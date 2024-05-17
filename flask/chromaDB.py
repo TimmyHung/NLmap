@@ -27,17 +27,19 @@ def loadData():
 def query(client, prompt):
     search_results = client.similarity_search(prompt, k=5)
     promptText = combinePromptText(search_results, prompt)
-    print(promptText)
+    # print(promptText)
     response = chat_completion2(promptText)
-    if response:
-        return response.strip().replace("台灣",'臺灣')
-    else:
-        return response
+    print(response)
+    return response
 
 def combinePromptText(search_results, prompt):
-    promptText = "你現在是一位Overpass Query Language的專家，請幫我參考以下例子並生成OverPass QL，輸出的格式僅限OverPass QL其餘多餘的文字請不要回答我：\n"
+    promptText = f"Help me generate Overpass Query Language for querying OpenStreetMap, related to the term: {prompt}\n"
+    promptText += "Respond with just the \"query_name\"and\"data\"，after \"data=\" all should be of the querystring and no explanation.\n"
+    promptText += "Format your response like this: query_name={SOME CHINESE SUMMARY WORDS REPRESENT THIS QUERY}|||data=[out:json][timeout:45];{INSERT_QUERY_HERE};out;>;out skel qt;\n"
+    promptText += "Example phrases and expected responses are:\n"
     for i in range(0,5):
-        promptText += "提問詞：" + str(search_results[i].page_content) + "。正確輸出格式：" + str(DataList[search_results[i].page_content]) + "\n"
-    promptText += "請幫我生成提問詞： " + prompt + " 的Query，請嚴格遵守回答格式。若QL輸出格式並非[out:json]請幫我改一下或請幫我補上。"
+        promptText += str(search_results[i].page_content) + "\n" + "query_name={GENERATE_BY_YOURSELF}|||" + str(DataList[search_results[i].page_content]) + "\n"
+    promptText += "Now only generate one query response."
 
+    print("\n==================\n" + promptText + "\n=================\n")
     return promptText
