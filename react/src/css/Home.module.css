@@ -10,45 +10,93 @@
     background-color: darkgrey;
 }
 
-.divider{
-    cursor: e-resize;
-    width: 7px;
-    z-index: 1000;
-    height: 100%;
-    background-color: black;
-    /* margin: 0.1rem; */
-    /* border: 2px solid #808080; */
-}
-
 
 .custom_area {
     width: 25%;
-    /* flex-grow: 1; */
-    /* min-width: 25%;
-    max-width: 25%; */
-    /* flex: 1; */
     background-color: #e5e9ec;
     height: 100%;
     padding: 2.5% 1.5%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.custom_area textarea{
+    font-size: 1.2em;
+    margin-bottom: 1px;
+    height: 10rem;
+    width: 100%;
+    border: 1px solid black;
+}
+
+.custom_area input{
+    padding-left: 1em;
+    font-size: 1em;
+    margin-bottom: 3px;
+    height: 3rem;
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid black;
+}
+
+.custom_area button{
+    border-radius: 10px;
+    width: 100%;
+}
+
+.loading-container {
+    width: 100%;
+    margin: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+.loading-text {
+    font-size: 1rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+@keyframes dots {
+    0% { content: ""; }
+    25% { content: " • "; }
+    50% { content: " • • "; }
+    75% { content: " • • • "; }
+    100% { content: ""; }
+  }
+  
+.loading_dots::after {
+    content: "";
+    animation: dots 0.8s steps(4, end) infinite;
+}
+
+
+
+.switchTab{
+    display: flex;
+}
+
+.switchTabMain{
+    background-color: #144583;
+    color: white !important;
+}
+
+.switchTab button{
+    color: black;
+    /* border-radius: 10px; */
 }
 
 .console textarea{
-    height: 20rem;
+    height: 13rem;
     background-color: #6a7586;
     color: white;
 }
 
-.custom_area textarea{
-    /* margin-top: auto; */
-    font-size: 1.2em;
-    margin-bottom: 1px; 
-    height: 13rem;
-    width: 100%;
-}
-
-.custom_area button{
-    border-radius: 15px;
-    width: 100%;
+.console textarea::placeholder{
+    color: lightgrey;
 }
 
 .searchSection{
@@ -88,7 +136,7 @@
 
 
 /* glow button */
-.searchSection button {
+.submitButton {
     margin-top: 5px;
     border: none;
     outline: none;
@@ -100,7 +148,7 @@
     vertical-align: center;
 }
 
-.searchSection button:before {
+.submitButton:before {
     content: '';
     background: linear-gradient(90deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
     /* background: linear-gradient(45deg, purple, red, transparent, purple, red, transparent, purple, red, purple); */
@@ -118,19 +166,15 @@
     border-radius: 10px;
 }
 
-/* .searchSection button:active {
-    color: #000
-} */
-
-.searchSection button:active:after {
+.submitButton:active:after {
     background: transparent;
 }
 
-.searchSection button:hover:before {
+.submitButton:hover:before {
     opacity: 1;
 }
 
-.searchSection button:after {
+.submitButton:after {
     z-index: -1;
     content: '';
     position: absolute;

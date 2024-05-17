@@ -1,106 +1,233 @@
-import { getOverPassQL, getGeoJsonData } from '../components/utils/API.jsx';
-import { useEffect, useState, useRef } from 'react';
-import { ReflexContainer,ReflexSplitter,ReflexElement } from 'react-reflex';
-import LeafletMap from "../components/layout/LeafletMap.jsx";
-import MapLibreMap from "../components/layout/MapLibreMap.jsx"; 
-import css from "../css/Home.module.css";
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { getOverPassQL, getGeoJsonData } from '@/components/lib/API.jsx';
+import MapLibreMap from "@/components/layout/MapLibreMap.jsx";
+import css from "@/css/Home.module.css";
+import Toast from '@/components/ui/Toast.jsx';
+
+const querystates = {
+  idle: "idle",
+  generating_query: "generating_query",
+  extracting_from_osm: "extracting_from_osm",
+  extraction_done: "extraction_done"
+};
+
+const tabs = {
+  manual: "manual",
+  askgpt: "askgpt"
+};
 
 export default function Home() {
   const notifyElement = useRef(null);
   const textareaElement = useRef(null);
-  const buttonElement = useRef(null);
+  const queryField = useRef(null);
 
-  const [inputValue, setInputValue] = useState('');
+  const [queryState, setQueryState] = useState(querystates.idle);
   const [overpassQL, setOverPassQL] = useState('');
   const [geoJsonData, setGeoJsonData] = useState(null);
   const [bounds, setBounds] = useState("21.20,117.67,26.25,124.18");
+  const [activeTab, setActiveTab] = useState(tabs.askgpt);
 
-  async function handleSearch(e) {
-    e.preventDefault();
-    textareaElement.current.disabled = true;
-    buttonElement.current.disabled = true;
-    console.log("查詢中");
-    const overpassQLResponse = await getOverPassQL(inputValue, bounds);
-    console.log("取得OverpassAPI");
-    if(overpassQLResponse.status){
-      setOverPassQL(overpassQLResponse.overpassQL);
-      const geoJsonResponse = await getGeoJsonData(overpassQLResponse.overpassQL);
-      if (geoJsonResponse.status) {
-        if (geoJsonResponse.geoJson.features.length == 0) {
-          Swal.fire("查無結果");
-          textareaElement.current.disabled = false;
-        } else {
-          Swal.fire("查詢成功");
-          setGeoJsonData(geoJsonResponse.geoJson);
-        }
-        buttonElement.current.disabled = false;
+  const [inputValue, setInputValue] = useState('');
+  const [customQuery, setCustomQuery] = useState('');
+  const [queryName, setQueryName] = useState('');
+
+  const printData = useCallback(() => {
+    console.log("inputValue: " + inputValue);
+    console.log("customQuery: " + customQuery);
+    console.log("queryName: " + queryName);
+    console.log("queryState: " + queryState);
+  }, [inputValue, customQuery, queryName, queryState]);
+
+  const handleGeoJsonResponse = useCallback(async (query, bounds) => {
+    const geoJsonResponse = await getGeoJsonData(query, bounds);
+    if (geoJsonResponse.status) {
+      if (geoJsonResponse.geoJson.features.length === 0) {
+        Swal.fire("查無結果");
+        setQueryState(querystates.idle);
       } else {
-        Swal.fire("取得GeoJson失敗\n錯誤訊息：" + geoJsonResponse.message);
-        textareaElement.current.disabled = false;
-        buttonElement.current.disabled = false;
+        Swal.fire("查詢成功");
+        setGeoJsonData(geoJsonResponse.geoJson);
+        setQueryState(querystates.extraction_done);
       }
-    }else{
-      Swal.fire("取得OverPass QL 失敗\n錯誤訊息：" + overpassQLResponse.message);
-      textareaElement.current.disabled = false;
-      buttonElement.current.disabled = false;
+    } else {
+      setQueryState(querystates.idle);
+      Toast.fire({
+        icon: "error",
+        title: geoJsonResponse.message
+      });
     }
-  }
+  }, []);
 
-  function clearGeoJson() {
+  const handleSearch = useCallback(async (e) => {
+    e.preventDefault();
+    setQueryState(querystates.generating_query);
+
+    if (activeTab === tabs.askgpt) {
+      const overpassQLResponse = await getOverPassQL(inputValue);
+      if (overpassQLResponse.status) {
+        setOverPassQL(overpassQLResponse.osmquery);
+        setQueryName(overpassQLResponse.query_name);
+        setQueryState(querystates.extracting_from_osm);
+        handleGeoJsonResponse(overpassQLResponse.osmquery, bounds);
+      } else {
+        setQueryState(querystates.idle);
+        Toast.fire({
+          icon: "error",
+          title: overpassQLResponse.message
+        });
+      }
+    } else {
+      setQueryState(querystates.extracting_from_osm);
+      handleGeoJsonResponse(customQuery, bounds);
+    }
+  }, [activeTab, inputValue, customQuery, bounds, handleGeoJsonResponse]);
+
+  const clearGeoJson = useCallback(() => {
     setGeoJsonData(null);
     setOverPassQL("");
-    textareaElement.current.disabled = false;
-    buttonElement.current.disabled = false;
-  }
+    setQueryState(querystates.idle);
+  }, []);
 
-  function focus(isfocus) {
-    isfocus ? notifyElement.current.className = css.showLabel : notifyElement.current.className = css.hideLabel;
-  }
+  const focus = useCallback((isFocus) => {
+    notifyElement.current.className = isFocus ? css.showLabel : css.hideLabel;
+  }, []);
 
-  function handleBoundsChange(rawBounds) {
-    const a = parseFloat(rawBounds._sw.lat).toFixed(2);
-    const b = parseFloat(rawBounds._sw.lng).toFixed(2);
-    const c = parseFloat(rawBounds._ne.lat).toFixed(2);
-    const d = parseFloat(rawBounds._ne.lng).toFixed(2);
-    const bounds = `${a},${b},${c},${d}`
+  const handleBoundsChange = useCallback((rawBounds) => {
+    const bounds = `${parseFloat(rawBounds._sw.lat).toFixed(2)},${parseFloat(rawBounds._sw.lng).toFixed(2)},${parseFloat(rawBounds._ne.lat).toFixed(2)},${parseFloat(rawBounds._ne.lng).toFixed(2)}`;
     setBounds(bounds);
-
-  }
+  }, []);
 
   return (
-      <div orientation="vertical" className={css.content}>
-        <div className={css.map}>
-          {/* <LeafletMap geoJsonData={geoJsonData} onBoundsChange={handleBoundsChange} /> */}
-          <MapLibreMap
-            geoJsonData={geoJsonData}
-            onBoundsChange={handleBoundsChange}
-          />
-        </div>
-
-        <div className={css.custom_area}>
-            <div className={css.console}>
-              <textarea value={overpassQL} disabled></textarea>
-            </div>
-            <div className={css.searchSection}>
-              <textarea
-                ref={textareaElement}
-                placeholder='輸入你的想法...'
-                onInput={(e) => setInputValue(e.target.value)}
-                onFocus={() => focus(true)}
-                onBlur={() => focus(false)}
-                onKeyDown={(e) => (e.key === 'Enter' && e.shiftKey) && handleSearch(e)}
-              ></textarea>
-              <div className={css.hideLabel} ref={notifyElement}>
-                <label>按下Shift+Enter送出查詢</label>
-              </div>
-              <button
-                ref={buttonElement}
-                type="button"
-                onClick={(e) => geoJsonData ? clearGeoJson() : handleSearch(e)}>
-                {geoJsonData ? "清除地圖" : "發動魔法"}
-              </button>
-            </div>
-        </div>  
+    <div className={css.content}>
+      <div className={css.map}>
+        {/* TODO: 加上node, way, relations 數量 */}
+        <MapLibreMap
+          geoJsonData={geoJsonData}
+          onBoundsChange={handleBoundsChange}
+        />
       </div>
+
+      <div className={css.custom_area}>
+        <button onClick={printData}>
+          Debug
+        </button>
+        <div className={css.searchSection}>
+
+          {/* {(queryState === querystates.generating_query || queryState === querystates.extracting_from_osm) && (
+            <div className={css.loading_container}>
+              <p className={css.loading_text}>
+                {queryState === querystates.generating_query ? "生成查詢語言" : "取得OverPass API"}<span className={css.loading_dots}></span>
+              </p>
+            </div>
+          )} */}
+
+          <div className={css.console}>
+            <textarea
+              ref={queryField}
+              placeholder={activeTab === tabs.askgpt ? "生成後的查詢語言會顯示在這..." : "輸入OverPass Query Language"}
+              value={activeTab === tabs.askgpt ? overpassQL : customQuery}
+              onInput={(e) => activeTab === tabs.manual && setCustomQuery(e.target.value)}
+              rows={7}
+              style={{
+                cursor: activeTab === tabs.askgpt ? 'not-allowed' : queryState !== querystates.idle ? 'not-allowed' : 'text',
+              }}
+              disabled={activeTab === tabs.askgpt || queryState !== querystates.idle}
+            />
+          </div>
+
+          {activeTab === tabs.askgpt ? (
+            <textarea
+              ref = {textareaElement}
+              placeholder="輸入你的想法..."
+              onInput={(e) => setInputValue(e.target.value)}
+              onFocus={() => focus(true)}
+              onBlur={() => focus(false)}
+              disabled={queryState !== querystates.idle && queryState !== querystates.extraction_done}
+              onKeyDown={(e) => {
+                if(e.key === 'Enter' && e.shiftKey){
+                  handleSearch(e);
+                  textareaElement.current.blur();
+                }
+              }}
+            ></textarea>
+          ):(
+            <input
+              ref = {textareaElement}
+              placeholder="這筆查詢的名稱"
+              onInput={(e) => setQueryName(e.target.value)}
+              onFocus={() => focus(true)}
+              onBlur={() => focus(false)}
+              disabled={queryState !== querystates.idle && queryState !== querystates.extraction_done}
+              onKeyDown={(e) => {
+                if(e.key === 'Enter' && e.shiftKey){
+                  if(activeTab === tabs.manual && queryField.current.value.length === 0){
+                    queryField.current.focus();
+                    return;
+                  }
+                  if (textareaElement.current.value.length === 0) {
+                    textareaElement.current.focus();
+                    return;
+                  }
+                  handleSearch(e);
+                  textareaElement.current.blur();
+                }
+              }}
+            ></input>
+          )}
+
+          <div className={css.hideLabel} ref={notifyElement}>
+            <label>或按下Shift+Enter送出查詢</label>
+          </div>
+          <button
+            className={css.submitButton}
+            type="button"
+            disabled={queryState !== querystates.idle && queryState !== querystates.extraction_done}
+            style={{
+              cursor: queryState !== querystates.idle && queryState !== querystates.extraction_done ? 'not-allowed' : "pointer",
+            }}
+            onClick={(e) => {
+              if(geoJsonData){
+                clearGeoJson()
+              }else{
+                if(activeTab === tabs.manual && queryField.current.value.length === 0){
+                  queryField.current.focus();
+                  return;
+                }
+                if (textareaElement.current.value.length === 0) {
+                  textareaElement.current.focus();
+                  return;
+                }
+                handleSearch(e)
+              }
+            }}>
+            {queryState === querystates.generating_query ? "生成查詢語言" : queryState === querystates.extracting_from_osm ? "取得OverPass API" : geoJsonData ? "清除地圖" : "發動魔法"}
+            {(queryState === querystates.generating_query || queryState === querystates.extracting_from_osm) && (<span className={css.loading_dots}></span>)}
+          </button>
+
+          <hr />
+
+          <div className={css.switchTab}>
+            <button
+              className={activeTab === tabs.askgpt ? css.switchTabMain : undefined}
+              onClick={() => {
+                setActiveTab(tabs.askgpt);
+                setQueryState(querystates.idle);
+              }}
+            >
+              GPT生成
+            </button>
+            <button
+              className={activeTab === tabs.manual ? css.switchTabMain : undefined}
+              onClick={() => {
+                setActiveTab(tabs.manual);
+                setQueryState(querystates.idle);
+              }}
+            >
+              手動查詢
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
