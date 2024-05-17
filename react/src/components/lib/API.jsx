@@ -34,31 +34,27 @@ export const getRequest = async (url, requestData, headers = {}, timeout = 5000)
     }
 };
 
-export const getOverPassQL = async(inputValue,bounds)=>{
+export const getOverPassQL = async(inputValue)=>{
     const data={
         queryNL: inputValue,
     }
-    // const bounds = `${rawBounds._southWest.lat},${rawBounds._southWest.lng},${rawBounds._northEast.lat},${rawBounds._northEast.lng}`
+    
     try{
-        const response = await postRequest("api/query", data, {}, 30000, "GET")
+        const response = await postRequest("api/query", data, {}, 20000, "GET")
         if(response.status){
-            return {status: true, message: "Successful get OverpassQL", overpassQL: response.query.replaceAll("{{bbox}}",bounds)}
-            // console.log("正在取得: " + "http://overpass-api.de/api/interpreter?data=" + response.query.replaceAll("{{bbox}}",bounds))
-            // const overpassJson = await getRequest("http://overpass-api.de/api/interpreter?data=" + response.query.replaceAll("{{bbox}}",bounds), {} , {}, 10000)
-            // const geoJson = osmtogeojson(overpassJson)
-            // return {status: true , message: "successful get geoJson", overpassQL: geoJson}
+            return {status: true, message: "Successful get OverpassQL", osmquery: response.osmquery, query_name: response.query_name}
         }else{
-            return {status: false , message: "Rate limit exceeded.", overpassQL: null}
+            return {status: false , message: "Rate limit exceeded.", osmquery: null, query_name: null}
         }
     }catch(err){
-        return {status: false , message: err, overpassQL: null}
+        return {status: false , message: err, osmquery: null, query_name: null}
     }
 }
 
-export const getGeoJsonData = async(overpassQL)=>{
+export const getGeoJsonData = async(overpassQL, bounds)=>{
     try{
-        console.log("正在取得: " + "http://overpass-api.de/api/interpreter?data=" + overpassQL)
-        const overpassJson = await getRequest("http://overpass-api.de/api/interpreter?data=" + overpassQL, {} , {}, 10000)
+        console.log("正在取得: " + "http://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}",bounds))
+        const overpassJson = await getRequest("http://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}",bounds), {} , {}, 20000)
         const geoJson = osmtogeojson(overpassJson)
         return {status: true , message: "successful get geoJson", geoJson: geoJson}
     }catch(err){

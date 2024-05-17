@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link} from 'react-router-dom';
-import css from '../css/Login.module.css';
-import postRequest from '../components/utils/API.jsx'
-import { useAuth } from '../components/utils/AuthProvider';
+import css from '@/css/Login.module.css';
+import postRequest from '@/components/lib/API.jsx'
+import { useAuth } from '@/components/lib/AuthProvider';
 
 
 export default function Login(){

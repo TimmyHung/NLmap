@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { AuthProvider, useAuth } from './components/utils/AuthProvider';
-import { verifyJWT } from './components/utils/API'
+import { AuthProvider, useAuth } from '@/components/lib/AuthProvider';
+import { verifyJWT } from '@/components/lib/API'
 
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import DashBoard from './pages/DashBoard';
-import NotFound from './pages/NotFound';
+import Home from '@/pages/Home';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import DashBoard from '@/pages/DashBoard';
+import NotFound from '@/pages/NotFound';
 
-import MainNavigation from './components/layout/MainNavigation';
+import MainNavigation from '@/components/layout/MainNavigation';
 
 
 export default function App() {

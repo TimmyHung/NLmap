@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import css  from '../css/Register.module.css';
-import postRequest from '../components/utils/API.jsx';
-import { useAuth } from '../components/utils/AuthProvider';
+import css  from '@/css/Register.module.css';
+import postRequest from '@/components/lib/API.jsx';
+import { useAuth } from '@/components/lib/AuthProvider';
 
 export default function Register(){
   const [account, setAccount] = useState('');

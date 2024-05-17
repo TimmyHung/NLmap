@@ -1,8 +1,8 @@
 
 import { Link,useLocation,Outlet } from "react-router-dom";
-import css from "../../css/MainNavigation.module.css";
-import logo from "../../assets/logo.png";
-import { useAuth } from '../utils/AuthProvider';
+import css from "@/css/MainNavigation.module.css";
+import logo from "@/assets/logo.png";
+import { useAuth } from '@/components/lib/AuthProvider';
 
 export default function MainNavigation(){
     const { JWTtoken, username, role, logout} = useAuth();
