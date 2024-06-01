@@ -1,3 +1,4 @@
+/* MainNavigation.module.css */
 .header {
     display: flex;
     justify-content: space-between;
@@ -17,28 +18,26 @@
 }
 
 .logo {
-    width: 2.5rem;
+    width: 3rem;
     height: auto;
+    margin: 0 10px 0 0;
 }
 
 .logo_section {
     transform: scale(90%);
     height: auto;
-    font-size: 1.35rem;
+    font-size: 2.5rem;
     font-family: "Covered By Your Grace", cursive;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    /* display: flex; */
+    /* flex-direction: column; */
     /* padding: 25px; */
 }
 
 .logo_link {
     display: flex;
-    flex-direction: column;
     align-items: center;
+    text-align: center;
 }
-
 
 .header ul {
     list-style: none;
@@ -66,4 +65,33 @@
 .header a:active,
 .header a.active {
     /* color: white; */
+}
+
+.leftContainer {
+    display: flex;
+}
+
+.navBar {
+    margin-left: 3em;
+    align-self: center;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid white;
+}
+
+.navBar button {
+    box-shadow: unset;
+    margin: 0 0.1em;
+    color: #EEEEEE;
+    background: none;
+    border: none;
+    cursor: pointer;
+    height: 2em;
+}
+
+.navBar button:hover {
+    background-color: rgba(217, 217, 217, 0.15);
+}
+
+.navBar .active {
+    background-color: rgba(217, 217, 217, 0.15);
 }

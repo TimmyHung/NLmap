@@ -46,7 +46,7 @@ export default function Login(): ReactElement {
       // 登入成功
       if (response.status) {
         const JWTtoken = response.JWTtoken;
-        login(JWTtoken);
+        login(JWTtoken, false);
       } else {
         if (response.message.includes("Invalid account or password")) {
           // 密碼錯誤
@@ -134,7 +134,7 @@ export default function Login(): ReactElement {
             <button className={css.button} type="button" onClick={handleLogin}>登入</button>
           </form>
           <div className={css.register_link}>
-            <a onClick={passwordRecovery}>忘記帳號了嗎?</a>
+            <a onClick={passwordRecovery}>忘記密碼</a>
           </div>
         </div>
         {/* <div className={css.footer}>

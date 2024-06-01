@@ -4,6 +4,10 @@ import { AuthProvider, useAuth } from '@/components/lib/AuthProvider';
 import { verifyJWT } from '@/components/lib/API';
 
 import Home from '@/pages/Home';
+import Tutorial from '@/pages/Tutorial';
+import History from '@/pages/History';
+import Favorite from '@/pages/Favorite';
+import About from '@/pages/About';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import DashBoard from '@/pages/DashBoard';
@@ -20,14 +24,17 @@ export default function App(): ReactElement {
             {/* Main-Navigation */}
             <Route element={<MainNavigation />}>
               <Route path="/" element={<Home />} />
-
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <Route path="/history" element={<History />}/>
+              <Route path="/favorites" element={<Favorite />}/>
+              <Route path="/tutorial" element={<Tutorial />}/>
+              <Route path="/about" element={<About />}/>
 
               <Route element={<PrivateRoute requiredRoles={['Admin']} />}>
                 <Route path="/dashboard" element={<DashBoard />} />
               </Route>
 
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
               <Route path="/404" element={<NotFound />} />
               {/* <Route path="*" element={<NotFound />} /> */}
             </Route>
