@@ -94,11 +94,10 @@ export default function Login(): ReactElement {
 
   return (
     <div className={css.backgroundImage}>
-      <div className={css.mainContainer}>
-        <div className={css.title}>
-          <h1>Sign in</h1>
-        </div>
         <div className={css.login_container}>
+          <div className={css.title}>
+            <h1>Sign in</h1>
+          </div>
           <form className={css.login_form}>
             <div className={css.form_group}>
               <label className={css.label}>帳號</label>
@@ -129,20 +128,16 @@ export default function Login(): ReactElement {
                 <input type="checkbox" id="checkbox" onChange={() => setKeepSignIn(!keepSignIn)} />
                 <label htmlFor="checkbox"></label>
               </div>
-              <div className={css.checkbox_div_innerText}>讓我保持登入</div>
+              <div className={css.checkbox_div_innerText}>記住此帳號</div>
             </div>
             <button className={css.button} type="button" onClick={handleLogin}>登入</button>
           </form>
-          <div className={css.register_link}>
-            <a onClick={passwordRecovery}>忘記密碼</a>
+          <div className={css.link}>
+          <span><a onClick={passwordRecovery}>忘記密碼</a></span>
+          |
+          <span>還沒有帳號?<Link to="/register"> 註冊</Link></span>
           </div>
         </div>
-        {/* <div className={css.footer}>
-          <div>
-            <label>還沒註冊?<Link className={css.register_link} to={"/register"}>馬上加入</Link></label>
-          </div>
-        </div> */}
-      </div>
     </div>
   );
 }

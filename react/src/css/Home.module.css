@@ -78,13 +78,17 @@
 }
 
 .switchTabMain{
-    background-color: #144583;
+    background-color: rgb(30, 30, 30);
     color: white !important;
 }
 
 .switchTab button{
     color: black;
-    /* border-radius: 10px; */
+}
+
+.switchTab button:hover{
+    background-color: rgb(30, 30, 30);
+    color: white;
 }
 
 .console textarea{
@@ -138,61 +142,3 @@
 .submitButton:hover{
     background: #103669;
 }
-
-
-/* glow button */
-/* .submitButton {
-    margin-top: 5px;
-    border: none;
-    outline: none;
-    color: white;
-    background: #202527;
-    position: relative;
-    z-index: 0;
-    border-radius: 10px;
-    vertical-align: center;
-}
-
-.submitButton:before {
-    content: '';
-    background: linear-gradient(90deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000); */
-    /* background: linear-gradient(45deg, purple, red, transparent, purple, red, transparent, purple, red, purple); */
-    /* position: absolute;
-    top: -2px;
-    left:-2px;
-    background-size: 400%;
-    z-index: -1;
-    filter: blur(5px);
-    width: calc(100% + 4px);
-    height: calc(100% + 4px);
-    animation: glowing 20s linear infinite;
-    opacity: 1;
-    transition: opacity 0.3s ease-in-out;
-    border-radius: 10px;
-}
-
-.submitButton:active:after {
-    background: transparent;
-}
-
-.submitButton:hover:before {
-    opacity: 1;
-}
-
-.submitButton:after {
-    z-index: -1;
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #202527;
-    left: 0;
-    top: 0;
-    border-radius: 10px;
-}
-
-@keyframes glowing {
-    0% { background-position: 0 0; }
-    50% { background-position: 400% 0; }
-    100% { background-position: 0 0; }
-} */

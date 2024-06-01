@@ -1,8 +1,9 @@
 
 .register_container{
   background-color: white;
-  max-width: 500px;
-  margin: 100px auto 30px auto;
+  width: 500px;
+  align-self: center;
+  justify-self: center;
   padding: 50px;
   border-radius: 15px;
   box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.25);
@@ -11,7 +12,16 @@
 .register_container h1{
   font-size: 35px;
   margin-bottom: 40px;
-  text-shadow: 0px 5px 10px rgba(0, 0, 0, 0.25);
+  /* text-shadow: 0px 5px 10px rgba(0, 0, 0, 0.25); */
+}
+
+.backgroundImage{
+  display: grid;
+  background-image: url("../assets/registerBG.jpg");
+  height: 100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 .center_wrapper{

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, ReactElement } from 'react';
-import maplibregl, { LngLatLike, Map, MapboxOptions } from 'maplibre-gl';
+import maplibregl, { LngLatLike, Map, MapOptions } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 interface MapLibreMapProps {
@@ -16,7 +16,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({ geoJsonData, onBoundsChange }
 
   useEffect(() => {
     if (mapRef.current) {
-      const mapOptions: MapboxOptions = {
+      const mapOptions: MapOptions = {
         container: mapRef.current,
         style: {
           "version": 8,
@@ -43,7 +43,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({ geoJsonData, onBoundsChange }
       const map: Map = new maplibregl.Map(mapOptions);
 
       // Add navigation controls to the map.
-      map.addControl(new maplibregl.NavigationControl(), 'top-right');
+      map.addControl(new maplibregl.NavigationControl(), 'top-left');
 
       map.on('moveend', () => {
         const bounds = map.getBounds();

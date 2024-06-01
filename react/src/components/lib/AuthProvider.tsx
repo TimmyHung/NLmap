@@ -26,8 +26,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (JWTtoken) {
       const fetchData = async () => {
         const response = await verifyJWT(JWTtoken);
-        console.log(response);
-        switch (response.code) {
+        // console.log(response);
+        switch (response.message) {
           case "Token Expired":
             logout("您已登出", "帳號驗證已過期請重新登入");
             break;
@@ -54,12 +54,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.setItem('JWTtoken', token);
     setJWTtoken(token);
     <Navigate to="/" />;
-    Swal.fire({
-      icon: "success",
-      title: firstTime ? "註冊成功" : "登入成功",
-      showConfirmButton: true,
-      timer: 2000
-    });
+    if(firstTime)
+      Swal.fire({
+        icon: "success",
+        title: firstTime ? "註冊成功" : "登入成功",
+        showConfirmButton: true,
+        timer: 2000
+      });
   };
 
   const logout = (title: string, text: string) => {

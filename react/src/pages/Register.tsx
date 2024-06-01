@@ -121,7 +121,7 @@ export default function Register(): ReactElement {
   }
 
   return (
-    <div>
+    <div className={css.backgroundImage}>
       <div className={css.register_container}>
         <form className={css.center_wrapper}>
           <h1>Create Account</h1>
@@ -174,17 +174,17 @@ export default function Register(): ReactElement {
               </div>
             </div>
 
+            <div className={css.footer}>
+              <div>
+                已經有帳號了嗎?<Link to={"/login"}>登入</Link>
+              </div>
+            </div>
             <div className={css.button_wrapper}>
               <button className={css.button} type="button" onClick={handleRegister}>註冊</button>
             </div>
             <label className={css.statement}>註冊即代表同意 <span onClick={terms}>服務條款</span> 及 <span onClick={privacy}>隱私權政策</span> </label>
           </div>
         </form>
-      </div>
-      <div className={css.footer}>
-        <div>
-          已經有帳號了嗎?<Link to={"/login"}>登入</Link>
-        </div>
       </div>
     </div>
   );
