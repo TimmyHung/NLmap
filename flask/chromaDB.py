@@ -1,6 +1,6 @@
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from proxy_client import chat_completion2
+from proxy_client import chat_completion2,self_chat_completion
 
 datasetNL = "./assets/dataset.dev.nl"
 with open(datasetNL, "r", encoding="utf-8") as f:
@@ -28,17 +28,18 @@ def query(client, prompt):
     search_results = client.similarity_search(prompt, k=5)
     promptText = combinePromptText(search_results, prompt)
     # print(promptText)
-    response = chat_completion2(promptText)
-    print(response)
+    # response = chat_completion2(promptText)
+    response = self_chat_completion(promptText)
+    print("The gpt response: " + response)
     return response
 
 def combinePromptText(search_results, prompt):
     promptText = f"Help me generate Overpass Query Language for querying OpenStreetMap, related to the term: {prompt}\n"
     promptText += "Respond with just the \"query_name\"and\"data\"，after \"data=\" all should be of the querystring and no explanation.\n"
-    promptText += "Format your response like this: query_name={SOME CHINESE SUMMARY WORDS REPRESENT THIS QUERY}|||data=[out:json][timeout:45];{INSERT_QUERY_HERE};out;>;out skel qt;\n"
+    promptText += "Format your response like this: query_name={FEW TAIWAN STYLE TRADITIONAL CHINESE WORDS REPRESENT THIS QUERY}|||data=[out:json][timeout:45];{INSERT_QUERY_HERE};out;>;out skel qt;\n"
     promptText += "Example phrases and expected responses are:\n"
     for i in range(0,5):
-        promptText += str(search_results[i].page_content) + "\n" + "query_name={GENERATE_BY_YOURSELF}|||" + str(DataList[search_results[i].page_content]) + "\n"
+        promptText += str(search_results[i].page_content) + "\n" + "query_name={FEW TAIWAN STYLE TRADITIONAL CHINESE WORDS REPRESENT THIS QUERY}|||" + str(DataList[search_results[i].page_content]) + "\n"
     promptText += "Now only generate one query response."
 
     print("\n==================\n" + promptText + "\n=================\n")
