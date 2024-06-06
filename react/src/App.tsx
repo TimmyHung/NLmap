@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactElement } from 'react';
+import { useState, useEffect, ReactElement } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/components/lib/AuthProvider';
 import { verifyJWT } from '@/components/lib/API';
@@ -36,7 +36,7 @@ export default function App(): ReactElement {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/404" element={<NotFound />} />
-              {/* <Route path="*" element={<NotFound />} /> */}
+              <Route path="*" element={<NotFound />} />
             </Route>
             {/* No-Navigation */}
           </Routes>

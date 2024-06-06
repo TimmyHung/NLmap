@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactElement } from 'react';
+import { useState, useEffect, ReactElement } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import css from '@/css/Login.module.css';
 import postRequest from '@/components/lib/API';

@@ -1,4 +1,4 @@
-import React, { useState, useRef, ReactElement } from 'react';
+import { useState, useRef, ReactElement, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import css from '@/css/Register.module.css';
 import postRequest from '@/components/lib/API';
@@ -9,6 +9,8 @@ export default function Register(): ReactElement {
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [accountValid, setAccountValid] = useState(false);
+  const buttonElement = useRef<HTMLButtonElement>(null);
   const emailNotifyElement = useRef<HTMLDivElement>(null);
   const nameNotifyElement = useRef<HTMLDivElement>(null);
   const { JWTtoken, login } = useAuth();
@@ -16,6 +18,7 @@ export default function Register(): ReactElement {
   if (JWTtoken) {
     return <Navigate to="/" replace />;
   }
+
 
   const handleRegister = async () => {
     try {
@@ -106,8 +109,10 @@ export default function Register(): ReactElement {
         if (account.length !== 0) {
           const valid = String(account).toLowerCase().match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
           valid ? notifyElement.className = css.NotifyElement_Off : notifyElement.className = css.NotifyElement_On;
+          setAccountValid(false);
         } else {
           notifyElement.className = css.NotifyElement_Off;
+          setAccountValid(true);
         }
       }
     }
@@ -130,7 +135,7 @@ export default function Register(): ReactElement {
               <label>電子郵件<span className="required">*</span></label>
               <div className={css.input_wrapper}>
                 <input
-                  type="text"
+                  type="email"
                   id="account"
                   onChange={(e) => setAccount(e.target.value)}
                   onFocus={() => validateEmail(true)}
@@ -180,7 +185,7 @@ export default function Register(): ReactElement {
               </div>
             </div>
             <div className={css.button_wrapper}>
-              <button className={css.button} type="button" onClick={handleRegister}>註冊</button>
+              <button ref={buttonElement} className={css.button} type="button" onClick={handleRegister}>註冊</button>
             </div>
             <label className={css.statement}>註冊即代表同意 <span onClick={terms}>服務條款</span> 及 <span onClick={privacy}>隱私權政策</span> </label>
           </div>

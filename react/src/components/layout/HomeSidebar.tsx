@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef, useCallback, ReactElement } from 'react';
+import { useState, useRef, useCallback, ReactElement } from 'react';
 import { getOverPassQL, getGeoJsonData } from '@/components/lib/API';
-import MapLibreMap from "@/components/layout/MapLibreMap";
+// import MapLibreMap from "@/components/layout/MapLibreMap";
 import css from "@/css/Home.module.css";
 import Toast from '@/components/ui/Toast';
 import Swal from 'sweetalert2';
@@ -12,7 +12,13 @@ export type QueryResponse = {
   query_name: string;
 };
 
-export default function HomeSideBar(): ReactElement {
+interface HomeSideBarProps {
+  setGeoJsonData: (data: GeoJSON.FeatureCollection | null) => void;
+  bounds: string;
+  setBounds: (bounds: string) => void;
+}
+
+export default function HomeSideBar({ setGeoJsonData, bounds, setBounds }: HomeSideBarProps): ReactElement {
   const queryFieldRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -20,8 +26,6 @@ export default function HomeSideBar(): ReactElement {
   const [queryState, setQueryState] = useState<QueryStates>('idle');
   const [activeTab, setActiveTab] = useState<Tabs>('askgpt');
   const [extractedQuery, setExtractedQuery] = useState<null | QueryResponse>(null);
-
-  const [bounds, setBounds] = useState('21.20,117.67,26.25,124.18');
 
   const handleGeoJsonResponse = useCallback(async (query: string) => {
     const geoJsonResponse = await getGeoJsonData(query, bounds);
@@ -32,6 +36,7 @@ export default function HomeSideBar(): ReactElement {
       } else {
         Swal.fire('查詢成功');
         setQueryState('idle');
+        setGeoJsonData(geoJsonResponse.geoJson);
       }
     } else {
       setQueryState('idle');
@@ -40,7 +45,7 @@ export default function HomeSideBar(): ReactElement {
         title: geoJsonResponse.message as String,
       });
     }
-  }, [bounds]);
+  }, [bounds, setGeoJsonData]);
 
   const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();

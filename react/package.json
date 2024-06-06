@@ -12,11 +12,11 @@
   "dependencies": {
     "axios": "^1.6.8",
     "maplibre-gl": "^4.3.1",
-    "osmtogeojson": "^3.0.0-beta.5",
+    "osmtogeojson": "^2.2.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.1",
-    "sweetalert2": "^11.11.0"
+    "sweetalert2": "^11.6.13"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",

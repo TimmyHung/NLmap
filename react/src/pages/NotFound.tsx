@@ -5,10 +5,10 @@ export default function NotFound(): React.ReactElement {
     <div
       className="not-found-container"
       style={{
+        paddingTop: '10%',
         width: '100%',
         display: 'flex',
         overflow: 'auto',
-        minHeight: '100vh',
         alignItems: 'center',
         flexDirection: 'column',
         justifyContent: 'center'

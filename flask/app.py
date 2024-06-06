@@ -9,7 +9,7 @@ import jwt
 import pymysql
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 load_dotenv()
 chromaDB = loadData()
 
@@ -31,15 +31,16 @@ def generate_jwt(payload):
 # Default route
 @app.route('/', methods=['GET'])
 def default_route():
-    return "Invalid API", 400
+    return "Invalid APIs", 400
 
 # Test route
 @app.route('/api/query',methods=['POST'])
 def getQuery():
+    print("Triggered")
     data = request.get_json()
     promptText = data.get('queryNL')
     response = query(chromaDB,promptText)
-    
+
     osmquery = response.split("|||")[1].replace("data=", "")
     query_name = response.split("|||")[0].replace("query_name=", "")
 
@@ -58,17 +59,18 @@ def register():
     username = data.get('username')
 
     cursor = db.cursor()
-    check_user_exist_query = "SELECT * FROM user_accounts WHERE account = %s"
+    check_user_exist_query = "SELECT * FROM users WHERE account = %s"
     cursor.execute(check_user_exist_query, (account,))
     check_result = cursor.fetchone()
 
+    print(check_result)
     if check_result:
         return jsonify({'status': False, 'message': 'Account already exists'}), 200
 
     salt = os.urandom(16).hex()
     hashed_password = hash_password(password, salt)
 
-    insert_query = "INSERT INTO user_accounts (account, hashed_password, salt, username) VALUES (%s, %s, %s, %s)"
+    insert_query = "INSERT INTO users (account, hashed_password, salt, username) VALUES (%s, %s, %s, %s)"
     cursor.execute(insert_query, (account, hashed_password, salt, username))
     db.commit()
 
@@ -85,7 +87,7 @@ def login():
     password = data.get('password')
 
     cursor = db.cursor()
-    sql = "SELECT hashed_password, salt, role, username FROM user_accounts WHERE account = %s"
+    sql = "SELECT hashed_password, salt, role, username FROM users WHERE account = %s"
     cursor.execute(sql, (account,))
     result = cursor.fetchone()
 
@@ -121,4 +123,6 @@ def jwt_verify():
         return jsonify({'status': False, 'message': 'JWT Failed: Unknown Error', 'detail': str(e)}), 200
 
 if __name__ == "__main__":
-    app.run(port=3000)
+    app.run(host="0.0.0.0",port=3000)
+    # from waitress import serve
+    # serve(app, host="0.0.0.0", port=3000)

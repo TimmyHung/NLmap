@@ -1,7 +1,7 @@
 import axios from 'axios';
 import osmtogeojson from "osmtogeojson";
 
-const baseURL = "http://127.0.0.1:3000/";
+const baseURL = "https://timmyhungback.pettw.online/";
 const defaultHeaders = {
   'Content-Type': 'application/json'
 };
@@ -41,6 +41,7 @@ export const getOverPassQL = async (inputValue: string) => {
   };
 
   try {
+    console.log("正在取得OverPassQL");
     const response = await postRequest("api/query", data, {}, 20000);
     if (response.status) {
       return { status: true, message: "Successful get OverpassQL", osmquery: response.osmquery, query_name: response.query_name };
