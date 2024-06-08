@@ -1,5 +1,6 @@
 import { useState, useEffect, ReactElement } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import GoogleLoginBtn, { DiscordLoginBtn, AppleLoginBtn } from '@/components/ui/OAuth_Button';
 import css from '@/css/Login.module.css';
 import postRequest from '@/components/lib/API';
 import { useAuth } from '@/components/lib/AuthProvider';
@@ -19,7 +20,6 @@ export default function Login(): ReactElement {
   }, [JWTtoken, navigate]);
 
   const handleLogin = async () => {
-    try {
       if (!account.trim()) {
         Swal.fire({
           icon: "warning",
@@ -39,15 +39,22 @@ export default function Login(): ReactElement {
       }
 
       const requestData = {
-        account: account,
+        type: "Native",
+        email: account,
         password: password
       };
       const response = await postRequest('api/login', requestData);
+      handleAuthResponse(response)
+  };
+
+  async function handleAuthResponse(response){
+    try {
+      if(!response) return;
       // 登入成功
       if (response.status) {
         const JWTtoken = response.JWTtoken;
         login(JWTtoken, false);
-      } else {
+      }else{
         if (response.message.includes("Invalid account or password")) {
           // 密碼錯誤
           Swal.fire({
@@ -55,27 +62,33 @@ export default function Login(): ReactElement {
             title: "Oops...",
             text: "帳號或密碼不正確！",
           });
-        } else if (response.message.includes("Account is not exists")) {
+        } else if (response.message.includes("Account does not exist")) {
           // 帳號不存在
+          Swal.fire({
+            icon: "question",
+            title: "Oops...",
+            text: "帳號或密碼不存在！",
+          });
+        }else if(response.message.includes("Login Failed: account exists")){
           Swal.fire({
             icon: "error",
             title: "Oops...",
-            text: "帳號或密碼不正確！",
+            text: "帳號已註冊，請使用" + (response.account_type == "Native" ? "網頁一般" : response.account_type) + "登入。",
           });
         } else {
           // 其他登入失敗原因
           Swal.fire({
             icon: "error",
             title: "Oops...",
-            text: "登入失敗，請聯繫管理員。",
+            text: "登入失敗，請聯繫管理員。(" + response.message + ")",
           });
         }
       }
-    } catch (error) {
-      console.error("登入時發生錯誤:", error);
+    }catch (error) {
+      // console.error("登入時發生錯誤:", error);
       // 處理登入時的錯誤
     }
-  };
+  }
 
   async function passwordRecovery() {
     const { value: email } = await Swal.fire({
@@ -91,6 +104,7 @@ export default function Login(): ReactElement {
       Swal.fire("信件還沒有發送至你的信箱\n請不要查收！！！");
     }
   }
+
 
   return (
     <div className={css.backgroundImage}>
@@ -133,9 +147,18 @@ export default function Login(): ReactElement {
             <button className={css.button} type="button" onClick={handleLogin}>登入</button>
           </form>
           <div className={css.link}>
-          <span><a onClick={passwordRecovery}>忘記密碼</a></span>
-          |
-          <span>還沒有帳號?<Link to="/register"> 註冊</Link></span>
+            <span><a onClick={passwordRecovery}>忘記密碼</a></span>
+            |
+            <span>還沒有帳號?<Link to="/register"> 註冊</Link></span>
+          </div>
+          <div className={css.divider_wrapper}>
+            <span className={css.divider}>或</span>
+          </div>
+
+          <div className={css.oauth_section}>
+            <GoogleLoginBtn onSuccess={handleAuthResponse}/>
+            <AppleLoginBtn onSuccess={handleAuthResponse}/>
+            <DiscordLoginBtn onSuccess={handleAuthResponse}/>
           </div>
         </div>
     </div>

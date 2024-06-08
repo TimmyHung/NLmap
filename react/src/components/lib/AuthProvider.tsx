@@ -1,12 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { verifyJWT } from './API';
+import { googleLogout } from '@react-oauth/google';
+import { FacebookLoginClient } from '@greatsumini/react-facebook-login';
 import Swal from 'sweetalert2';
 
 interface AuthContextType {
   JWTtoken: string | null;
   username: string | null;
   role: string | null;
+  picture: string | null;
   login: (token: string, firstTime: boolean) => Promise<void>;
   logout: (title: string, text: string) => void;
 }
@@ -21,6 +24,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [JWTtoken, setJWTtoken] = useState<string | null>(localStorage.getItem('JWTtoken'));
   const [username, setUsername] = useState<string | null>('');
   const [role, setRole] = useState<string | null>('');
+  const [picture, setPicture] = useState<string | null>('');
 
   useEffect(() => {
     if (JWTtoken) {
@@ -43,12 +47,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           case "Token Normal":
             setUsername(response.data.username);
             setRole(response.data.role);
+            setPicture(response.data.picture);
             break;
         }
       };
       fetchData();
     }
   }, [JWTtoken]);
+
 
   const login = async (token: string, firstTime: boolean) => {
     localStorage.setItem('JWTtoken', token);
@@ -65,9 +71,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = (title: string, text: string) => {
     localStorage.removeItem('JWTtoken');
+
     setJWTtoken(null);
     setUsername(null);
     setRole(null);
+    googleLogout();
+
     Swal.fire({
       icon: "success",
       title: title,
@@ -78,7 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ JWTtoken, username, role, login, logout }}>
+    <AuthContext.Provider value={{ JWTtoken, username, role, picture, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

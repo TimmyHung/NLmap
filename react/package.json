@@ -10,11 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@greatsumini/react-facebook-login": "^3.3.3",
+    "@react-oauth/google": "^0.12.1",
     "axios": "^1.6.8",
     "maplibre-gl": "^4.3.1",
     "osmtogeojson": "^2.2.12",
     "react": "^18.2.0",
+    "react-apple-login": "^1.1.6",
+    "react-apple-signin-auth": "^1.1.0",
     "react-dom": "^18.2.0",
+    "react-facebook": "^9.0.12",
     "react-router-dom": "^6.23.1",
     "sweetalert2": "^11.6.13"
   },

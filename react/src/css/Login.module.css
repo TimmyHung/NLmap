@@ -45,6 +45,10 @@
   box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.25);
 }
 
+.login_container hr{
+  width: 80%;
+}
+
 .link{
   font-size: 15px;
   margin: 15px 0;
@@ -112,6 +116,89 @@
     background-color: #3dbb78;
 }
 
+.divider_wrapper {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  width: 80%;
+  margin: 0 auto;
+}
+
+.divider_wrapper::before,
+.divider_wrapper::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #ccc;
+}
+
+.divider_wrapper::before {
+  margin-right: 10px;
+}
+
+.divider_wrapper::after {
+  margin-left: 10px;
+}
+
+.divider {
+  white-space: nowrap;
+  margin: 10px 0;
+}
+
+.oauth_section{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.oauth_section button{
+  width: 55px;
+  height: 40px;
+}
+
+
+.oauth_section .appleLogin{
+  color: white;
+  background-color: black;
+}
+.oauth_section .appleLogin:hover{
+  background-color: rgb(50, 50, 50);
+}
+
+.oauth_section .googleLogin{
+  background-color: white;
+}
+.oauth_section .googleLogin:hover{
+  background-color: rgb(245, 245, 245);
+}
+
+.oauth_section .googleLogo {
+  width: 15px;
+  height: 20px;
+  scale: 1.2;
+  vertical-align: middle;
+}
+
+/* .oauth_section .facebookLogin{
+  background-color: #4267B2;
+  color: white;
+}
+
+.oauth_section .facebookLogin:hover{
+  background-color: #3d60a4;
+} */
+
+.oauth_section .discordLogin{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #7289DA;
+  cursor: pointer;
+}
+
+.oauth_section .discordLogin:hover{
+  background-color: #657dd6;
+}
+
 
 /* Checked Box below*/
 .round {
@@ -171,4 +258,3 @@
 .round input[type="checkbox"]:checked + label:after {
   opacity: 1;
 }
-

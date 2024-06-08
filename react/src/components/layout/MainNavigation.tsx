@@ -6,7 +6,7 @@ import { useAuth } from '@/components/lib/AuthProvider';
 import Swal from 'sweetalert2';
 
 export default function MainNavigation() {
-  const { JWTtoken, username, role, logout } = useAuth();
+  const { JWTtoken, username, role, picture, logout } = useAuth();
   const location = useLocation();
   const currentPage = location.pathname;
   const isAdmin = role === "Admin";
@@ -120,8 +120,12 @@ export default function MainNavigation() {
           <div className={css.profileContainer}>
             {!isMobile && (
               <div className={css.profile} ref={menuRef}>
-                <button className={css.profileButton} onClick={()=>setMenuVisible(!menuVisible)}>
-                  {username?.charAt(0)}
+                <button className={css.profileButton} onClick={()=>setMenuVisible(!menuVisible)}>  
+                  {
+                    picture ? <img src={picture}></img> 
+                    :
+                    username?.charAt(0)
+                  }
                 </button>
                 {menuVisible && (
                   <div className={css.dropdownMenu}>

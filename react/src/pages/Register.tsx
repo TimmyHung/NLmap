@@ -50,7 +50,7 @@ export default function Register(): ReactElement {
       }
 
       const requestData = {
-        account: account,
+        email: account,
         password: password,
         username: username,
       };
@@ -64,7 +64,7 @@ export default function Register(): ReactElement {
           Swal.fire({
             icon: "error",
             title: "Oops...",
-            text: "帳號已註冊！",
+            text: "帳號已註冊，請使用" + (response.account_type == "Native" ? "網頁一般" : response.account_type) + "登入。",
           });
         } else {
           Swal.fire({

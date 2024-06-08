@@ -55,8 +55,8 @@ export const getOverPassQL = async (inputValue: string) => {
 
 export const getGeoJsonData = async (overpassQL: string, bounds: string) => {
   try {
-    console.log("正在取得: " + "http://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}", bounds));
-    const overpassJson = await getRequest("http://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}", bounds), {}, {}, 20000);
+    console.log("正在取得: " + "https://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}", bounds));
+    const overpassJson = await getRequest("https://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}", bounds), {}, {}, 20000);
     const geoJson = osmtogeojson(overpassJson);
     return { status: true, message: "successful get geoJson", geoJson: geoJson };
   } catch (err) {

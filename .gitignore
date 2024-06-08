@@ -4,6 +4,8 @@ express/
 .vscode/
 __pycache__/
 *.env
+!Note/*
+*.p8
 
 # Logs
 logs
