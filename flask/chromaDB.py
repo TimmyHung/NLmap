@@ -1,6 +1,6 @@
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from proxy_client import chat_completion2,self_chat_completion
+from utils import chat_completion,self_chat_completion
 
 datasetNL = "./assets/dataset.dev.nl"
 with open(datasetNL, "r", encoding="utf-8") as f:
@@ -28,8 +28,8 @@ def query(client, prompt):
     search_results = client.similarity_search(prompt, k=5)
     promptText = combinePromptText(search_results, prompt)
     # print(promptText)
-    # response = chat_completion2(promptText)
-    response = self_chat_completion(promptText)
+    response = chat_completion(promptText)
+    # response = self_chat_completion(promptText)
     print("The gpt response: " + response)
     return response
 
