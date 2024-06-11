@@ -2,6 +2,7 @@ import { Link, useLocation, Outlet } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import css from "@/css/MainNavigation.module.css";
 import logo from "@/assets/logo.png";
+import SettingComponent from "@/components/ui/Setting";
 import { useAuth } from '@/components/lib/AuthProvider';
 import Swal from 'sweetalert2';
 
@@ -12,9 +13,11 @@ export default function MainNavigation() {
   const isAdmin = role === "Admin";
   const [menuVisible, setMenuVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [settingVisible, setSettingVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const settingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -22,7 +25,10 @@ export default function MainNavigation() {
         setMenuVisible(false);
       }
       if (drawerRef.current && !drawerRef.current.contains(event.target as Node)) {
-        setDrawerOpen(false);
+        setDrawerVisible(false);
+      }
+      if (settingRef.current && !settingRef.current.contains(event.target as Node)) {
+        setSettingVisible(false);
       }
     }
 
@@ -47,13 +53,6 @@ export default function MainNavigation() {
     { to: "/dashboard", label: "控制台", icon: <i className="fa-solid fa-hammer"></i>, private: true}
   ];
 
-  function handleButtonClick(label: string, imageUrl: string) {
-    Swal.fire({
-      title: label,
-      imageUrl: imageUrl,
-      imageAlt: "Custom image"
-    });
-  }
 
   function renderNavLinks() {
     return (
@@ -91,7 +90,7 @@ export default function MainNavigation() {
             );
           })}
           <hr />
-          <li onClick={() => { handleButtonClick("別催了", "https://i.pinimg.com/originals/94/4a/f9/944af92b1498751b005c6754aeac5f75.jpg"); }}>
+          <li onClick={() => setSettingVisible(true)}>
             <i className="fa-solid fa-gear"></i>設定
           </li>
           <li onClick={() => { logout("登出成功", ""); setMenuVisible(false); }}>
@@ -120,18 +119,14 @@ export default function MainNavigation() {
           <div className={css.profileContainer}>
             {!isMobile && (
               <div className={css.profile} ref={menuRef}>
-                <button className={css.profileButton} onClick={()=>setMenuVisible(!menuVisible)}>  
-                  {
-                    picture ? <img src={picture}></img> 
-                    :
-                    username?.charAt(0)
-                  }
+                <button className={css.profileButton} onClick={() => setMenuVisible(!menuVisible)}>
+                  {picture ? <img src={picture}></img> : username?.charAt(0)}
                 </button>
                 {menuVisible && (
                   <div className={css.dropdownMenu}>
                     <span>歡迎回來，{username}！</span>
                     <ul>
-                      <li onClick={() => handleButtonClick("別催了", "https://i.pinimg.com/originals/94/4a/f9/944af92b1498751b005c6754aeac5f75.jpg")}>
+                      <li onClick={() => setSettingVisible(true)}>
                         <i className="fa-solid fa-gear"></i>設定
                       </li>
                       <hr />
@@ -145,10 +140,10 @@ export default function MainNavigation() {
             )}
             {isMobile && (
               <div ref={drawerRef}>
-                <button className={css.drawerButton} onClick={() => setDrawerOpen(!drawerOpen)}>
+                <button className={css.drawerButton} onClick={() => setDrawerVisible(!drawerVisible)}>
                   <i className="fa-solid fa-bars"></i>
                 </button>
-                <div className={`${css.drawer} ${drawerOpen ? css.drawerOpen : ''}`} >
+                <div className={`${css.drawer} ${drawerVisible ? css.drawerOpen : ''}`}>
                   <div className={css.drawerContent}>
                     {renderMobileNavLinks()}
                   </div>
@@ -175,6 +170,14 @@ export default function MainNavigation() {
       <div className={css.outlet}>
         <Outlet />
       </div>
+      {settingVisible && (
+        <div className={css.modalBackground}>
+          <div className={css.modalContent} ref={settingRef}>
+            <SettingComponent setSettingVisible={setSettingVisible}/>
+          </div>
+        </div>
+      )}
     </>
   );
+  
 }

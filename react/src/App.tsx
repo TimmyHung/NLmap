@@ -19,7 +19,7 @@ import MainNavigation from '@/components/layout/MainNavigation';
 export default function App(): ReactElement {
   return (
     <>
-      <GoogleOAuthProvider clientId="143001318724-fa0rbobg9lpqvkb8ckqb7tcca1mia84n.apps.googleusercontent.com">
+      <GoogleOAuthProvider clientId="511179737777-0cqaobrr6a2pp8nuf3jphdkoj2p7jg80.apps.googleusercontent.com">
         <AuthProvider>
           <BrowserRouter>
             <Routes>

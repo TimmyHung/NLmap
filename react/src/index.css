@@ -46,6 +46,10 @@ button {
   height: 40px;
 }
 
+button:where(.swal2-close){
+  box-shadow: unset !important;
+}
+
 button:hover {
   background-color: #144583;
   color: white;
