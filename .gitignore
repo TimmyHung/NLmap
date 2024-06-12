@@ -1,11 +1,10 @@
-# custom
+# Custom
 discordbot/
 express/
 .vscode/
 __pycache__/
 *.env
-!Note/*
-*.p8
+.Note/
 
 # Logs
 logs

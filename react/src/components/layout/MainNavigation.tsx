@@ -50,6 +50,7 @@ export default function MainNavigation() {
     { to: JWTtoken ? "/favorites" : "/login", label: "收藏", icon:  <i className="fa-solid fa-heart"></i>},
     { to: "/tutorial", label: "使用教學", icon: <i className="fa-solid fa-lightbulb"></i>},
     { to: "/about", label: "關於我們", icon: <i className="fa-solid fa-circle-info"></i> },
+    { to: "/diary", label: "開發日誌", icon: <i className="fa-solid fa-book"></i>},
     { to: "/dashboard", label: "控制台", icon: <i className="fa-solid fa-hammer"></i>, private: true}
   ];
 

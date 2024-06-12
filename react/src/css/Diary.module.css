@@ -1,0 +1,69 @@
+.mainContainer {
+    /* justify-content: center; */
+    padding: 0 10% 5% 10%;
+    background-color: white;
+    min-height: 100%;
+}
+
+.loading{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.countDown {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid black;
+    text-align: center;
+}
+
+.commitList {
+    width: 100%;
+}
+
+.commitItemContainer {
+    width: 100%;
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 15px 30px;
+}
+
+.commitInfo{
+    display: flex;
+    align-items: center;
+}
+
+.commitID{
+    display: flex;
+    align-items: center;
+}
+
+.avatar {
+    border-radius: 50%;
+    margin-right: 3px;
+}
+
+.commitDetails a {
+    font-weight: bold;
+    color: #000000;
+    text-decoration: none;
+    padding-right: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.commitDetails a:hover {
+}
+
+.commitDetails p {
+    display: flex;
+    align-items: center;
+    margin: 15px 0 0;
+    color: #586069;
+}

@@ -1,5 +1,5 @@
 import React,{ useRef } from 'react';
-import { postRequest, getRequest } from '@/components/lib/API';
+import { postRequest } from '@/components/lib/API';
 import { useGoogleLogin } from '@react-oauth/google';
 import AppleSignin from 'react-apple-signin-auth';
 import { useEffect } from 'react';
