@@ -1,14 +1,14 @@
-#**歡迎來到 NLmap 的程式碼儲存庫**
+# **歡迎來到 NLmap 的程式碼儲存庫**
 
 協作開發以下幾點請注意並遵守：
-1. 禁止**直接**推送或提交任何版本到main分支。
+1. 禁止**直接**提交任何版本到main分支。
 2. 請善用分支功能提交自己寫的code在自己的分支上。
-3. 確認code測試無誤後可以提出pull request，確認沒問題後會合併到main分支上。
+3. 確認code測試無誤後可以提出pull request，我確認沒問題後會合併到main分支上。
 
 關於要怎麼操作：
 1. 可以`git clone https://github.com/TimmyHung/Graduation-Project.git` 到你的桌面
 2. react為前端使用TypeScript撰寫、flask為後端使用Python撰寫
-3. 右鍵使用vscode開啟資料夾後可以在終端機上 cd react進到react資料夾
+3. 右鍵使用vscode開啟資料夾後可以在終端機上`cd react`進到react資料夾
    ```
    npm install
    npm run dev
@@ -18,7 +18,7 @@
    <img width="285" alt="image" src="https://github.com/TimmyHung/Graduation-Project/assets/58425985/542bff18-4c5d-47ed-b569-0666de807fdf">
    
    代表網頁在`http://localhost:80/`本地端開啟了
-4. cd flask到flask的後端網站
+4. `cd flask`到flask的資料夾
    ```
    python3 main.py
    ```
@@ -51,9 +51,10 @@
    1. DATABASE開頭的為資料庫連線相關
    2. DISCORD開頭的為Discord登入使用
    3. JWT開頭的為驗證使用者登入身份是否遭竄改所使用(外流就完了)
-6. 資料庫的部分可以架設本地端的Ｍysql至於怎麼安裝請上網查詢
+6. 資料庫的部分可以架設本地端的ＭySQL至於怎麼安裝與連線請上網查詢。
 7. 登入、查詢一開始不會運作很正常，因為前後端的IP在本地跑不一樣，這部分可能要根據你自己的localhost網址去調整，至於哪邊改熟讀程式碼就知道了：>
 8. 第三方登入(Google、Apple、Discord)基本上都不能在本地端跑他有一些嚴格要求，所以遇到不能使用不要問我。
+9. 請在每一次開發前`git pull`同步main分支的更新到自己本地端的檔案，因為我時不時會推送新的更新上去！
 
 
 **最後的最後，遇到問題請先嘗試自行上網查詢解決，真的真的沒有辦法了再詢問，只怕你不問。**
