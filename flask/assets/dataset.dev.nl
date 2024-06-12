@@ -1,5 +1,6 @@
 台灣的麥當勞
 台北市高度超過300公尺的建築物
+所有道路
 castle in Deutschland
 Tram railways in Magnitogorsk which are not located in a railway yard and without spur, siding or crossover tracks
 Glass and clothes recycling places in Gironde
