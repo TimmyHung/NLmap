@@ -41,7 +41,7 @@ export const getOverPassQL = async (inputValue: string) => {
   };
 
   try {
-    console.log("正在取得OverPassQL");
+    console.log("正在取得OverPassQL，資料: \n" + inputValue);
     const response = await postRequest("api/query", data, {}, 20000);
     if (response.status) {
       return { status: true, message: "Successful get OverpassQL", osmquery: response.osmquery, query_name: response.query_name };
@@ -79,6 +79,6 @@ export const verifyJWT = async (JWTtoken: string) => {
     // console.error('API 請求錯誤:', error.response ? error.response.data : error.message);
     // throw error;
     // console.log('API請求錯誤:',error);
-    return { status: false, code: "Timeout", error: error };
+    return { status: false, message: "Timeout", error: error };
   }
 };

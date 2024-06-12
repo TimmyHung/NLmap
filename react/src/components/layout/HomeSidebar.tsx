@@ -52,29 +52,32 @@ export default function HomeSideBar({ setGeoJsonData, bounds, setBounds }: HomeS
     setQueryState('generating_query');
 
     try {
-      let response: QueryResponse;
-      if (activeTab === 'askgpt') {
-        const overpassQLResponse = await getOverPassQL(extractedQuery?.query_name || '');
-        if (!overpassQLResponse.status) throw new Error(overpassQLResponse.message?.toString() || '');
-        response = { osmquery: overpassQLResponse.osmquery, query_name: overpassQLResponse.query_name };
-      } else {
-        response = { osmquery: extractedQuery?.osmquery || '', query_name: extractedQuery?.query_name || '' };
-      }
+        let response: QueryResponse;
+        if (activeTab === 'askgpt') {
+            const inputText = textAreaRef.current?.value.trim() || ''; // 確保取到最新的輸入值
+            const overpassQLResponse = await getOverPassQL(inputText);
+            if (!overpassQLResponse.status) throw new Error(overpassQLResponse.message?.toString() || '');
+            response = { osmquery: overpassQLResponse.osmquery, query_name: overpassQLResponse.query_name };
+        } else {
+            response = { osmquery: queryFieldRef.current?.value || '', query_name: inputRef.current?.value || '' };
+        }
 
-      setExtractedQuery(response);
-      setQueryState('extracting_from_osm');
-      handleGeoJsonResponse(response.osmquery);
+        setExtractedQuery(response);
+        setQueryState('extracting_from_osm');
+        handleGeoJsonResponse(response.osmquery);
     } catch (error: any) {
-      setQueryState('idle');
-      Toast.fire({
-        icon: 'error',
-        title: error.message,
-      });
+        setQueryState('idle');
+        Toast.fire({
+            icon: 'error',
+            title: error.message,
+        });
     }
-  }, [activeTab, extractedQuery, handleGeoJsonResponse]);
+}, [activeTab, handleGeoJsonResponse]);
+
 
   const printData = useCallback(() => {
     console.log("extractedQuery: " + extractedQuery?.osmquery);
+    console.log("queryName:" + extractedQuery?.query_name);
     console.log("queryState: " + queryState);
   }, [extractedQuery, queryState]);
 
@@ -97,32 +100,32 @@ export default function HomeSideBar({ setGeoJsonData, bounds, setBounds }: HomeS
         </div>
 
         {activeTab === 'askgpt' ? (
-          <textarea
-            ref={textAreaRef}
-            placeholder="輸入你的想法..."
-            onChange={(e) => setExtractedQuery({ osmquery: extractedQuery?.osmquery || '', query_name: e.target.value })}
-            disabled={queryState !== 'idle'}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.shiftKey) {
-                handleSearch(e);
-                e.currentTarget.blur();
-              }
-            }}
-            className={queryState === 'idle' ? '' : css.disabled}
-          />
+            <textarea
+                ref={textAreaRef}
+                placeholder="輸入你的想法..."
+                onChange={(e) => setExtractedQuery({ osmquery: extractedQuery?.osmquery || '', query_name: e.target.value })}
+                disabled={queryState !== 'idle'}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.shiftKey) {
+                        handleSearch(e);
+                        e.currentTarget.blur();
+                    }
+                }}
+                className={queryState === 'idle' ? '' : css.disabled}
+            />
         ) : (
-          <input
-            ref={inputRef}
-            placeholder="這筆查詢的名稱"
-            onChange={(e) => setExtractedQuery({ osmquery: extractedQuery?.osmquery || '', query_name: e.target.value })}
-            disabled={queryState !== 'idle'}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.shiftKey) {
-                handleSearch(e);
-              }
-            }}
-            className={queryState === 'idle' ? '' : css.disabled}
-          />
+            <input
+                ref={inputRef}
+                placeholder="這筆查詢的名稱"
+                onChange={(e) => setExtractedQuery({ osmquery: extractedQuery?.osmquery || '', query_name: e.target.value })}
+                disabled={queryState !== 'idle'}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.shiftKey) {
+                        handleSearch(e);
+                    }
+                }}
+                className={queryState === 'idle' ? '' : css.disabled}
+            />
         )}
 
         {/* <button

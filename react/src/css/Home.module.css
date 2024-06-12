@@ -142,3 +142,13 @@
 .submitButton:hover{
     background: #103669;
 }
+
+
+.mapInfo {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.8); /* 半透明背景，方便查看 */
+    padding: 10px;
+    border-radius: 5px;
+  }

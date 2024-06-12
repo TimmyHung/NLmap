@@ -1,101 +1,103 @@
 import React, { useRef, useEffect, useState, ReactElement } from 'react';
 import maplibregl, { LngLatLike, Map, MapOptions } from 'maplibre-gl';
+import css from "@/css/Home.module.css";
 import 'maplibre-gl/dist/maplibre-gl.css';
+import GeojsonLayer from "@/components/lib/GeojsonLayer";
+import getRandomDarkColor from '@/components/lib/Utils';
+
+interface GeoJsonData {
+  id: string;
+  data: GeoJSON.FeatureCollection;
+}
 
 interface MapLibreMapProps {
-  geoJsonData: GeoJSON.FeatureCollection | null;
+  geoJsonDataArray: GeoJsonData[];
   onBoundsChange: (bounds: maplibregl.LngLatBounds) => void;
 }
 
-const MapLibreMap: React.FC<MapLibreMapProps> = ({ geoJsonData, onBoundsChange }): ReactElement => {
+const MapLibreMap: React.FC<MapLibreMapProps> = ({ geoJsonDataArray, onBoundsChange }): ReactElement => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<Map | null>(null);
   const [mapState, setMapState] = useState({
     center: [120.55, 23.67] as LngLatLike,
     zoom: 7
   });
+  const [colors, setColors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
-    if (mapRef.current) {
+    if (mapRef.current && !mapInstance.current) {
       const mapOptions: MapOptions = {
         container: mapRef.current,
         style: {
-          "version": 8,
-          "sources": {
-            "osm": {
-              "type": "raster",
-              "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
-              "tileSize": 256,
-              "maxzoom": 19
+          version: 8,
+          sources: {
+            osm: {
+              type: 'raster',
+              tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              maxzoom: 19
             }
           },
-          "layers": [
+          layers: [
             {
-              "id": "osm",
-              "type": "raster",
-              "source": "osm"
+              id: 'osm',
+              type: 'raster',
+              source: 'osm'
             }
           ]
         },
         center: mapState.center,
-        zoom: mapState.zoom,
+        zoom: mapState.zoom
       };
 
-      const map: Map = new maplibregl.Map(mapOptions);
+      mapInstance.current = new maplibregl.Map(mapOptions);
+      mapInstance.current.addControl(new maplibregl.NavigationControl(), 'top-left');
 
-      // Add navigation controls to the map.
-      map.addControl(new maplibregl.NavigationControl(), 'top-left');
-
-      map.on('moveend', () => {
-        const bounds = map.getBounds();
+      mapInstance.current.on('moveend', () => {
+        const bounds = mapInstance.current!.getBounds();
         onBoundsChange(bounds);
         setMapState({
-          center: map.getCenter().toArray() as LngLatLike,
-          zoom: map.getZoom()
+          center: mapInstance.current!.getCenter().toArray() as LngLatLike,
+          zoom: mapInstance.current!.getZoom()
         });
       });
-
-      map.on('load', () => {
-        if (geoJsonData) {
-          map.addSource('geojson-data', {
-            type: 'geojson',
-            data: geoJsonData
-          });
-
-          // Add a layer for point features (nodes)
-          map.addLayer({
-            id: 'geojson-points',
-            type: 'circle',
-            source: 'geojson-data',
-            filter: ['==', '$type', 'Point'],
-            paint: {
-              'circle-radius': 5,
-              'circle-color': '#007cbf'
-            }
-          });
-
-          // Add a layer for line features (ways)
-          map.addLayer({
-            id: 'geojson-lines',
-            type: 'line',
-            source: 'geojson-data',
-            filter: ['==', '$type', 'LineString'],
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint: {
-              'line-color': '#007cbf',
-              'line-width': 3
-            }
-          });
-        }
-      });
-
-      return () => map.remove();
     }
-  }, [geoJsonData, mapState.center, mapState.zoom, onBoundsChange]);
+  }, [mapState.center, mapState.zoom, onBoundsChange]);
 
-  return <div ref={mapRef} style={{ width: '100%', height: '100%' }} />;
+  useEffect(() => {
+    const newColors = geoJsonDataArray.reduce((acc, geoJsonData) => {
+      if (!acc[geoJsonData.id]) {
+        acc[geoJsonData.id] = getRandomDarkColor();
+      }
+      return acc;
+    }, {} as { [key: string]: string });
+    setColors((prevColors) => ({ ...prevColors, ...newColors }));
+  }, [geoJsonDataArray]);
+
+  return (
+    <>
+      <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+      {geoJsonDataArray.map((geoJsonData) => (
+        <GeojsonLayer
+          key={geoJsonData.id}
+          map={mapInstance.current}
+          maploaded={!!mapInstance.current}
+          id={geoJsonData.id}
+          geojson={geoJsonData.data}
+          color={colors[geoJsonData.id]} 
+          containingGeometries={[
+            { type: 'Point', visibleOnMap: true },
+            { type: 'Line', visibleOnMap: true },
+            { type: 'Polygon', visibleOnMap: true },
+          ]}
+        />
+      ))}
+      <div className={css.mapInfo}>
+        <div>{"經度 " + mapState.center[0].toFixed(2) + "    緯度 " + mapState.center[1].toFixed(2)}</div>
+        <div>{"縮放等級 " + mapState.zoom.toFixed(2)}</div>
+      </div>
+    </>
+  );
 };
 
 export default MapLibreMap;

@@ -30,7 +30,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (JWTtoken) {
       const fetchData = async () => {
         const response = await verifyJWT(JWTtoken);
-        // console.log(response);
         switch (response.message) {
           case "Token Expired":
             logout("您已登出", "帳號驗證已過期請重新登入");
