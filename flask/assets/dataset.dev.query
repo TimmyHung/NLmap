@@ -1,6 +1,6 @@
-[out:json];(area["name"="臺灣"]["type"="boundary"];node["amenity"="fast_food"]["name"="麥當勞"](area););out body;>;out skel qt;
-[out:json][timeout:50];area['name:en'="Taipei"]->.searchArea;(way[building](area.searchArea)(if:number(t["height"])>300););(._;>;);out body;
-[out:json][timeout:25];way["highway"]({{bbox}});out;>;out skel qt;
+[out:json][timeout:20];area["name"="臺灣"]["type"="boundary"]->.tw;(way["highway"](area.tw)({{bbox}}););out;>;out skel qt;
+[out:json][timeout:20];area["name"="臺灣"]["type"="boundary"]->.tw;area['name:en'="Taipei"](area.tw)->.taipei;(way[building](area.taipei)(if:number(t["height"])>300););out;>;out skel qt;
+[out:json][timeout:20];area["name"="臺灣"]["type"="boundary"]->.tw;(way["highway"](area.tw)({{bbox}}););out;>;out skel qt;
 [out:json][timeout:180];{{geocodeArea:"Deutschland"}}->.searchArea;(node["historic"="castle"](area.searchArea););out;>;out skel qt;
 [out:json][timeout:25];{{geocodeArea:"Magnitogorsk"}}->.searchArea;way["railway"="tram"]["service"!="yard"]["service"!="spur"]["service"!="siding"]["service"!="crossover"](area.searchArea);out;>;out skel;
 [out:json][timeout:25];{{geocodeArea:"Gironde"}}->.searchArea;(node["amenity"="recycling"]["recycling:glass"!~"."]["recycling:clothes"!~"."](area.searchArea););out center;
