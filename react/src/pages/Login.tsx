@@ -43,7 +43,7 @@ export default function Login(): ReactElement {
         email: account,
         password: password
       };
-      const response = await postRequest('api/login', requestData);
+      const response = await postRequest('api/authorization/login', requestData);
       handleAuthResponse(response)
   };
 

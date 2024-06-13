@@ -55,7 +55,7 @@ export default function Register(): ReactElement {
         username: username,
       };
 
-      const response = await postRequest('api/register', requestData);
+      const response = await postRequest('api/authorization/register', requestData);
       if (response.status) {
         login(response.JWTtoken, true);
         <Navigate to="/" />;

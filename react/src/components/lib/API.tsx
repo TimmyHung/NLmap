@@ -70,7 +70,7 @@ export const verifyJWT = async (JWTtoken: string) => {
     'Content-Type': 'application/json'
   };
   try {
-    const response = await axios.post(baseURL + "api/jwtverify", {}, {
+    const response = await axios.post(baseURL + "api/authorization/jwtverify", {}, {
       headers: { ...defaultHeaders, ...headers },
       timeout: 5000
     });
