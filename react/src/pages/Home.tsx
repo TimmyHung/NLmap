@@ -9,7 +9,6 @@ interface GeoJsonData {
 }
 
 export default function Home(): ReactElement {
-  const [overpassQL, setOverPassQL] = useState('');
   const [geoJsonDataArray, setGeoJsonDataArray] = useState<GeoJsonData[]>([]);
   const [bounds, setBounds] = useState("21.20,117.67,26.25,124.18");
 
@@ -37,7 +36,6 @@ export default function Home(): ReactElement {
       <HomeSideBar
         setGeoJsonData={handleGeoJsonData}
         bounds={bounds}
-        setBounds={setBounds}
       />
     </div>
   );

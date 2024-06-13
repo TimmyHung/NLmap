@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Navigate } from 'react-router-dom';
 import { verifyJWT } from './API';
 import { googleLogout } from '@react-oauth/google';
-import { FacebookLoginClient } from '@greatsumini/react-facebook-login';
 import Swal from 'sweetalert2';
 
 interface AuthContextType {
@@ -10,6 +9,8 @@ interface AuthContextType {
   username: string | null;
   role: string | null;
   picture: string | null;
+  account_type: string | null;
+  userID: string | null;
   login: (token: string, firstTime: boolean) => Promise<void>;
   logout: (title: string, text: string) => void;
 }
@@ -25,6 +26,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [username, setUsername] = useState<string | null>('');
   const [role, setRole] = useState<string | null>('');
   const [picture, setPicture] = useState<string | null>('');
+  const [account_type, setAccountType] = useState<string | null>('');
+  const [userID, setUserID] = useState<string | null>('');
 
   useEffect(() => {
     if (JWTtoken) {
@@ -47,6 +50,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUsername(response.data.username);
             setRole(response.data.role);
             setPicture(response.data.picture);
+            setAccountType(response.data.account_type);
+            setUserID(response.data.userID);
             break;
         }
       };
@@ -86,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ JWTtoken, username, role, picture, login, logout }}>
+    <AuthContext.Provider value={{ JWTtoken, username, role, picture, login, logout, account_type, userID }}>
       {children}
     </AuthContext.Provider>
   );

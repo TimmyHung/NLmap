@@ -15,10 +15,9 @@ export type QueryResponse = {
 interface HomeSideBarProps {
   setGeoJsonData: (data: GeoJSON.FeatureCollection | null) => void;
   bounds: string;
-  setBounds: (bounds: string) => void;
 }
 
-export default function HomeSideBar({ setGeoJsonData, bounds, setBounds }: HomeSideBarProps): ReactElement {
+export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps): ReactElement {
   const queryFieldRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -54,7 +53,7 @@ export default function HomeSideBar({ setGeoJsonData, bounds, setBounds }: HomeS
     try {
         let response: QueryResponse;
         if (activeTab === 'askgpt') {
-            const inputText = textAreaRef.current?.value.trim() || ''; // 確保取到最新的輸入值
+            const inputText = textAreaRef.current?.value.trim() || '';
             const overpassQLResponse = await getOverPassQL(inputText);
             if (!overpassQLResponse.status) throw new Error(overpassQLResponse.message?.toString() || '');
             response = { osmquery: overpassQLResponse.osmquery, query_name: overpassQLResponse.query_name };

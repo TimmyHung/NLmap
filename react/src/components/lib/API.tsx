@@ -15,7 +15,7 @@ export const postRequest = async (url: string, requestData: any, headers = {}, t
     return response.data;
   } catch (error: any) {
     console.error('API POST錯誤:', error.response ? error.response.data : error.message);
-    throw error;
+    return {status: false, message: error.response ? error.response.data : error.message}
   }
 };
 
@@ -31,7 +31,21 @@ export const getRequest = async (url: string, requestData: any, headers = {}, ti
     return response.data;
   } catch (error: any) {
     console.error('API GET錯誤:', error.response ? error.response.data : error.message);
-    throw error;
+    return {status: false, message: error.response ? error.response.data : error.message}
+  }
+};
+
+export const deleteRequest = async (url: string, requestData: any, headers = {}, timeout = 5000) => {
+  try {
+    const response = await axios.delete(url.startsWith("http") ? url : baseURL + url, {
+      headers: { ...defaultHeaders, ...headers },
+      params: requestData,
+      timeout: timeout
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('API DELETE錯誤:', error.response ? error.response.data : error.message);
+    return {status: false, message: error.response ? error.response.data : error.message}
   }
 };
 

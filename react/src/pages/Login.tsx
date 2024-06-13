@@ -79,8 +79,11 @@ export default function Login(): ReactElement {
           // 其他登入失敗原因
           Swal.fire({
             icon: "error",
-            title: "Oops...",
-            text: "登入失敗，請聯繫管理員。(" + response.message + ")",
+            title: "登入失敗",
+            text: response.message,
+            footer: '如果你認為這是一項錯誤，請聯絡網站管理員。',
+            showConfirmButton: false,
+            showCloseButton: true
           });
         }
       }

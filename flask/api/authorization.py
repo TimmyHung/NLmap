@@ -9,21 +9,69 @@ import jwt
 authorize_blueprint = Blueprint('authorize', __name__)
 root = "/api/authorization"
 
+def verify_jwt(token):
+    if not token:
+        return {'status': False, 'message': 'no token'}, 401
+    try:
+        decoded = jwt.decode(token, os.getenv('JWT_SECRET_KEY'), algorithms=['HS256'])
+        return {'status': True, 'message': 'Token Normal', 'data': decoded}, 200
+    except jwt.ExpiredSignatureError as e:
+        return {'status': False, 'message': 'JWT Failed: Token Expired', 'detail': str(e)}, 200
+    except jwt.InvalidTokenError as e:
+        return {'status': False, 'message': 'JWT Failed: Token Invalid', 'detail': str(e)}, 200
+    except Exception as e:
+        return {'status': False, 'message': 'JWT Failed: ' + str(e)}, 200
+
 @authorize_blueprint.route(root + '/jwtverify', methods=['POST'])
 def jwt_verify():
-    token = request.headers.get('Authorization')
-    if not token:
-        return jsonify({'message': 'no token'}), 401
-    try:
-        decoded = jwt.decode(token.split(' ')[1], os.getenv('JWT_SECRET_KEY'), algorithms=['HS256'])
-        return jsonify({'status': True, 'message': 'Token Normal', 'data': decoded}), 200
-    except jwt.ExpiredSignatureError as e:
-        return jsonify({'status': False, 'message': 'JWT Failed: Token Expired', 'detail': str(e)}), 200
-    except jwt.InvalidTokenError as e:
-        return jsonify({'status': False, 'message': 'JWT Failed: Token Invalid', 'detail': str(e)}), 200
-    except Exception as e:
-        return jsonify({'status': False, 'message': 'JWT Failed: Unknown Error', 'detail': str(e)}), 200
+    token = request.headers.get('Authorization').split(' ')[1]
+    response, status_code = verify_jwt(token)
+    return jsonify(response), status_code
 
+
+@authorize_blueprint.route(root + '/delete', methods=['DELETE'])
+def deleteAccount():
+    JWTtoken = request.args.get("JWTtoken")
+    response, status_code = verify_jwt(JWTtoken)
+    if not response['status']:
+        return jsonify(response), status_code
+
+    account_type = response['data']['account_type']
+    userID = response['data']['userID']
+
+    if not account_type or not userID:
+        return {"status": False, "message": "Missing account_type or userID"}, 200
+
+    userID_column = ""
+    match account_type:
+        case "Native":
+            userID_column = "user_ID"
+        case "Google":
+            userID_column = "google_userID"
+        case "Apple":
+            userID_column = "apple_userID"
+        case "Discord":
+            userID_column = "discord_userID"
+        case _:
+            return {"status": False, "message": "Invalid account type"}, 200
+
+    cursor = get_db_cursor()
+    check_user_exist_query = f"SELECT email, account_type FROM users WHERE {userID_column} = %s"
+    cursor.execute(check_user_exist_query, (userID,))
+    check_result = cursor.fetchone()
+
+    if not check_result:
+        return {"status": False, "message": "User does not exist"}, 200
+
+    delete_query = f"DELETE FROM users WHERE {userID_column} = %s AND account_type = %s"
+
+    try:
+        cursor.execute(delete_query, (userID, account_type))
+        cursor.connection.commit()
+        return {"status": True, "message": "Account deleted successfully"}, 200
+    except Exception as e:
+        cursor.connection.rollback()
+        return {"status": False, "message": str(e)}, 500
 
 @authorize_blueprint.route(root + '/register', methods=['POST'])
 def register():
@@ -49,10 +97,13 @@ def register():
     cursor.execute(insert_query, (email, hashed_password, salt, username, account_type))
     db.commit()
 
-    payload = {'username': username, 'account_type': account_type, 'role': 'User'}
+    userID = cursor.lastrowid
+
+    payload = {'username': username, 'account_type': account_type, 'role': 'User', 'userID': userID}
     token = generate_jwt(payload)
 
     return jsonify({'status': True, 'message': 'Register successful', 'JWTtoken': token}), 200
+
 
 @authorize_blueprint.route(root + '/login', methods=['POST'])
 def login():
@@ -68,8 +119,8 @@ def login():
         cursor.execute(sql, (email, username, role, google_userID, apple_userID, discord_userID, loginType))
         cursor.connection.commit()
 
-    def generate_response(loginType, username, role, additional_payload={}):
-        payload = {'account_type': loginType, 'username': username, 'role': role}
+    def generate_response(loginType, username, role, userID, additional_payload={}):
+        payload = {'account_type': loginType, 'username': username, 'role': role, 'userID': userID}
         payload.update(additional_payload)
         token = generate_jwt(payload)
         return jsonify({'status': True, 'message': message, 'JWTtoken': token}), 200
@@ -99,15 +150,15 @@ def login():
             else:
                 return jsonify({'status': False, 'message': 'Login Failed: Account does not exist'}), 200
 
-            sql = "SELECT hashed_password, salt, role, username FROM users WHERE email = %s"
+            sql = "SELECT user_ID, hashed_password, salt, role, username FROM users WHERE email = %s"
             cursor.execute(sql, (email,))
             result = cursor.fetchone()
-            stored_hashed_password, salt, role, username = result
+            userID, stored_hashed_password, salt, role, username = result
             hashed_login_password = hash_password(password, salt)
 
             if hashed_login_password == stored_hashed_password:
                 message = 'Login Successful'
-                return generate_response(loginType, username, role)
+                return generate_response(loginType, username, role, userID)
             else:
                 return jsonify({'status': False, 'message': 'Login Failed: Invalid account or password.', 'JWTtoken': None}), 200
 
@@ -137,8 +188,8 @@ def login():
                 role, username, db_google_userID, account_type = result
                 message = 'Login Successful'
 
-            additional_payload = {'name': name, 'picture': picture}
-            return generate_response(loginType, username, role, additional_payload)
+            additional_payload = {'picture': picture}
+            return generate_response(loginType, username, role, db_google_userID, additional_payload)
 
         # case "Facebook":
         #     fb_res = data.get('fbRes')
@@ -192,7 +243,7 @@ def login():
                 message = 'Login Successful'
 
             additional_payload = {'userID': apple_userID}
-            return generate_response(loginType, username, role, additional_payload)
+            return generate_response(loginType, username, role, apple_userID, additional_payload)
 
         case _:
             return jsonify({'status': False, 'message': 'Bad Request'}), 400
