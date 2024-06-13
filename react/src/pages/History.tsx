@@ -6,4 +6,4 @@ export default function history() {
            歷史紀錄
         </div>
     );
-};
+}

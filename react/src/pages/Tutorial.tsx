@@ -23,15 +23,15 @@ export default function Tutorial() {
                         <div className={css.step_image}>
                             <img src="https://images.theconversation.com/files/521751/original/file-20230419-18-hg9dc3.jpg?ixlib=rb-4.1.0&rect=398%2C2%2C1206%2C991&q=20&auto=format&w=320&fit=clip&dpr=2&usm=12&cs=strip" alt="地圖查詢步驟1" />
                             <ol>
-                            <li>利用旁邊的搜尋欄輸入自然語言，稍待程式執行（搜尋結果會以地圖形式顯示）</li>
-                            <li>地圖上方的搜尋欄則是輸入地名，它能夠幫你找到你想搜尋的地方</li>
-                            <li>地圖左邊的搜尋按鈕，它能夠讓你輸入完自然語言，縮放到資料點位置</li>
-                            <li>建立完成帳號後的使用收藏功能，按一下搜尋欄右上方的愛心即可收藏</li>
-                        </ol>
+                                <li>利用旁邊的搜尋欄輸入自然語言，稍待程式執行（搜尋結果會以地圖形式顯示）</li>
+                                <li>地圖上方的搜尋欄則是輸入地名，它能夠幫你找到你想搜尋的地方</li>
+                                <li>地圖左邊的搜尋按鈕，它能夠讓你輸入完自然語言，縮放到資料點位置</li>
+                                <li>建立完成帳號後的使用收藏功能，按一下搜尋欄右上方的愛心即可收藏</li>
+                            </ol>
                         </div>
                     </div>
                 </div>
             </section>
         </div>
     );
-};
+}
