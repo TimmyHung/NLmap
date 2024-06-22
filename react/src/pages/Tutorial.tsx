@@ -4,7 +4,7 @@ export default function Tutorial() {
     return (
         <div className={css.tutorial}>
             <section className={css.tutorial_section}>
-                <h2>圖片都是暫放</h2>
+                <h2>使用教學</h2>
                 <div className={css.tutorial_step}>
                     <h3>1. 建立帳號</h3>
                     <div className={css.step_content}>
@@ -15,6 +15,7 @@ export default function Tutorial() {
                         </div>
                         <p>需建立完成帳號才能使用歷史紀錄及收藏的功能，方便下次的查詢</p>
                     </div>
+                    <hr/>
                 </div>
 
                 <div className={css.tutorial_step}>
@@ -30,6 +31,7 @@ export default function Tutorial() {
                             </ol>
                         </div>
                     </div>
+                    <hr/>
                 </div>
             </section>
         </div>

@@ -2,12 +2,13 @@
     margin: 0 auto;
     padding: 20px;
     font-family: Arial, sans-serif;
-    background-color: #374558;
+    background-color: lightgray;
 }
 
 .tutorial h2 {
     text-align: center;
-    color: #ffffff;
+    color: #000000;
+    font-size: 40px;
 }
 
 .tutorial_section {
@@ -22,8 +23,9 @@
 }
 
 .tutorial_step h3 {
-    color: #fff;
+    color: black;
     margin-bottom: 10px;
+    font-size: 25px;
 }
 
 .step_content {
@@ -48,13 +50,13 @@
 
 .step_content p {
     text-align: center;
-    color: #fff;
+    color: black;
     margin-bottom: 10px;
 }
 
 .step_content ol {
     padding-left: 20px;
-    color: #fff;
+    color: black;
 }
 
 .step_content ol li {
