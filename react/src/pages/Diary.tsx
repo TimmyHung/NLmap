@@ -19,7 +19,7 @@ export default function Diary() {
     }, [dispatch, isLoaded]);
 
     function calculateDaysRemaining() {
-        const targetDate = new Date('2024-09-16');
+        const targetDate = new Date('2024-09-16T00:00:00');
         const currentDate = new Date();
         const timeDifference = targetDate.getTime() - currentDate.getTime();
         const daysRemaining = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));

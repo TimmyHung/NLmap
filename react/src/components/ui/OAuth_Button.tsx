@@ -18,7 +18,7 @@ const GoogleLoginBtn: React.FC<successProps> = ({ onSuccess }) => {
                 type: "Google",
                 access_token: res.access_token,
             };
-            const response = await postRequest('api/login', requestData);
+            const response = await postRequest('api/authorization/login', requestData);
             onSuccess(response);
         },
         onError: () => {
@@ -93,7 +93,7 @@ export const AppleLoginBtn: React.FC<successProps> = ({ onSuccess }) => {
                     type: "Apple",
                     appleRes: appleRes
                 };
-                const response = await postRequest('api/login', requestData);
+                const response = await postRequest('api/authorization/login', requestData);
                 onSuccess(response)
             }}
             onError={(error) => console.error(error)}

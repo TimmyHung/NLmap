@@ -6,6 +6,8 @@ import SettingComponent from "@/components/ui/Setting";
 import { useAuth } from '@/components/lib/AuthProvider';
 import Swal from 'sweetalert2';
 
+
+
 export default function MainNavigation() {
   const { JWTtoken, username, role, picture, logout } = useAuth();
   const location = useLocation();
@@ -18,9 +20,15 @@ export default function MainNavigation() {
   const menuRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const settingRef = useRef<HTMLDivElement>(null);
-
+  
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      const swalContainer = document.querySelector('.swal2-container');
+      
+      if (swalContainer && swalContainer.contains(event.target as Node)) {
+        return;
+      }
+  
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuVisible(false);
       }
@@ -31,11 +39,11 @@ export default function MainNavigation() {
         setSettingVisible(false);
       }
     }
-
+  
     function handleResize() {
       setIsMobile(window.innerWidth <= 768);
     }
-
+  
     document.addEventListener("mousedown", handleClickOutside);
     window.addEventListener("resize", handleResize);
     return () => {
@@ -43,6 +51,7 @@ export default function MainNavigation() {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+  
 
   const navLinks = [
     { to: "/", label: "首頁", icon: <i className="fa-solid fa-house"></i> },
