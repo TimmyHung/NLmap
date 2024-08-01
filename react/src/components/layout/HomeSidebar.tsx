@@ -10,6 +10,7 @@ export type Tabs = 'manual' | 'askgpt';
 export type QueryResponse = {
   osmquery: string;
   query_name: string;
+  response_metadata?: string;
 };
 
 interface HomeSideBarProps {
@@ -54,11 +55,12 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
         let response: QueryResponse;
         if (activeTab === 'askgpt') {
             const inputText = textAreaRef.current?.value.trim() || '';
-            const overpassQLResponse = await getOverPassQL(inputText);
-            if (!overpassQLResponse.status) throw new Error(overpassQLResponse.message?.toString() || '');
-            response = { osmquery: overpassQLResponse.osmquery, query_name: overpassQLResponse.query_name };
+            const model = "gpt35" //TODO gpt35 or gpt4
+            const overpassQLResponse = await getOverPassQL(inputText, model);
+            if (overpassQLResponse.statucode != 200) throw new Error(overpassQLResponse.message?.toString() || '');
+            response = { osmquery: overpassQLResponse.osmquery, query_name: overpassQLResponse.query_name, response_metadata: overpassQLResponse.response_metadata};
         } else {
-            response = { osmquery: queryFieldRef.current?.value || '', query_name: inputRef.current?.value || '' };
+            response = { osmquery: queryFieldRef.current?.value || '', query_name: inputRef.current?.value || ''};
         }
 
         setExtractedQuery(response);

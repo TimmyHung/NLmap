@@ -49,21 +49,23 @@ export const deleteRequest = async (url: string, requestData: any, headers = {},
   }
 };
 
-export const getOverPassQL = async (inputValue: string) => {
+export const getOverPassQL = async (inputValue: string, model: string) => {
   const data = {
     queryNL: inputValue,
+    model: model,
   };
 
   try {
     console.log("正在取得OverPassQL，資料: \n" + inputValue);
     const response = await postRequest("api/query", data, {}, 20000);
-    if (response.status) {
-      return { status: true, message: "Successful get OverpassQL", osmquery: response.osmquery, query_name: response.query_name };
-    } else {
-      return { status: false, message: "Rate limit exceeded.", osmquery: null, query_name: null };
-    }
+    return response
+    // if (response.statucode == 200) {
+    //   return { status: true, message: "Successful get OverpassQL", osmquery: response.osmquery, query_name: response.query_name };
+    // } else {
+    //   return { status: false, message: "Rate limit exceeded.", osmquery: null, query_name: null };
+    // }
   } catch (err) {
-    return { status: false, message: err, osmquery: null, query_name: null };
+    return { statucode: 500, message: err };
   }
 };
 
@@ -90,9 +92,6 @@ export const verifyJWT = async (JWTtoken: string) => {
     });
     return response.data;
   } catch (error: any) {
-    // console.error('API 請求錯誤:', error.response ? error.response.data : error.message);
-    // throw error;
-    // console.log('API請求錯誤:',error);
     return { status: false, message: "Timeout", error: error };
   }
 };

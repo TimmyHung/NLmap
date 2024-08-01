@@ -1,8 +1,12 @@
-from flask import Blueprint, request, jsonify
-from db import get_db_cursor, db
-from utils import hash_password, generate_jwt, verify_google_token, verify_facebook_token, verify_apple_token
-import requests
+
+import sys
 import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+from flask import Blueprint, request, jsonify, redirect
+from db import get_db_cursor, db
+from utils.util import hash_password, generate_jwt, verify_google_token, verify_apple_token
+import requests
 import jwt
 
 
@@ -254,7 +258,7 @@ CLIENT_SECRET = os.getenv('DISCORD_CLIENT_SECRET')
 REDIRECT_URI = "https://timmyhungback.pettw.online/api/authorization/discord/callback"
 FRONTEND_URL = "https://timmyhung.pettw.online"
 
-@authorize_blueprint.route('/api/authorization/discord/callback', methods=['GET'])
+@authorize_blueprint.route(root + '/discord/callback', methods=['GET'])
 def callback():
     code = request.args.get('code')
     if not code:

@@ -126,7 +126,7 @@ export const DiscordLoginBtn: React.FC<successProps> = ({ onSuccess }) => {
     }, [location, onSuccess]);
 
     const handleLogin = () => {
-        window.location.href = "https://discord.com/oauth2/authorize?client_id=1248966248859963505&response_type=code&redirect_uri=https%3A%2F%2Ftimmyhungback.pettw.online%2Fapi%2Fdiscord%2Fcallback&scope=email+identify";
+        window.location.href = "https://discord.com/oauth2/authorize?client_id=1248966248859963505&response_type=code&redirect_uri=https%3A%2F%2Ftimmyhungback.pettw.online%2Fapi%2Fauthorization%2Fdiscord%2Fcallback&scope=identify+email";
     };
 
     return (
