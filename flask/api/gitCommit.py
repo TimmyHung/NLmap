@@ -1,7 +1,6 @@
-from flask import Flask, Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify
 import requests
 import os
-app = Flask(__name__)
 
 git_blueprint = Blueprint('gitCommit', __name__)
 
@@ -38,9 +37,7 @@ def get_commits():
     except Exception as e:
         return jsonify({'status': False, 'message': f'An error occurred: {str(e)}'}), 500
 
-app.register_blueprint(git_blueprint)
 
-if __name__ == "__main__":
-    app.run(debug=True)
+
 
 
