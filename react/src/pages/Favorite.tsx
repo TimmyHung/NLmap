@@ -6,4 +6,4 @@ export default function Favorite() {
            收藏
         </div>
     );
-};
+}
