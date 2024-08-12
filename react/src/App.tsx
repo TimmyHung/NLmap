@@ -22,29 +22,29 @@ import MainNavigation from '@/components/layout/MainNavigation';
 export default function App(): ReactElement {
   return (
     <GoogleOAuthProvider clientId="511179737777-0cqaobrr6a2pp8nuf3jphdkoj2p7jg80.apps.googleusercontent.com">
-      <AuthProvider>
-        <Provider store={store}>
-          <BrowserRouter>
-            <Routes>
-              <Route element={<MainNavigation />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/history" element={<History />} />
-                <Route path="/favorites" element={<Favorite />} />
-                <Route path="/tutorial" element={<Tutorial />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/diary" element={<Diary />} />
-                <Route element={<PrivateRoute requiredRoles={['Admin']} />}>
-                  <Route path="/dashboard" element={<DashBoard />} />
+      <BrowserRouter>
+        <AuthProvider>
+          <Provider store={store}>
+              <Routes>
+                <Route element={<MainNavigation />}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/history" element={<History />} />
+                  <Route path="/favorites" element={<Favorite />} />
+                  <Route path="/tutorial" element={<Tutorial />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/diary" element={<Diary />} />
+                  <Route element={<PrivateRoute requiredRoles={['Admin']} />}>
+                    <Route path="/dashboard" element={<DashBoard />} />
+                  </Route>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/404" element={<NotFound />} />
+                  <Route path="*" element={<NotFound />} />
                 </Route>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/404" element={<NotFound />} />
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </Provider>
-      </AuthProvider>
+              </Routes>
+          </Provider>
+        </AuthProvider>
+      </BrowserRouter>
     </GoogleOAuthProvider>
   );
 }

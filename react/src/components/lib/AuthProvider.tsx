@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { verifyJWT } from './API';
 import { googleLogout } from '@react-oauth/google';
 import Swal from 'sweetalert2';
@@ -22,7 +22,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [JWTtoken, setJWTtoken] = useState<string | null>(localStorage.getItem('JWTtoken'));
+  const [JWTtoken, setJWTtoken] = useState<string | null>();
   const [username, setUsername] = useState<string | null>('');
   const [role, setRole] = useState<string | null>('');
   const [picture, setPicture] = useState<string | null>('');
@@ -59,11 +59,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [JWTtoken]);
 
-
+  const navigate = useNavigate();
   const login = async (token: string, firstTime: boolean) => {
     localStorage.setItem('JWTtoken', token);
     setJWTtoken(token);
-    <Navigate to="/" />;
+    navigate("/");
     if(firstTime)
       Swal.fire({
         icon: "success",

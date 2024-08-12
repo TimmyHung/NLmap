@@ -53,6 +53,7 @@ export default function Login(): ReactElement {
       // 登入成功
       if (response.status) {
         const JWTtoken = response.JWTtoken;
+        console.log(JWTtoken)
         login(JWTtoken, false);
       }else{
         if (response.message.includes("Invalid account or password")) {
