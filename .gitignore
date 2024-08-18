@@ -1,6 +1,4 @@
 # Custom
-discordbot/
-express/
 .vscode/
 __pycache__/
 *.env
