@@ -29,8 +29,6 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
   useEffect(() => {
     if (!map || !geojson || !maploaded || !color) return;
 
-    // console.log(`Adding layers for id: ${id}, color: ${color}`);
-
     if (!map.getSource(`${id}-source`)) {
       map.addSource(`${id}-source`, {
         type: "geojson",
@@ -133,8 +131,6 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
 
   useEffect(() => {
     if (!map || !maploaded || !color) return;
-
-    // console.log(`Updating color for id: ${id}, color: ${color}`);
 
     [
       { type: "Point", proptochange: "circle-color" },

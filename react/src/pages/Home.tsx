@@ -26,8 +26,8 @@ export default function Home(): ReactElement {
   }, []);
 
   return (
-    <div className={css.content}>
-      <div className={css.map}>
+    <div className="flex w-full h-full">
+      <div className="w-full h-full">
         <MapLibreMap
           geoJsonDataArray={geoJsonDataArray}
           onBoundsChange={handleBoundsChange}

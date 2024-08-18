@@ -1,12 +1,10 @@
 import { Link, useLocation, Outlet } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import css from "@/css/MainNavigation.module.css";
-import logo from "@/assets/logo.png";
 import SettingComponent from "@/components/ui/Setting";
 import { useAuth } from '@/components/lib/AuthProvider';
+import css from "@/css/MainNavigation.module.css";
 import Swal from 'sweetalert2';
-
-
+import logo from "@/assets/logo.png";
 
 export default function MainNavigation() {
   const { JWTtoken, username, role, picture, logout } = useAuth();
@@ -67,80 +65,97 @@ export default function MainNavigation() {
   function renderNavLinks() {
     return (
       <>
+        {navLinks.map(link => {
+          if (link.private && !isAdmin) {
+            return null;
+          }
+          return (
+            <Link key={link.label} to={link.to}>
+              <button className={`${currentPage !== "/login" && currentPage === link.to ? 'bg-transparentGrey' : ''} text-gray-200 mx-1 bg-none border-none cursor-pointer h-8 md:px-[0.3vw] lg:px-4 hover:bg-transparentGrey`}>
+                {link.label}
+              </button>
+            </Link>
+          );
+        })}
+      </>
+    );
+  }
+  
+  function renderMobileNavLinks() {
+    return (
+      <>
+        <ul className="list-none w-[calc(170px+10vw)] p-0 m-0 block">
           {navLinks.map(link => {
             if (link.private && !isAdmin) {
               return null;
             }
             return (
               <Link key={link.label} to={link.to}>
-                <button className={currentPage != "/login" && currentPage === link.to ? css.active : ''}>
-                  {link.label}
-                </button>
-              </Link>
-            )
-          }
-        )}
-      </>
-    );
-  }
-  function renderMobileNavLinks() {
-    return (
-      <>
-        <ul>
-          {navLinks.map(link => {
-            if (link.private && !isAdmin) {
-              return null;
-            }
-            return (
-              <Link key={link.to} to={link.to}>
-                <li>
-                      {link.icon}{link.label}
+                <li className="flex p-3 cursor-pointer items-center m-2 text-white gap-2 hover:bg-gray-400 hover:rounded-lg">
+                  {link.icon}{link.label}
                 </li>
               </Link>
             );
           })}
-          <hr />
-          <li onClick={() => setSettingVisible(true)}>
-            <i className="fa-solid fa-gear"></i>設定
-          </li>
-          <li onClick={() => { logout("登出成功", ""); setMenuVisible(false); }}>
-            <i className="fa-solid fa-right-from-bracket"></i>登出
-          </li>
+          <hr className="mx-3" />
+          {JWTtoken ? (
+            <>
+              <li className="flex p-3 cursor-pointer items-center m-2 text-white gap-2 hover:bg-transparentGrey hover:rounded-lg" onClick={() => setSettingVisible(true)}>
+                <i className="fa-solid fa-gear"></i>設定
+              </li>
+              <li className="flex p-3 cursor-pointer items-center m-2 text-white gap-2 hover:bg-transparentGrey hover:rounded-lg" onClick={() => { logout("登出成功", ""); setMenuVisible(false); }}>
+                <i className="fa-solid fa-right-from-bracket"></i>登出
+              </li>
+            </>
+          ) : (
+            <>
+              <Link to="/register">
+                <li className="flex p-3 cursor-pointer items-center m-2 text-white gap-2 hover:bg-transparentGrey hover:rounded-lg">
+                  <i className="fa-solid fa-user-plus"></i>註冊
+                </li>
+              </Link>
+              <Link to="/login">
+                <li className="flex p-3 cursor-pointer items-center m-2 text-white gap-2 hover:bg-transparentGrey hover:rounded-lg">
+                  <i className="fa-solid fa-right-to-bracket"></i>登入
+                </li>
+              </Link>
+            </>
+          )}
         </ul>
       </>
     );
   }
-
+  
   return (
     <>
-      <div className={css.header}>
-        <div className={css.leftContainer}>
-          <div className={css.logo_section}>
-            <Link to="/" className={css.logo_link}>
-              <img className={css.logo} src={logo} alt="Logo" />
-              <span>NLmap</span>
+      <div className={`${css.headerContainer} flex justify-between items-center py-6 px-8 h-[9%] bg-[#202527] shadow-md`}>
+        <div className="flex">
+          <div className="transform scale-90 font-covered">
+            <Link to="/" className="flex items-center text-center">
+              <img className="w-12 h-auto mr-2.5" src={logo} alt="Logo" />
+              <span className="text-4xl font-covered">NLmap</span>
             </Link>
           </div>
-          <div className={css.navBar} style={{ display: isMobile ? 'none' : 'flex' }}>
+          <div className="hidden md:flex ml-[2vw] self-center pb-2 border-b border-white flex-nowrap overflow-x-auto whitespace-nowrap ">
             {renderNavLinks()}
           </div>
         </div>
         {JWTtoken ? (
-          <div className={css.profileContainer}>
+          <div className="flex items-center">
             {!isMobile && (
-              <div className={css.profile} ref={menuRef}>
-                <button className={css.profileButton} onClick={() => setMenuVisible(!menuVisible)}>
-                  {picture ? <img src={picture}></img> : username?.charAt(0)}
+              <div className="relative" ref={menuRef}>
+                <button className="w-12 h-12 rounded-full border-none bg-black flex justify-center items-center cursor-pointer" onClick={() => setMenuVisible(!menuVisible)}>
+                  {picture ? <img src={picture} alt="Profile" className="w-12 h-12 rounded-full object-cover" /> : username?.charAt(0)}
                 </button>
                 {menuVisible && (
-                  <div className={css.dropdownMenu}>
-                    <span>歡迎回來，{username}！</span>
-                    <ul>
-                      <li onClick={() => setSettingVisible(true)}>
+                  <div className="grid absolute mt-1.5 mr-5 right-0 bg-white shadow-lg rounded-lg z-50 self-center justify-center">
+                    <span className="p-5 pt-5">歡迎回來，{username}！</span>
+                    <ul className="list-none w-[15em] p-0 m-0 block">
+                      <li className="flex p-3 cursor-pointer items-center m-2 gap-2 hover:bg-gray-300 hover:rounded-lg" onClick={() => setSettingVisible(true)}>
                         <i className="fa-solid fa-gear"></i>設定
                       </li>
-                      <hr />
-                      <li onClick={() => { logout("登出成功", ""); setMenuVisible(false); }}>
+                      <hr className="mx-3" />
+                      <li className="flex p-3 cursor-pointer items-center m-2 gap-2 hover:bg-gray-300 hover:rounded-lg" onClick={() => { logout("登出成功", ""); setMenuVisible(false); }}>
                         <i className="fa-solid fa-right-from-bracket"></i>登出
                       </li>
                     </ul>
@@ -149,45 +164,63 @@ export default function MainNavigation() {
               </div>
             )}
             {isMobile && (
-              <div ref={drawerRef}>
-                <button className={css.drawerButton} onClick={() => setDrawerVisible(!drawerVisible)}>
+              <div>
+                <button className="bg-none border-none text-white text-2xl cursor-pointer" onClick={() => setDrawerVisible(!drawerVisible)}>
                   <i className="fa-solid fa-bars"></i>
                 </button>
-                <div className={`${css.drawer} ${drawerVisible ? css.drawerOpen : ''}`}>
-                  <div className={css.drawerContent}>
-                    {renderMobileNavLinks()}
+                <div ref={drawerRef} className={ ` fixed inset-0 w-full h-full bg-black/40 flex justify z-[1000] ${drawerVisible ? '' : 'hidden'}`} onClick={() => setDrawerVisible(!drawerVisible)}>
+                  <div className={` absolute right-0 top-0 h-full bg-[#343c3f] z-50 flex flex-col items-center pt-4 ${drawerVisible ? '' : 'hidden'}`}>
+                    <div className="w-full flex flex-col items-center">
+                      {renderMobileNavLinks()}
+                    </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
         ) : (
-          <div className={css.authButtonContainer}>
-            <Link to="/register">
-              <button className={currentPage === '/register' ? css.active : ''}>
-                註冊
-              </button>
-            </Link>
-            |
-            <Link to="/login">
-              <button className={currentPage === '/login' ? css.active : ''}>
-                登入
-              </button>
-            </Link>
-          </div>
+          <>
+            {isMobile ? (
+              <div>
+                <button className="bg-none border-none text-white text-2xl cursor-pointer" onClick={() => setDrawerVisible(!drawerVisible)}>
+                  <i className="fa-solid fa-bars"></i>
+                </button>
+                <div ref={drawerRef} className={ ` fixed inset-0 w-full h-full bg-black/40 flex justify z-[1000] ${drawerVisible ? '' : 'hidden'}`} onClick={() => setDrawerVisible(!drawerVisible)}>
+                  <div className={` absolute right-0 top-0 h-full bg-[#343c3f] z-50 flex flex-col items-center pt-4 ${drawerVisible ? '' : 'hidden'}`}>
+                    <div className="w-full flex flex-col items-center">
+                      {renderMobileNavLinks()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="self-center rounded-lg bg-black/50 px-2 py-1 text-white flex flex-row items-center">
+                <Link to="/register">
+                  <button className={`${currentPage === '/register' ? 'bg-transparentGrey' : ''} px-3 hover:bg-transparentGrey whitespace-nowrap`}>
+                    註冊
+                  </button>
+                </Link>
+                <span className="px-2">|</span>
+                <Link to="/login">
+                  <button className={`${currentPage === '/login' ? 'bg-transparentGrey' : ''} px-3 hover:bg-transparentGrey whitespace-nowrap`}>
+                    登入
+                  </button>
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </div>
-      <div className={css.outlet}>
+      <div className="h-bodyFull">
         <Outlet />
       </div>
       {settingVisible && (
-        <div className={css.modalBackground}>
-          <div className={css.modalContent} ref={settingRef}>
+        <div className="fixed inset-0 w-full h-full bg-black/40 flex justify-center items-center z-[1000]">
+          <div className="bg-white flex justify-center items-center rounded-lg shadow-lg" ref={settingRef}>
             <SettingComponent setSettingVisible={setSettingVisible}/>
           </div>
         </div>
       )}
     </>
-  );
-  
+  );  
 }

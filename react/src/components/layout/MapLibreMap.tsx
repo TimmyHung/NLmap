@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState, ReactElement } from 'react';
 import maplibregl, { LngLatLike, Map, MapOptions } from 'maplibre-gl';
-import css from "@/css/Home.module.css";
 import 'maplibre-gl/dist/maplibre-gl.css';
 import GeojsonLayer from "@/components/lib/GeojsonLayer";
+import Popup from "@/components/lib/Popup";
 import getRandomDarkColor from '@/components/lib/Utils';
 
 interface GeoJsonData {
@@ -76,7 +76,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({ geoJsonDataArray, onBoundsCha
 
   return (
     <>
-      <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+      <div ref={mapRef} className="w-full h-full" />
       {geoJsonDataArray.map((geoJsonData) => (
         <GeojsonLayer
           key={geoJsonData.id}
@@ -92,7 +92,8 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({ geoJsonDataArray, onBoundsCha
           ]}
         />
       ))}
-      <div className={css.mapInfo}>
+      <Popup map={mapInstance.current} />
+      <div className="absolute bottom-2 left-2 bg-white bg-opacity-80 p-2 rounded-md">
         <div>{"經度 " + mapState.center[0].toFixed(2) + "    緯度 " + mapState.center[1].toFixed(2)}</div>
         <div>{"縮放等級 " + mapState.zoom.toFixed(2)}</div>
       </div>
