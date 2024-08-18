@@ -69,9 +69,7 @@ def chat_completion(model,prompt):
                 return {"content": response.content,"response_metadata": response.response_metadata} 
             case "gpt35" | _:
                 if(isinstance(prompt,list)):
-                    # print(prompt)
                     response = gpt35.invoke(input=prompt)
-                    # print(response)
                 else:
                     response = gpt35.invoke(input=[HumanMessage(content=prompt)])
                 return {"content": response.content,"response_metadata": response.response_metadata}

@@ -17,7 +17,7 @@ app.register_blueprint(query_blueprint)
 # Default route
 @app.route('/', methods=['GET'])
 def default_route():
-    return "Invalid APIs", 400
+    return "未知的API端點。", 400
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3000)
