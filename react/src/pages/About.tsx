@@ -4,7 +4,11 @@ export default function About() {
     return (
         <div className={css.About}>
             <section className={css.About_section}>
+                <div className={css.text2}>
+                    <h2>關於我們</h2>
+                </div>
                 <div className={css.container}>
+                    
                     <div className={css.leftSide}>
                         <div className={css.logo}>
                             <img src="src/assets/logo.png" />
@@ -13,24 +17,23 @@ export default function About() {
                             <p>NLmap</p>
                         </div>
                     </div>
+
                     <div className={css.rightSide}>
                         <div className={css.text1}>
-                            <h2>關於我們</h2>
-                            <ol>&emsp;歡迎來到NLMap！我們是一群來自淡江大學資訊管理系的學生，參加畢業專題競賽時共同開發了這款名為NLMap的網站。我們的目標是創造一個簡單、高效的地理資訊查詢工具，讓使用者能夠輕鬆地通過自然語言進行地理位置的檢索和驗證。</ol>
+                            <ol>&emsp;歡迎來到NLmap！我們是一群來自淡江大學資訊管理系的學生，參加畢業專題競賽時共同開發了這款名為NLmap的網站。我們的目標是創造一個簡單、高效的地理資訊查詢工具，讓使用者能夠輕鬆地通過自然語言進行地理位置的檢索和驗證。</ol>
                         </div>
                     </div>
                 </div>
-                <br/>
                 <hr/>
                 <div className={css.text2}>
                     <h2>專題成員</h2>
                     <ul>
-                        <li>1.專題教授 : <strong>魏世杰</strong></li>
-                        <li>2.<strong>陳姿樺：</strong>組長、負責UI設計，包括歷史紀錄、收藏及手機版網頁的設計</li>
-                        <li>3.<strong>洪廷樺 :</strong> 負責前端網頁開發及後端伺服器程式設計</li>
-                        <li>4.<strong>徐明献 : </strong> 負責主視覺設計及UI設計，包括首頁、帳號登入和註冊、使用教學和"關於我們"頁面的設計，並整理了1000筆原始資料</li>
-                        <li>5.<strong>楊舒宇 :</strong> 負責原始資料的分類，並將手機版多做的介面補充改成電腦版的設計</li>
-                        <li>6.<strong>賴美妍 : </strong>負責原始資料的分類、UI設計關於我們、管理員後台介面</li>
+                        <li>指導教授 : <strong>魏世杰</strong></li>
+                        <li>1.<strong>陳姿樺：</strong>組長、負責UI設計，包括歷史紀錄、收藏及手機版網頁的設計。</li>
+                        <li>2.<strong>洪廷樺 :</strong> 負責前端網頁開發及後端伺服器程式設計。</li>
+                        <li>3.<strong>徐明献 : </strong> 負責主視覺設計及UI設計，包括首頁、帳號登入和註冊、使用教學和"關於我們"頁面的設計，並整理了1000筆原始資料。</li>
+                        <li>4.<strong>楊舒宇 :</strong> 負責原始資料的分類，並將手機版多做的介面補充改成電腦版的設計。</li>
+                        <li>5.<strong>賴美妍 : </strong>負責原始資料的分類、"關於我們"介面UI設計、管理員後台介面UI設計。</li>
                     </ul>
                     <hr/>
                     <h2>具備功能</h2>
