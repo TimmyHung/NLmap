@@ -25,28 +25,44 @@
 .leftSide{
     margin-left: 10%;
 }
-.logo{
-    margin-top: 30%;
-    margin-left: 15%;
+
+.logo img {
+    width: 140px; 
+    margin-top: 20%;
+    margin-left: 19%;
 }
 .logo_name{
     font-family: "Covered By Your Grace";
     color: #B6B6B6;
-    font-size: 50px;
+    font-size: 100px;
     -webkit-text-stroke: 1px #000000;
-    margin-top: -50%;
+    margin-top: -20%;
+    margin-left: 3%;
 }
 .text1 h2{ 
-    margin-left: 32%;
+    margin-left: 22.5%;
+    font-size: 35px;
 }
 .text1 ol{
     text-align: justify;
     margin-left: 27%;
     margin-right: 25px;
-    font-size: 18px;
+    font-size: 23px;
+    letter-spacing: 1.7;
+    line-height: 2;
+    padding-top: 15px;
+    padding-bottom: 40px;
 }
 .text2 h2{
     text-align: center;
+    font-size: 35px;
+}
+.text2 ul{
+    font-size: 20px;
+    letter-spacing: 1.5;
+    line-height: 2;
+    padding-top: 10px;
+    padding-bottom: 40px;
 }
 /* 
 .text2 ol{
@@ -57,6 +73,81 @@
   padding: 0px 0px;
 } */
 
-.text2 ol ul{
-    font-size: 36px;
+.text2 ol li{
+    font-size: 20px;
+    letter-spacing: 1.5;
+    line-height: 2;
+}
+
+.text2 ol{
+    font-size: 19px;
+    letter-spacing: 1.5;
+    padding-top: 10px;
+    padding-bottom: 40px;
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column; 
+        align-items: center;
+    }
+
+    .leftSide {
+        margin-left: 0;
+        align-items: center;
+        text-align: center;
+    }
+
+    .rightSide {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        align-items: center;
+        text-align: center;
+    }
+
+    .logo img {
+        width: 120px; 
+        height: auto; 
+        margin-bottom: 50%;
+        margin-left: 1%;
+    }
+
+    .logo_name {
+        font-size: 60px;
+        margin-top: -70px;
+    }
+
+    .text1 h2, .text2 h2 {
+        font-size: 33px;
+        margin-left: 0;
+    }
+
+    .text1 ol, .text2 ul  {
+        margin-left: 0;
+        margin-right: 0;
+        font-size:18px;
+        padding: 0 5px;
+        padding-top: 10px;
+        line-height: 2;
+    }
+    .text2 ol li{
+        margin-left: 0;
+        margin-right: 0;
+        font-size:18px;
+        padding: 0 5px;
+        padding-top: 10px;
+        line-height: 2;
+    }
+    .text2 ol{
+        font-size: 18px;
+        letter-spacing: 2;
+    }
+    
+    .About {
+        padding: 20px;
+    }
+
+    .About_section {
+        padding: 15px 20px;
+    }
 }

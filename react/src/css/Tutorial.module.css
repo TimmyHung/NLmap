@@ -8,64 +8,130 @@
 .tutorial h2 {
     text-align: center;
     color: #000000;
-    font-size: 40px;
+    font-size: 50px;
 }
 
 .tutorial_section {
-    margin-top: 20px;
+    margin-top: 5px;
 }
 
 .tutorial_step {
-    /* border: 1px solid #ddd; */
     border-radius: 5px;
-    padding: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 3px;
 }
 
 .tutorial_step h3 {
     color: black;
-    margin-bottom: 30px;
-    font-size: 30px;
+    margin-bottom: 70px;
+    font-size: 35px;
 }
 
 .step_content {
-    display: flex;
     flex-direction: column;
     align-items: center;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
-.step_content .step_image {
-    display: flex;
-    width: auto;
-    height: 100%;
-    margin-bottom: 10px;
-}
+
 
 .step_content .step_image img {
-    width:  640px;
-    height: auto;
+    width: 100%;
+    max-width: 800px;
+    margin-left: 20.5%;
+    text-align:center;
     border-radius: 5px;
-    margin: 0 10px;
 }
 
 .step_content p {
+    display: flex;
     color: black;
-    margin-bottom: 10px;
-    font-size: 23px;
-    letter-spacing: 1px;
-    margin-left: 4em;
-    margin-top: 4em;
-    float: right;
+    margin-top: 50px;
+    margin-left: 21%; 
+    font-size: 25px;
+    letter-spacing: 1.5px;
 }
 
 .step_content ol {
-    padding-left: 20px;
-    color: black;
+    padding-left: 20px; 
+    margin: 0 auto;
+    max-width: 90%;
+    box-sizing: border-box;
 }
 
 .step_content ol li {
-    margin-bottom: 10px;
-    margin-left: 20px;
-    font-size: 23px;
-    letter-spacing: 1px;
+    margin-top: 30px;
+    margin-left: 150px; 
+    margin-bottom: 10px; 
+    font-size: 25px;
+    list-style-position: inside; 
+    text-align: left;
+}
+
+
+@media (max-width: 1000px) {
+    .tutorial h2 {
+        font-size: 40px;
+    }
+
+    .tutorial_step h3 {
+        font-size: 30px;
+    }
+
+    .step_content p, .step_content ol li {
+        font-size: 25px;
+        margin-left: 0;
+        margin-top: 30px;
+        margin-bottom: 10px;
+       
+    }
+    .step_content .step_image img {
+        width: 100%;
+        max-width: 700px;
+        border-radius: 5px;
+        margin-left: 5%; 
+        text-align:center;
+    }
+}
+
+@media (max-width: 768px) {
+    .tutorial h2 {
+        font-size: 40px;
+        padding: 10px;
+    }
+
+    .tutorial_step h3 {
+        font-size: 30px;
+        margin-bottom: 20px;
+    }
+
+    .step_content .step_image img {
+        max-width: 100%;
+        width: 100%;
+        border-radius: 5px;
+        margin: 0 10px 20px 10px;
+    }
+
+    .step_content p {
+        font-size: 18px;
+        margin-top: 50px;
+        margin-left: 0;
+        padding: 0 10px;
+        max-width: 100%;
+        text-align:center;
+    }
+
+    .step_content ol {
+        padding-left: 10px;
+        max-width: 100%;
+        text-align:center;
+    }
+
+    .step_content ol li {
+        font-size: 18px;
+        margin-left: 0;
+        margin-top: 30px;
+        margin-bottom: 10px;
+        text-align:center;
+    }
 }
