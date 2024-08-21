@@ -4,7 +4,7 @@
     margin: 0 auto;
     padding: 60px;
     font-family: Arial, sans-serif;
-    background-color: #374558;
+    background-color: #344851;
 }
 .About_section{
     background-color: #F2F0F0;
@@ -46,13 +46,13 @@
 }
 
 .logo img {
-    width: 130px; 
+    width: 140px; 
 }
 
 .logo_name {
     font-family: "Covered By Your Grace";
     color: #B6B6B6;
-    font-size: 60px;
+    font-size: 70px;
     -webkit-text-stroke: 1px #000000;
     margin-top: 0;
     text-align: center;
