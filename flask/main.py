@@ -6,7 +6,7 @@ from api.generateQuery import query_blueprint
 from api.gitCommit import git_blueprint
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "https://timmyhung.pettw.online"}})
+CORS(app, resources={r"/*": {"origins": ["https://timmyhung.pettw.online", "http://localhost", "http://127.0.0.1"]}})
 load_dotenv()
 
 # Register blueprints

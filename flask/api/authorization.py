@@ -4,7 +4,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from flask import Blueprint, request, jsonify, redirect
-from db import get_db_cursor, db
+from db import get_db_cursor
 from utils.util import hash_password, generate_jwt, verify_google_token, verify_apple_token
 import requests
 import jwt
@@ -59,7 +59,7 @@ def deleteAccount():
         case _:
             return {"status": False, "message": "Invalid account type"}, 200
 
-    cursor = get_db_cursor()
+    cursor, connection = get_db_cursor()
     check_user_exist_query = f"SELECT email, account_type FROM users WHERE {userID_column} = %s"
     cursor.execute(check_user_exist_query, (userID,))
     check_result = cursor.fetchone()
@@ -76,6 +76,8 @@ def deleteAccount():
     except Exception as e:
         cursor.connection.rollback()
         return {"status": False, "message": str(e)}, 500
+    
+    connection.close()
 
 @authorize_blueprint.route(root + '/register', methods=['POST'])
 def register():
@@ -85,7 +87,7 @@ def register():
     username = data.get('username')
     account_type = "Native"
 
-    cursor = get_db_cursor()
+    cursor, connection = get_db_cursor()
     check_user_exist_query = "SELECT email, account_type FROM users WHERE email = %s"
     cursor.execute(check_user_exist_query, (email,))
     check_result = cursor.fetchone()
@@ -106,6 +108,8 @@ def register():
     payload = {'username': username, 'account_type': account_type, 'role': 'User', 'userID': userID}
     token = generate_jwt(payload)
 
+    connection.close()
+
     return jsonify({'status': True, 'message': 'Register successful', 'JWTtoken': token}), 200
 
 
@@ -113,7 +117,7 @@ def register():
 def login():
     data = request.get_json()
     loginType = data.get('type')
-    cursor = get_db_cursor()
+    cursor, connection = get_db_cursor()
 
     def create_new_user(email, username, role, google_userID=None, apple_userID=None, discord_userID=None):
         sql = """
@@ -242,6 +246,11 @@ def login():
                 username = appleRes.get("user")["name"]["lastName"] + appleRes.get("user")["name"]["firstName"]
                 create_new_user(email, username, role, apple_userID=apple_userID)
                 message = 'Register Successful'
+            elif not initLogin and not result: #使用者已註冊過但資料庫沒有資料
+                role = 'User'
+                username = "使用者"
+                create_new_user(email, username, role, apple_userID=apple_userID)
+                message = 'Register Successful'
             else:
                 role, username, apple_userID, account_type = result
                 message = 'Login Successful'
@@ -251,6 +260,8 @@ def login():
 
         case _:
             return jsonify({'status': False, 'message': 'Bad Request'}), 400
+    
+    connection.close()
 
 
 CLIENT_ID = os.getenv('DISCORD_CLIENT_ID')
@@ -293,7 +304,7 @@ def callback():
     email = user_info['email']
     picture = "https://cdn.discordapp.com/avatars/" + user_id + "/" + user_info['avatar'] + ".png"
 
-    cursor = get_db_cursor()
+    cursor, connection = get_db_cursor()
     def create_new_user(email, username, role, discord_userID):
         sql = """
             INSERT INTO users (email, username, role, discord_userID, account_type) 
@@ -338,4 +349,6 @@ def callback():
 
     additional_payload = {'username': username, 'picture': picture}
     jwt_token = generate_response(username, role, additional_payload)
+
+    connection.close()
     return redirect(f"{FRONTEND_URL}/login?token={jwt_token}&message={message}&status=true")
