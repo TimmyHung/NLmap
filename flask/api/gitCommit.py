@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify
-from chromaDB import loadData, query
 import requests
 import os
 

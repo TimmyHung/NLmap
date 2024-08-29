@@ -3,6 +3,7 @@
 __pycache__/
 *.env
 .Note/
+chroma_persist_db/
 
 # Logs
 logs

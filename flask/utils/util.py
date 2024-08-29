@@ -2,6 +2,7 @@ import hashlib
 import jwt
 import os
 import requests
+from utils.MySQL import get_db_cursor
 
 def hash_password(password, salt):
     return hashlib.sha256((password + salt).encode('utf-8')).hexdigest()
@@ -19,6 +20,20 @@ def verify_google_token(access_token):
 
 def verify_apple_token(appleJWT):
     return jwt.decode(appleJWT, options={"verify_signature": False})
+
+def save_queryLog(request_id, model_name, prompt_tokens, completion_tokens, total_tokens, valid):
+    cursor, connection = get_db_cursor()
+    # try:
+    sql = "INSERT INTO query_logs (request_id, model_name, prompt_tokens, completion_tokens, total_tokens, valid) VALUES (%s, %s, %s, %s, %s, %s)"
+    cursor.execute(sql, (request_id, model_name, prompt_tokens, completion_tokens, total_tokens, valid))
+    connection.commit()
+    # except Exception as e:
+    #     print(f"新增QueryLogs時發生錯誤： {e}")
+    #     connection.rollback()
+    # finally:
+    cursor.close()
+    connection.close()
+
 
 
 # from openai import OpenAI

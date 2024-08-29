@@ -16,7 +16,9 @@ def get_db_connection():
 
 def get_db_cursor():
     connection = get_db_connection()
-    return connection.cursor(), connection
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    return cursor, connection
+
 
 # def keep_alive(connection):
 #     while True:

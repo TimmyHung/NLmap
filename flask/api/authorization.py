@@ -1,14 +1,9 @@
-
-import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-
-from flask import Blueprint, request, jsonify, redirect
-from db import get_db_cursor
-from utils.util import hash_password, generate_jwt, verify_google_token, verify_apple_token
 import requests
 import jwt
-
+from flask import Blueprint, request, jsonify, redirect
+from utils.MySQL import get_db_cursor
+from utils.util import hash_password, generate_jwt, verify_google_token, verify_apple_token
 
 authorize_blueprint = Blueprint('authorize', __name__)
 root = "/api/authorization"
@@ -101,7 +96,7 @@ def register():
 
     insert_query = "INSERT INTO users (email, hashed_password, salt, username, account_type) VALUES (%s, %s, %s, %s, %s)"
     cursor.execute(insert_query, (email, hashed_password, salt, username, account_type))
-    db.commit()
+    connection.commit()
 
     userID = cursor.lastrowid
 
@@ -152,7 +147,8 @@ def login():
 
             result = check_email_exists(email)
             if result:
-                db_email, db_account_type = result
+                db_email = result["email"]
+                db_account_type = result["account_type"]
                 if db_email and db_account_type != loginType:
                     return jsonify({'status': False, 'message': 'Login Failed: account exists.', 'JWTtoken': None, 'account_type': db_account_type}), 200
             else:
@@ -161,7 +157,11 @@ def login():
             sql = "SELECT user_ID, hashed_password, salt, role, username FROM users WHERE email = %s"
             cursor.execute(sql, (email,))
             result = cursor.fetchone()
-            userID, stored_hashed_password, salt, role, username = result
+            userID = result["user_ID"]
+            stored_hashed_password = result["hashed_password"]
+            salt = result["salt"]
+            role = result["role"]
+            username = result["username"]
             hashed_login_password = hash_password(password, salt)
 
             if hashed_login_password == stored_hashed_password:
@@ -181,7 +181,8 @@ def login():
 
             result = check_email_exists(email)
             if result:
-                db_email, db_account_type = result
+                db_email = result["email"]
+                db_account_type = result["account_type"]
                 if db_email and db_account_type != loginType:
                     return jsonify({'status': False, 'message': 'Login Failed: account exists.', 'JWTtoken': None, 'account_type': db_account_type}), 200
 
@@ -235,7 +236,8 @@ def login():
 
             result = check_email_exists(email)
             if result:
-                db_email, db_account_type = result
+                db_email = result["email"]
+                db_account_type = result["account_type"]
                 if db_email and db_account_type != loginType:
                     return jsonify({'status': False, 'message': 'Login Failed: account exists.', 'JWTtoken': None, 'account_type': db_account_type}), 200
 
@@ -333,7 +335,8 @@ def callback():
 
     result = check_email_exists(email)
     if result:
-        db_email, db_account_type = result
+        db_email = result["email"]
+        db_account_type = result["account_type"]
         if db_email and db_account_type != 'Discord':
             return redirect(f"{FRONTEND_URL}/login?message=Login Failed: account exists&account_type={db_account_type}&status=false")
 

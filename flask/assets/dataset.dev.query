@@ -32,3 +32,4 @@
 [out:json][timeout:20];(node["amenity"="toilets"]({{bbox}}););out;>;out skel qt;
 [out:json][timeout:20];(node["leisure"="swimming_pool"]({{bbox}}););out;>;out skel qt;
 [out:json][timeout:20];(node["public_transport"="platform"]({{bbox}}););out;>;out skel qt;
+[out:json][timeout:20];(node["amenity"="restaurant"]({{bbox}});way["amenity"="restaurant"]({{bbox}});relation["amenity"="restaurant"]({{bbox}}););out;>;out skel qt;

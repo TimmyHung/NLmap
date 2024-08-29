@@ -1,5 +1,5 @@
+from utils.chromaDB import loadData, query
 from flask import Blueprint, request, jsonify
-from chromaDB import loadData, query
 
 query_blueprint = Blueprint('query', __name__)
 chromaDB = loadData()
