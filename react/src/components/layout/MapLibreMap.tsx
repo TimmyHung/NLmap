@@ -13,14 +13,23 @@ interface GeoJsonData {
 interface MapLibreMapProps {
   geoJsonDataArray: GeoJsonData[];
   onBoundsChange: (bounds: maplibregl.LngLatBounds) => void;
+  initialCenter?: LngLatLike;
+  initialZoom?: number;
+  showInfo?: boolean;
 }
 
-const MapLibreMap: React.FC<MapLibreMapProps> = ({ geoJsonDataArray, onBoundsChange }): ReactElement => {
+const MapLibreMap: React.FC<MapLibreMapProps> = ({
+  geoJsonDataArray,
+  onBoundsChange,
+  initialCenter = [120.55, 23.67],
+  initialZoom = 7,
+  showInfo = true,
+}): ReactElement => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<Map | null>(null);
   const [mapState, setMapState] = useState({
-    center: [120.55, 23.67] as LngLatLike,
-    zoom: 7
+    center: initialCenter,
+    zoom: initialZoom
   });
   const [colors, setColors] = useState<{ [key: string]: string }>({});
 
@@ -85,18 +94,15 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({ geoJsonDataArray, onBoundsCha
           id={geoJsonData.id}
           geojson={geoJsonData.data}
           color={colors[geoJsonData.id]} 
-          containingGeometries={[
-            { type: 'Point', visibleOnMap: true },
-            { type: 'Line', visibleOnMap: true },
-            { type: 'Polygon', visibleOnMap: true },
-          ]}
         />
       ))}
       <Popup map={mapInstance.current} />
-      <div className="absolute bottom-2 left-2 bg-white bg-opacity-80 p-2 rounded-md">
+      
+      { showInfo &&
+        <div className="absolute bottom-2 left-2 bg-white bg-opacity-80 p-2 rounded-md">
         <div>{"經度 " + mapState.center[0].toFixed(2) + "    緯度 " + mapState.center[1].toFixed(2)}</div>
         <div>{"縮放等級 " + mapState.zoom.toFixed(2)}</div>
-      </div>
+      </div>}
     </>
   );
 };

@@ -1,3 +1,5 @@
+import osmtogeojson from "osmtogeojson";
+
 export default function getRandomDarkColor() {
   const red = Math.floor(Math.random() * 128);
   const green = Math.floor(Math.random() * 128);
@@ -10,4 +12,8 @@ export default function getRandomDarkColor() {
   const alphaHex = Math.floor(0.75 * 255).toString(16).padStart(2, "0");
 
   return `#${redHex}${greenHex}${blueHex}${alphaHex}`;
+}
+
+export function osmToGeoJson(osmJson){
+  return osmtogeojson(osmJson);
 }

@@ -1,6 +1,6 @@
 import { Link, useLocation, Outlet } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import SettingComponent from "@/components/ui/Setting";
+import SettingComponent from "@/components/layout/Setting";
 import { useAuth } from '@/components/lib/AuthProvider';
 import css from "@/css/MainNavigation.module.css";
 import Swal from 'sweetalert2';

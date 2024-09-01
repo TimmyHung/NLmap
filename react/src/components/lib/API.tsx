@@ -1,6 +1,5 @@
 import axios from 'axios';
-import osmtogeojson from "osmtogeojson";
-import GeojsonLayer from './GeojsonLayer';
+import { osmToGeoJson } from "@/components/lib/Utils";
 
 const baseURL = "https://timmyhungback.pettw.online/";
 const defaultHeaders = {
@@ -83,7 +82,7 @@ export const getGeoJsonData = async (overpassQL: string, bounds: string) => {
   try {
     console.log("正在取得: " + "https://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}", bounds));
     const overpassJson = await getRequest("https://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}", bounds), {}, {}, 20000);
-    const geoJson = osmtogeojson(overpassJson);
+    const geoJson = osmToGeoJson(overpassJson);
     return { status: true, message: "successful get geoJson", geoJson: geoJson, rawJson: overpassJson };
   } catch (err) {
     return { status: false, message: err, geoJson: null };

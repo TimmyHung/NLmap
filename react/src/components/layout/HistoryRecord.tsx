@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import axios from 'axios';
-import styles from '/src/css/History.module.css';
 import clockIcon from "@/assets/clock.png";
 import location_icon from '@/assets/location_icon.svg';
+import MapModal from '@/components/layout/MapModal';
+import { osmToGeoJson } from "@/components/lib/Utils";
+import postRequest, { getGeoJsonData, getOverPassQL, getRequest } from '../lib/API';
+import osmtogeojson from 'osmtogeojson';
+import Toast from '../ui/Toast';
 
 
 const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
@@ -16,12 +19,22 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     const [availableDistricts, setAvailableDistricts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processedCount, setProcessedCount] = useState(0);
+    const [isMapModalVisible, setIsMapModalVisible] = useState(false);
+    const [selectedGeoJson, setSelectedGeoJson] = useState<GeoJSON.FeatureCollection | null>(null);
+    const [selectedDisplayName, setSelectedDisplayName] = useState('');
+    const [mapCenter, setMapCenter] = useState<[number, number]>([120.55, 23.67]);
+    const [mapZoom, setMapZoom] = useState<number>(12);
+    const geoJsonData = osmToGeoJson(recordSet.records);
     const containerRef = useRef(null);
+
+    //Custom Settings
     const filterCities = true;
     const hideUnknownRecords = true;
+    const skipFetchLocationInfo = true;
 
     const title = recordSet.title;
-    const records = recordSet.records;
+    const records = recordSet.records.elements;
+
 
     const cities = useMemo(() => [
         { value: "基隆市", label: "基隆市" },
@@ -67,58 +80,85 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     };
 
     const getLatLon = (record, allRecords) => {
+        const calculateAverageLatLon = (latLonArray) => {
+            const total = latLonArray.length;
+            const sumLatLon = latLonArray.reduce(
+                (acc, latLon) => {
+                    acc.lat += latLon.lat;
+                    acc.lon += latLon.lon;
+                    return acc;
+                },
+                { lat: 0, lon: 0 }
+            );
+            return {
+                lat: sumLatLon.lat / total,
+                lon: sumLatLon.lon / total
+            };
+        };
+    
         const findLatLonInWay = (way) => {
+            const latLonArray = [];
             for (const nodeId of way.nodes) {
                 const nodeRecord = allRecords.find(r => r.id === nodeId && r.type === 'node');
-                if (nodeRecord) {
-                    return { lat: nodeRecord.lat, lon: nodeRecord.lon };
+                if (nodeRecord && nodeRecord.lat !== undefined && nodeRecord.lon !== undefined) {
+                    latLonArray.push({ lat: nodeRecord.lat, lon: nodeRecord.lon });
                 }
             }
-            return null;
+            return latLonArray;
         };
-
+    
         const findLatLonInRelation = (relation) => {
+            const latLonArray = [];
             for (const member of relation.members) {
-                if (member.role === 'inner' && member.type === 'way') {
+                if (member.type === 'way') {
                     const wayRecord = allRecords.find(r => r.id === member.ref && r.type === 'way');
                     if (wayRecord) {
-                        const latLon = findLatLonInWay(wayRecord);
-                        if (latLon) return latLon;
-                    }
-                }
-            }
-
-            for (const member of relation.members) {
-                if (member.role === 'outer' && member.type === 'way') {
-                    const wayRecord = allRecords.find(r => r.id === member.ref && r.type === 'way');
-                    if (wayRecord) {
-                        const latLon = findLatLonInWay(wayRecord);
-                        if (latLon) return latLon;
+                        const wayLatLon = findLatLonInWay(wayRecord);
+                        latLonArray.push(...wayLatLon);
                     }
                 } else if (member.type === 'relation') {
                     const subRelation = allRecords.find(r => r.id === member.ref && r.type === 'relation');
                     if (subRelation) {
-                        const latLon = findLatLonInRelation(subRelation);
-                        if (latLon) return latLon;
+                        const subRelationLatLon = findLatLonInRelation(subRelation);
+                        latLonArray.push(...subRelationLatLon);
                     }
                 }
             }
-
-            return null;
+            return latLonArray;
         };
-
-        if (record.lat && record.lon) {
+    
+        // 初始化 lats 和 lons 作為空數組
+        record.lats = [];
+        record.lons = [];
+    
+        // 如果 record 自己有經緯度，直接添加到 lats 和 lons
+        if (record.lat !== undefined && record.lon !== undefined) {
+            record.lats.push(record.lat);
+            record.lons.push(record.lon);
             return { lat: record.lat, lon: record.lon };
         }
-
+    
+        let latLonArray = [];
+        
+        // 如果是 relation，找出其所有經緯度並計算平均值
         if (record.type === 'relation') {
-            return findLatLonInRelation(record);
-        } else if (record.type === 'way') {
-            return findLatLonInWay(record);
+            latLonArray = findLatLonInRelation(record);
+        } 
+        // 如果是 way，找出其所有經緯度並計算平均值
+        else if (record.type === 'way') {
+            latLonArray = findLatLonInWay(record);
         }
-
+    
+        if (latLonArray.length > 0) {
+            record.lats = latLonArray.map(coord => coord.lat);
+            record.lons = latLonArray.map(coord => coord.lon);
+            const avgLatLon = calculateAverageLatLon(latLonArray);
+            return avgLatLon;
+        }
+    
         return null;
     };
+    
 
     useEffect(() => {
         const filterRecordsByCityAndDistrict = async () => {
@@ -138,15 +178,13 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                         continue;
                     }
     
-                    if (!ctyName || !townName) {
-                        const location = getLatLon(record, records);
-                        if (location) {
-                            const locationInfo = await fetchLocationInfo(location.lon, location.lat);
-                            ctyName = standardizeCityName(locationInfo[0]);
-                            townName = locationInfo[1];
-                        }
+                    const location = getLatLon(record, records);
+                    if ((!ctyName || !townName) && !skipFetchLocationInfo) {
+                        const locationInfo = await fetchLocationInfo(location.lon, location.lat);
+                        ctyName = standardizeCityName(locationInfo[0]);
+                        townName = locationInfo[1];
                     }
-    
+
                     if (ctyName === "未知" || townName === "未知") {
                         setProcessedCount(prevCount => prevCount + 1);
                         continue;
@@ -234,7 +272,6 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         if (record?.tags["brand:zh"] && record?.tags?.branch) {
             return `${record.tags["brand:zh"]}-${record.tags.branch}`;
         }
-
         
         if (record?.tags?.name && record?.tags?.branch) {
             return `${record.tags.name}-${record.tags.branch}`;
@@ -292,6 +329,58 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
 
     const showCitySelector = availableCities.length > 1;
     const showDistrictSelector = (availableCities.length === 1 && availableDistricts.length > 1) || (availableCities.length > 1 && selectedCity);
+
+    const handleMapShow = async (record) => {
+        console.log(record);
+        const feature = geoJsonData.features.find(f => f.id === `${record.type}/${record.id}`);
+        
+        if (feature) {
+            const filteredGeoJson: GeoJSON.FeatureCollection = {
+                type: "FeatureCollection",
+                features: [feature as GeoJSON.Feature<GeoJSON.Geometry>]
+            };
+    
+            const lats = record.lats;
+            const lons = record.lons;
+    
+            const minLat = Math.min(...lats);
+            const maxLat = Math.max(...lats);
+            const minLon = Math.min(...lons);
+            const maxLon = Math.max(...lons);
+
+            const latDiff = maxLat - minLat;
+            const lonDiff = maxLon - minLon;
+    
+            const maxDiff = Math.max(latDiff, lonDiff);
+            
+            const baseZoomLevel = 14
+            const maxZoomLevel = 17.5;
+            const minZoomLevel = 6.5;
+            const zoomLevel = Math.min(Math.max(baseZoomLevel - Math.log2(maxDiff * 200), minZoomLevel), maxZoomLevel);
+
+            console.log((minLon + maxLon) / 2);
+            console.log((minLat + maxLat) / 2);
+    
+            const center: [number, number] = [(minLon + maxLon) / 2, (minLat + maxLat) / 2];
+    
+            setSelectedGeoJson(filteredGeoJson);
+            setSelectedDisplayName(record.displayName);
+            setIsMapModalVisible(true);
+            setMapCenter(center);
+            setMapZoom(Math.round(zoomLevel));
+        } else {
+            Toast.fire({
+                icon: 'error',
+                title: "無法找到對應的地圖資料",
+            });
+        }
+    };
+    
+
+    const handleCloseModal = () => {
+        setIsMapModalVisible(false);
+        setSelectedGeoJson(null);
+    };
 
     return (
         <section className="mx-6 md:mx-10 my-8">
@@ -360,7 +449,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                             <Skeleton key={index} />
                         ))
                     ) : (
-                        Array.from(displayedRecords).map((record, index) => (
+                        Array.from(displayedRecords).map((record: RecordType, index) => (
                             <article key={index} className="rounded-xl shadow-lg flex flex-col w-auto h-auto min-h-40 box-border border-4 border-white flex-shrink-0">
                                 <h3 className="bg-darkBlueGrey text-white text-xl rounded-t-xl flex box-border relative px-2 py-2">
                                     {index + 1}. {record.displayName}
@@ -370,15 +459,19 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                                         <img className="h-7 self-start" src={location_icon} />
                                         <p>{record.displayAddress}</p>
                                     </div>
-                                    <div className="flex justify-end">
+                                    <div className="flex flex-row justify-end">
                                         <a className="text-[#144583] text-lg underline font-bold underline-offset-4 cursor-pointer"
-                                            onClick={() => {
-                                                console.log(record)
-                                                console.log(record.tags)
-                                            }}
-                                        >
+                                            onClick={() => handleMapShow(record)}>
                                             地圖顯示
                                         </a>
+                                        <MapModal
+                                            isVisible={isMapModalVisible}
+                                            textTitle={selectedDisplayName}
+                                            onClose={handleCloseModal}
+                                            geoJsonData={selectedGeoJson}
+                                            center={mapCenter}
+                                            zoom={mapZoom}
+                                        />
                                     </div>
                                 </div>
                             </article>
@@ -400,3 +493,9 @@ const Skeleton = () => {
         </div>
     );
 };
+
+interface RecordType {
+    displayName: string;
+    displayAddress: string;
+    [key: string]: any;
+}
