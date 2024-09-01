@@ -110,16 +110,16 @@ export default function Login(): ReactElement {
 
 
   return (
-    <div className={css.backgroundImage}>
-        <div className={css.login_container}>
-          <div className={css.title}>
+    <div className={"h-full w-full flex justify-center " + css.backgroundImage}>
+        <div className="self-center py-8 px-8 md:px-12 rounded-xl bg-[#f9f9f9] m-8 w-full max-w-[450px] shadow-xl">
+          <div className="text-4xl min-w-128 w-full flex justify-center pb-6">
             <h1>Sign in</h1>
           </div>
-          <form className={css.login_form}>
-            <div className={css.form_group}>
-              <label className={css.label}>帳號</label>
+          <form className="">
+            <div className="flex flex-col pb-1">
+              <label className="">帳號</label>
               <input
-                className={css.input}
+                className="w-full h-12"
                 type="text"
                 id="username"
                 value={account}
@@ -127,10 +127,10 @@ export default function Login(): ReactElement {
                 required
               />
             </div>
-            <div className={css.form_group}>
-              <label className={css.label}>密碼</label>
+            <div className="flex flex-col pb-8">
+              <label className="">密碼</label>
               <input
-                className={css.input}
+                className="w-full h-12"
                 type="password"
                 id="password"
                 autoComplete="on"
@@ -140,25 +140,21 @@ export default function Login(): ReactElement {
                 required
               />
             </div>
-            <div className={css.checkbox_div}>
-              <div className={css.round}>
-                <input type="checkbox" id="checkbox" onChange={() => setKeepSignIn(!keepSignIn)} />
-                <label htmlFor="checkbox"></label>
-              </div>
-              <div className={css.checkbox_div_innerText}>記住此帳號</div>
-            </div>
-            <button className={css.button} type="button" onClick={handleLogin}>登入</button>
+
+            <button className="w-full h-12 bg-[#42cb83] hover:bg-[#3dbb78] rounded-[30px] mb-2 text-lg font-bold" type="button" onClick={handleLogin}>登入</button>
           </form>
-          <div className={css.link}>
-            <span><a onClick={passwordRecovery}>忘記密碼</a></span>
+          <div className="flex gap-1 justify-center text-sm">
+            <span><a onClick={passwordRecovery} className="font-bold text-black">忘記密碼</a></span>
             |
-            <span>還沒有帳號?<Link to="/register"> 註冊</Link></span>
+            <span>還沒有帳號?<Link to="/register" className="font-bold text-black"> 註冊</Link></span>
           </div>
-          <div className={css.divider_wrapper}>
-            <span className={css.divider}>或</span>
+          <div className="flex items-center w-full mx-auto py-4">
+            <div className="flex-1 border-b border-gray-300"></div>
+            <span className="px-2">或</span>
+            <div className="flex-1 border-b border-gray-300"></div>
           </div>
 
-          <div className={css.oauth_section}>
+          <div className="flex flex-row w-full justify-center gap-2">
             <GoogleLoginBtn onSuccess={handleAuthResponse}/>
             <AppleLoginBtn onSuccess={handleAuthResponse}/>
             <DiscordLoginBtn onSuccess={handleAuthResponse}/>

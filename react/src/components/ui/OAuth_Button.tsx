@@ -29,51 +29,16 @@ const GoogleLoginBtn: React.FC<successProps> = ({ onSuccess }) => {
     return (
         <>
             <button
-                className={css.googleLogin}
+                className="w-full max-w-[75px] flex justify-center items-center bg-white hover:bg-[#f5f5f5]"
                 onClick={() => {
                     handleGoogle();
                 }}
             >
-                <img src={GoogleLogo} alt="Google Logo" className={css.googleLogo} />
+                <img src={GoogleLogo} alt="Google Logo" className="w-[15px] h-[20px]" />
             </button>
         </>
     );
 };
-
-// export const FacebookLoginBtn: React.FC<successProps> = ({onSuccess}) => {
-//     function handleFacebookLogin(){
-//         FacebookLoginClient.login((res)=>{
-//             switch(res.status){
-//                 case "unknown"://Login cancelled.
-//                     break;
-//                 case "connected"://Login successfully.
-//                     FacebookLoginClient.getProfile(async (profileRes)=>{
-//                         const requestData = {
-//                             type: "Facebook",
-//                             fbRes: profileRes,
-//                         };
-//                         const response = await postRequest('api/login', requestData);
-//                         onSuccess(response)
-
-//                     },{fields: 'email,name,picture'});
-//                     break;   
-//             }
-//         }, {scope: 'public_profile, email'});
-
-
-//     }
-
-//     return(
-//         <FacebookLogin
-//             appId="456153207027324"
-//             scope="public_profile,email"
-//             fields="name,email,picture"
-//             render={() => (
-//                 <button className={css.facebookLogin} onClick={()=>handleFacebookLogin()} ><i className="fa-brands fa-facebook-f fa-lg"></i></button>
-//             )}
-//         />
-//     )
-// }
 
 export const AppleLoginBtn: React.FC<successProps> = ({ onSuccess }) => {
     return (
@@ -97,7 +62,7 @@ export const AppleLoginBtn: React.FC<successProps> = ({ onSuccess }) => {
                 onSuccess(response)
             }}
             onError={(error) => console.error(error)}
-            render={(props) => <button {...props} className={css.appleLogin}><i className="fa-brands fa-apple fa-lg"></i></button>}
+            render={(props) => <button {...props} className="w-full max-w-[75px] text bg-black hover:bg-[#323232]"><i className="fa-brands fa-apple fa-lg"></i></button>}
         />
     )
 }
@@ -130,7 +95,7 @@ export const DiscordLoginBtn: React.FC<successProps> = ({ onSuccess }) => {
     };
 
     return (
-        <button className={css.discordLogin} onClick={handleLogin}>
+        <button className="w-full max-w-[75px] bg-[#7289DA] hover:bg[#657dd6]" onClick={handleLogin}>
             <i className="fa-brands fa-discord"></i>
         </button>
     );
