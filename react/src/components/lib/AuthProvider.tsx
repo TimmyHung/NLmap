@@ -22,7 +22,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [JWTtoken, setJWTtoken] = useState<string | null>();
+  const [JWTtoken, setJWTtoken] = useState<string | null>(localStorage.getItem('JWTtoken'));
   const [username, setUsername] = useState<string | null>('');
   const [role, setRole] = useState<string | null>('');
   const [picture, setPicture] = useState<string | null>('');

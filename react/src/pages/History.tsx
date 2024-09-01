@@ -1,93 +1,87 @@
 import React, { useState, useEffect } from 'react';
 import HistoryRecord from '@/components/layout/HistoryRecord';
+import { deleteHistoryRecords, getHistoryRecords } from '@/components/lib/API';
+import { useAuth } from '@/components/lib/AuthProvider';
+import { debounce } from 'lodash';
 
 const History = () => {
+    const { JWTtoken } = useAuth();
     const [recordsSet, setRecordsSet] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isFetching, setIsFetching] = useState(false);
+    const [recordPerPage, setRecordPerPage] = useState(3);
+
+    const fetchHistoryRecords = async (currentPage, recordsToFetch) => {
+        if (isFetching) return;  // 防止重複加載
+        setIsFetching(true);
+
+        try {
+            const data = await getHistoryRecords(JWTtoken, currentPage, recordsToFetch);
+
+            if (data.statusCode === 200) {
+                setRecordsSet(prevRecords => {
+                    const newRecords = data.data.filter(record => 
+                        !prevRecords.some(prevRecord => prevRecord.title === record.title && prevRecord.timestamp === record.timestamp)
+                    );
+                    return [...prevRecords, ...newRecords];
+                });
+                setHasMore(currentPage < data.total_pages);
+            } else {
+                console.error('資料獲取失敗:', data.message);
+            }
+        } catch (error) {
+            console.error('資料獲取失敗:', error);
+        } finally {
+            setIsFetching(false);
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteRecord = async (recordToDelete) => {
+        const response = await deleteHistoryRecords(JWTtoken, recordToDelete.id);
+
+        setRecordsSet((prevRecords) =>
+            prevRecords.filter(
+                (record) =>
+                    record.title !== recordToDelete.title ||
+                    record.timestamp !== recordToDelete.timestamp
+            )
+        );
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            const devData = [
-                {
-                    title: '一公里內的餐廳',
-                    records: [
-                        {
-                            name: '餐廳 A',
-                            address: '台北市信義區松仁路123號',
-                            mapUrl: 'https://example.com/mapA',
-                        },
-                        {
-                            name: '餐廳 B',
-                            address: '台北市大安區復興南路456號',
-                            mapUrl: 'https://example.com/mapB',
-                        },
-                        {
-                            name: '餐廳 B',
-                            address: '桃園市蘆竹區中興路',
-                            mapUrl: 'https://example.com/mapB',
-                        },
-                        {
-                            name: '餐廳 B',
-                            address: '新北市淡水區水源街二段177向43弄6-2號',
-                            mapUrl: 'https://example.com/mapB',
-                        },
-                        {
-                            name: '餐廳 B',
-                            address: '超吉長的文字超吉長的文字超吉長的文字超吉長的文字超吉長的文字超吉長的文字超吉長的文字超吉長的文字超吉長的文字超吉長的文字',
-                            mapUrl: 'https://example.com/mapB',
-                        },
-                        {
-                            name: '餐廳 B',
-                            address: '台北市大安區復興南路456號',
-                            mapUrl: 'https://example.com/mapB',
-                        },
-                        {
-                            name: '餐廳 B',
-                            address: '台北市大安區復興南路456號',
-                            mapUrl: 'https://example.com/mapB',
-                        },
-                        {
-                            name: '餐廳 B',
-                            address: '台北市大安區復興南路456號',
-                            mapUrl: 'https://example.com/mapB',
-                        },
-                    ],
-                },
-                {
-                    title: '台灣的大學大學大學大學大學大學大學大學大學',
-                    records: [
-                        {
-                            name: '國立台灣大學',
-                            address: '台北市大安區羅斯福路四段1號',
-                            mapUrl: 'https://example.com/mapNTU',
-                        },
-                        {
-                            name: '國立清華大學',
-                            address: '新竹市光復路二段101號',
-                            mapUrl: 'https://example.com/mapNTHU',
-                        },
-                    ],
-                },
-            ];
-
-            setRecordsSet(devData);
-            setLoading(false);
-            // try {
-            //     const response = await fetch('/api/getHistoryRecords');
-            //     const data = await response.json();
-            //     setRecordsSet(data);
-            // } catch (error) {
-            //     console.error('資料獲取失敗:', error);
-            // } finally {
-            //     setLoading(false);
-            // }
-        };
-
-        fetchData();
+        // 初次加載
+        const recordHeight = 250; 
+        const availableHeight = window.innerHeight;
+        const recordsToShow = Math.floor(availableHeight / recordHeight);
+        setRecordPerPage(recordsToShow);
+        fetchHistoryRecords(page, recordsToShow);
     }, []);
 
-    if (loading) {
-        return <>
+    const loadMoreRecords = () => {
+        if (!hasMore || loading || isFetching) return;
+        setPage(prevPage => {
+            const newPage = prevPage + 1;
+            fetchHistoryRecords(newPage, recordPerPage);
+            return newPage;
+        });
+    };
+
+    useEffect(() => {
+        const handleScroll = debounce(() => {
+            if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.scrollHeight - 5) {
+                loadMoreRecords();
+            }
+        }, 200);
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [hasMore, isFetching]);
+
+    if (loading && recordsSet.length === 0) {
+        return (
             <div className="flex justify-center items-center h-full gap-4">
                 <img
                     className="h-11 md:h-16"
@@ -95,11 +89,11 @@ const History = () => {
                 />
                 <p className="text-3xl md:text-5xl text-[#909090]">載入中...</p>
             </div>
-        </>
+        );
     }
 
     if(recordsSet.length === 0){
-        return <>
+        return (
             <div className="flex justify-center items-center h-full gap-4">
                 <img
                     className="h-11 md:h-16"
@@ -107,15 +101,25 @@ const History = () => {
                 />
                 <p className="text-3xl md:text-5xl text-[#909090]">暫無歷史紀錄</p>
             </div>
-        </>        
+        );
     }
 
     return (
-        <div className="h-full">
-            {recordsSet.map((recordSet, index) => (
-                <HistoryRecord key={index} title={recordSet.title} records={recordSet.records} />
+        <>
+            {recordsSet.map((recordSet) => (
+                <HistoryRecord
+                    key={`${recordSet.title}-${recordSet.timestamp}`}
+                    recordSet={recordSet}
+                    onDelete={handleDeleteRecord}
+                />
             ))}
-        </div>
+            {hasMore && (
+                <div className="flex justify-center items-center py-4">
+                    <p className="text-2xl text-[#909090]">下滑載入更多...</p>
+                </div>
+            )}
+            <div className="w-full h-1" />
+        </>
     );
 };
 

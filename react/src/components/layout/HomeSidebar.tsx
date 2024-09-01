@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, ReactElement, useEffect } from 'react';
-import { getOverPassQL, getGeoJsonData } from '@/components/lib/API';
+import { getOverPassQL, getGeoJsonData, saveManualQueryHistoryRecords } from '@/components/lib/API';
 // import MapLibreMap from "@/components/layout/MapLibreMap";
 import css from "@/css/Home.module.css";
 import Toast from '@/components/ui/Toast';
@@ -21,7 +21,7 @@ interface HomeSideBarProps {
 }
 
 export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps): ReactElement {
-  const { role } = useAuth();
+  const { JWTtoken, role } = useAuth();
   const isAdmin = role === "Admin";
   const queryFieldRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,25 +32,38 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
   const [gptModel, setGPTModel] = useState<GPTModel>('gpt35');
   const [extractedQuery, setExtractedQuery] = useState<null | QueryResponse>(null);
 
-  const handleGeoJsonResponse = useCallback(async (query: string) => {
-    const geoJsonResponse = await getGeoJsonData(query, bounds);
-    if (geoJsonResponse.status) {
-      if (geoJsonResponse.geoJson.features.length === 0) {
-        Swal.fire('查無結果');
+  const handleGeoJsonResponse = useCallback(async (query_text: string, query: string, manualQuery: boolean, model_name: string) => {
+    let valid = false;
+    let geoJsonResponse = null;
+
+    try {
+        geoJsonResponse = await getGeoJsonData(query, bounds);
+        if (geoJsonResponse.status) {
+            if (geoJsonResponse.geoJson.features.length === 0) {
+                Swal.fire('查無結果');
+            } else {
+                Swal.fire('查詢成功');
+                setGeoJsonData(geoJsonResponse.geoJson);
+                valid = true;
+            }
+          await saveManualQueryHistoryRecords(JWTtoken,query_text, query, valid, geoJsonResponse?.rawJson || null, manualQuery, model_name);
+        } else {
+            Toast.fire({
+                icon: 'error',
+                title: geoJsonResponse.message as String,
+            });
+        }
+    } catch (error) {
+        Toast.fire({
+            icon: 'error',
+            title: '查詢失敗',
+        });
+    } finally {
         setQueryState('idle');
-      } else {
-        Swal.fire('查詢成功');
-        setQueryState('idle');
-        setGeoJsonData(geoJsonResponse.geoJson);
-      }
-    } else {
-      setQueryState('idle');
-      Toast.fire({
-        icon: 'error',
-        title: geoJsonResponse.message as String,
-      });
     }
-  }, [bounds, setGeoJsonData]);
+}, [bounds, setGeoJsonData]);
+
+
 
   const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,21 +91,25 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
 
     try {
         let response: QueryResponse;
+        var manualQuery = false;
+        var model = null;
+        const inputText = textAreaRef.current?.value.trim() || ' ';
         if (activeTab === 'askgpt') {
-            const inputText = textAreaRef.current?.value.trim() || '';
-            var model = gptModel;
-            const overpassQLResponse = await getOverPassQL(inputText, model);
-            if (overpassQLResponse.statucode != 200){
-              throw new Error(overpassQLResponse.message?.toString() || '');
-            }
-            response = { osmquery: overpassQLResponse.osmquery, query_name: overpassQLResponse.query_name, response_metadata: overpassQLResponse.response_metadata};
+          model = gptModel;
+          const overpassQLResponse = await getOverPassQL(inputText, model, JWTtoken, bounds);
+          if (overpassQLResponse.statuscode != 200){
+            throw new Error(overpassQLResponse.message?.toString() || '');
+          }
+          response = { osmquery: overpassQLResponse.osmquery, query_name: overpassQLResponse.query_name, response_metadata: overpassQLResponse.response_metadata};
         } else {
-            response = { osmquery: queryFieldRef.current?.value || '', query_name: inputRef.current?.value || ''};
+          model = "manual";
+          manualQuery = true;
+          response = { osmquery: queryFieldRef.current?.value || '', query_name: inputRef.current?.value || ''};
         }
-
+        var query_text = manualQuery ? response.query_name : inputText; 
         setExtractedQuery(response);
         setQueryState('extracting_from_osm');
-        handleGeoJsonResponse(response.osmquery);
+        handleGeoJsonResponse(query_text, response.osmquery, manualQuery, model);
     } catch (error: any) {
         setQueryState('idle');
         Toast.fire({
@@ -100,7 +117,7 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
             title: error.message,
         });
     }
-  }, [activeTab, handleGeoJsonResponse, gptModel]);
+  }, [activeTab, handleGeoJsonResponse, gptModel, bounds]);
 
 
 
@@ -115,22 +132,22 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
     <div className="w-1/4 bg-[#e5e9ec] h-full px-6 py-4 hidden md:flex flex-col justify-between border-l border-black">
       
       {activeTab === "askgpt" ?
-        <div className="w-full flex justify-center border-[1px] border-black rounded-md shadow-md">
-          <div className={`cursor-pointer py-2 w-full text-center border-r-[1px] border-black ${gptModel === "gpt35" && "bg-gray-300 shadow-inner "}`} 
+        <div className="w-full flex justify-center border-[1px] border-black rounded-md">
+          <div className={`cursor-pointer py-2 w-full text-center border-r-[1px] border-black ${gptModel === "gpt35" && "bg-gray-300 shadow-custom-inner"}`} 
               onClick={() => {
                 setGPTModel("gpt35");
               }}>
             GPT-3.5
           </div>
-          <div className={`cursor-pointer py-2 w-full text-center border-r-[1px] border-black ${gptModel === "gpt4" && "bg-gray-300 shadow-inner"}`} 
+          <div className={`cursor-pointer py-2 w-full text-center border-r-[1px] border-black ${gptModel === "gpt4" && "bg-gray-300 shadow-custom-inner"}`} 
               onClick={() => {
                 setGPTModel("gpt4");
               }}>
             GPT-4
           </div>
-
+        
           { isAdmin &&  /*自費購買的API金鑰所以不直接公開 */
-            <div className={`cursor-pointer py-2 w-full text-center border-black ${gptModel === "gpt4o" && "bg-gray-300 shadow-inner"}`} onClick={()=>setGPTModel("gpt4o")}>
+            <div className={`cursor-pointer py-2 w-full text-center border-black ${gptModel === "gpt4o" && "bg-gray-300 shadow-custom-inner"}`} onClick={()=>setGPTModel("gpt4o")}>
               GPT-4o
             </div>
           }

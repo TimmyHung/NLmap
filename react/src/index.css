@@ -72,34 +72,30 @@ textarea{
   width: 100%;
 }
 
-textarea::-webkit-scrollbar,
-div::-webkit-scrollbar {
+*::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
 
-textarea::-webkit-scrollbar-button,
-div::-webkit-scrollbar-button {
+*::-webkit-scrollbar-button {
   background: transparent;
 }
 
-textarea::-webkit-scrollbar-track-piece,
-div::-webkit-scrollbar-track-piece {
+*::-webkit-scrollbar-track-piece {
   background: transparent;
 }
 
-textarea::-webkit-scrollbar-thumb,
-div::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
   border-radius: 4px;
   background-color: rgba(0, 0, 0, 0.4);
   border: 1px solid slategrey;
 }
 
-textarea::-webkit-scrollbar-track,
-div::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   margin-top: 2px;
   margin-bottom: 2px;
 }
+
 
 
 

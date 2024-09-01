@@ -4,7 +4,7 @@ import Login from "@/assets/登入.png";
 
 export default function Tutorial() {
     return (
-        <section className="p-4 md:p-16 font-sans bg-[#344851]">
+        <section className="p-4 md:p-16 font-sans bg-darkBlueGrey">
             <div className="bg-[#F2F0F0] p-7 rounded-[28px]">
                 <h2 className="text-center text-black text-[35px]">使用教學</h2>
 

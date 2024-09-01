@@ -145,7 +145,7 @@ export default function MainNavigation() {
             {!isMobile && (
               <div className="relative" ref={menuRef}>
                 <button className="w-12 h-12 rounded-full border-none bg-black flex justify-center items-center cursor-pointer" onClick={() => setMenuVisible(!menuVisible)}>
-                  {picture ? <img src={picture} alt="Profile" className="w-12 h-12 rounded-full object-cover" /> : username?.charAt(0)}
+                  {picture ? <img src={picture} alt="Profile" className="w-12 h-12 rounded-full object-cover" style={{ maxWidth: 'unset' }}/> : username?.charAt(0)}
                 </button>
                 {menuVisible && (
                   <div className="grid absolute mt-1.5 mr-5 right-0 bg-white shadow-lg rounded-lg z-50 self-center justify-center">
