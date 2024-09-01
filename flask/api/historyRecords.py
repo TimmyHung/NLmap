@@ -124,7 +124,7 @@ def save_manual_query():
         query = data.get('query')
         valid = data.get('valid')
         manualQuery = data.get('manualQuery')
-        geoRawJson = data.get('geoRawJson').get("elements",[])
+        geoRawJson = data.get('geoRawJson')
         model_name = data.get('model_name')
 
         if not query_text or not query:
@@ -134,7 +134,7 @@ def save_manual_query():
         if manualQuery:
             save_queryLog(user_id, query, "manual", 0, 0, 0, valid)
         
-        if user_id != None and len(geoRawJson) > 0:
+        if user_id != None and len(data.get('geoRawJson').get("elements",[])) > 0:
             cursor, connection = get_db_cursor()
             insert_sql = """
                 INSERT INTO query_history (user_id, model_name, query_text, query, result) 
