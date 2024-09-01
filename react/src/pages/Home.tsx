@@ -2,6 +2,7 @@ import { useState, useCallback, ReactElement } from 'react';
 import MapLibreMap from "@/components/layout/MapLibreMap";
 import css from "@/css/Home.module.css";
 import HomeSideBar from '@/components/layout/HomeSidebar';
+import HomeBottomDrawer from '@/components/layout/HomeBottomDrawer';
 
 interface GeoJsonData {
   id: string;
@@ -34,6 +35,10 @@ export default function Home(): ReactElement {
         />
       </div>
       <HomeSideBar
+        setGeoJsonData={handleGeoJsonData}
+        bounds={bounds}
+      />
+      <HomeBottomDrawer
         setGeoJsonData={handleGeoJsonData}
         bounds={bounds}
       />

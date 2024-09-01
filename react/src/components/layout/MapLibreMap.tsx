@@ -21,7 +21,7 @@ interface MapLibreMapProps {
 const MapLibreMap: React.FC<MapLibreMapProps> = ({
   geoJsonDataArray,
   onBoundsChange,
-  initialCenter = [120.55, 23.67],
+  initialCenter = [120.76, 23.80],
   initialZoom = 7,
   showInfo = true,
 }): ReactElement => {
@@ -85,7 +85,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
 
   return (
     <>
-      <div ref={mapRef} className="w-full h-full" />
+      <div ref={mapRef} className="w-full md:h-full" style={{ height: 'calc(100vh - 3rem)' }} />
       {geoJsonDataArray.map((geoJsonData) => (
         <GeojsonLayer
           key={geoJsonData.id}
@@ -99,7 +99,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
       <Popup map={mapInstance.current} />
       
       { showInfo &&
-        <div className="absolute bottom-2 left-2 bg-white bg-opacity-80 p-2 rounded-md">
+        <div className="absolute bottom-[8vh] left-2 bg-white bg-opacity-80 p-2 rounded-md">
         <div>{"經度 " + mapState.center[0].toFixed(2) + "    緯度 " + mapState.center[1].toFixed(2)}</div>
         <div>{"縮放等級 " + mapState.zoom.toFixed(2)}</div>
       </div>}
