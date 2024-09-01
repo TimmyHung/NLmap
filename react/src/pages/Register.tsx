@@ -126,7 +126,7 @@ export default function Register(): ReactElement {
                 我們保留隨時修訂這些條款的權利，修訂後的條款將在網站上公佈並生效。<br><br>
                 
                 <strong>聯繫方式</strong><br>
-                如果您對這些條款有任何疑問，請聯繫我們：ooo@example.com。
+                如果您對這些條款有任何疑問，請聯繫我們：410631203@gms.tku.edu.tw。
             </div>
         `
     });
@@ -174,7 +174,7 @@ export default function Register(): ReactElement {
         本網站隱私權保護政策將因應需求隨時進行修正，修正後的條款將刊登於網站上。</p>
 
         <p><strong>八、聯繫管道</strong><br>
-        對於本站之隱私權政策有任何疑問，或者想提出變更、移除個人資料之請求，請Email 至：ooo@example.com</p>
+        對於本站之隱私權政策有任何疑問，或者想提出變更、移除個人資料之請求，請Email 410631203@gms.tku.edu.tw</p>
       </div>`
     });
 }
@@ -190,7 +190,7 @@ export default function Register(): ReactElement {
       if (!focus) {
         if (account.length !== 0) {
           const valid = String(account).toLowerCase().match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
-          valid ? notifyElement.className = css.NotifyElement_Off : notifyElement.className = css.NotifyElement_On;
+          notifyElement.className = valid ? css.NotifyElement_Off : css.NotifyElement_On
           setAccountValid(false);
         } else {
           notifyElement.className = css.NotifyElement_Off;
@@ -208,68 +208,65 @@ export default function Register(): ReactElement {
   }
 
   return (
-    <div className={css.backgroundImage}>
-      <div className={css.register_container}>
-        <form className={css.center_wrapper}>
-          <h1>Create Account</h1>
-          <div className={css.regiter_form}>
-            <div className={css.form_item}>
-              <label>電子郵件<span className="required">*</span></label>
-              <div className={css.input_wrapper}>
-                <input
-                  type="email"
-                  id="account"
-                  onChange={(e) => setAccount(e.target.value)}
-                  onFocus={() => validateEmail(true)}
-                  onBlur={() => validateEmail(false)}
-                  autoComplete="one-time-code"
-                />
-              </div>
+    <div className={"h-full w-full flex justify-center " + css.backgroundImage}>
+      <div className="self-center py-8 px-6 md:px-12 rounded-xl m-8 w-full max-w-[450px] bg-white">
+        <form className="flex flex-col justify-center items-center">
+          <div className="text-3xl md:text-4xl w-full flex justify-center pb-6">
+            <h1>Create Account</h1>
+          </div>
+          <div className="">
+            <div className="flex flex-col pb-1">
+              <label>電子郵件<span className="text-red-600">*</span></label>
+              <input
+                className="w-full h-12"
+                type="email"
+                id="account"
+                onChange={(e) => setAccount(e.target.value)}
+                onFocus={() => validateEmail(true)}
+                onBlur={() => validateEmail(false)}
+                autoComplete="one-time-code"
+              />
               <div className={css.NotifyElement_Off} ref={emailNotifyElement}>
-                <label><span>輸入一個有效的電子郵件地址</span></label>
+                <label className="text-red-800">輸入一個有效的電子郵件地址</label>
               </div>
             </div>
 
-            <div className={css.form_item}>
-              <label>密碼<span className="required">*</span></label>
-              <div className={css.input_wrapper}>
-                <input
-                  type="password"
-                  id="password"
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="one-time-code"
-                />
-              </div>
+            <div className="mb-2">
+              <label>密碼<span className="text-red-600">*</span></label>
+              <input
+                className="w-full h-12"
+                type="password"
+                id="password"
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="one-time-code"
+              />
             </div>
 
-            <div className={css.form_item}>
-              <label>使用者名稱<span className="required">*</span></label>
-              <div className={css.input_wrapper}>
-                <input
-                  type="text"
-                  id="username"
-                  onChange={(e) => setUsername(e.target.value)}
-                  onFocus={() => validateName(true)}
-                  onBlur={() => validateName(false)}
-                  onKeyUp={(e) => e.key === "Enter" && handleRegister()}
-                  maxLength={8}
-                  autoComplete="one-time-code"
-                />
-              </div>
+            <div className="">
+              <label>使用者名稱<span className="text-red-600">*</span></label>
+              <input
+                className="w-full h-12"
+                type="text"
+                id="username"
+                onChange={(e) => setUsername(e.target.value)}
+                onFocus={() => validateName(true)}
+                onBlur={() => validateName(false)}
+                onKeyUp={(e) => e.key === "Enter" && handleRegister()}
+                maxLength={8}
+                autoComplete="one-time-code"
+              />
               <div className={css.NotifyElement_Off} ref={nameNotifyElement}>
-                <label>長度限制8個字元</label>
+                <label>長度限制最多8個字元</label>
               </div>
             </div>
 
-            <div className={css.footer}>
-              <div>
-                已經有帳號了嗎?<Link to={"/login"}>登入</Link>
-              </div>
+            <div className="w-full flex gap-2 justify-center py-4">
+              已經有帳號了嗎?<Link to={"/login"} className="font-bold text-black">登入</Link>
             </div>
-            <div className={css.button_wrapper}>
-              <button ref={buttonElement} className={css.button} type="button" onClick={handleRegister}>註冊</button>
+            <div className="">
+              <button ref={buttonElement} className="w-full h-12 bg-[#42cb83] hover:bg-[#3dbb78] rounded-[30px] mb-2 text-lg font-bold" type="button" onClick={handleRegister}>註冊</button>
             </div>
-            <label className={css.statement}>註冊即代表同意 <span onClick={terms}>服務條款</span> 及 <span onClick={privacy}>隱私權政策</span> </label>
+            <label className="text-sm md:text-base flex justify-center gap-1">註冊即代表同意 <span onClick={terms} className="font-bold underline cursor-pointer">服務條款</span> 及 <span onClick={privacy} className="font-bold underline cursor-pointer">隱私權政策</span> </label>
           </div>
         </form>
       </div>

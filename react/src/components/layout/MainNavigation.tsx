@@ -128,7 +128,7 @@ export default function MainNavigation() {
   
   return (
     <>
-      <div className={`${css.headerContainer} flex justify-between items-center py-6 px-8 h-[9%] bg-[#202527] shadow-md`}>
+      <div className={`${css.headerContainer} flex justify-between items-center py-6 px-4 md:px-8 h-[9%] bg-[#202527] shadow-md`}>
         <div className="flex">
           <div className="transform scale-90 font-covered">
             <Link to="/" className="flex items-center text-center">

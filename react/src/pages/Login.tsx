@@ -112,7 +112,7 @@ export default function Login(): ReactElement {
   return (
     <div className={"h-full w-full flex justify-center " + css.backgroundImage}>
         <div className="self-center py-8 px-8 md:px-12 rounded-xl bg-[#f9f9f9] m-8 w-full max-w-[450px] shadow-xl">
-          <div className="text-4xl min-w-128 w-full flex justify-center pb-6">
+          <div className="text-4xl w-full flex justify-center pb-6">
             <h1>Sign in</h1>
           </div>
           <form className="">
