@@ -30,3 +30,4 @@ dist-ssr
 *.sln
 *.sw?
 flask/assets/datalist.pkl
+flask/assets/modification_times.json

@@ -3,35 +3,22 @@ import requests
 import jwt
 from flask import Blueprint, request, jsonify, redirect
 from utils.MySQL import get_db_cursor
-from utils.util import hash_password, generate_jwt, verify_google_token, verify_apple_token
+from utils.util import hash_password, generate_jwt, verify_google_token, verify_apple_token, verify_JWTtoken
 
 authorize_blueprint = Blueprint('authorize', __name__)
 root = "/api/authorization"
 
-def verify_jwt(token):
-    if not token:
-        return {'status': False, 'message': 'no token'}, 401
-    try:
-        decoded = jwt.decode(token, os.getenv('JWT_SECRET_KEY'), algorithms=['HS256'])
-        return {'status': True, 'message': 'Token Normal', 'data': decoded}, 200
-    except jwt.ExpiredSignatureError as e:
-        return {'status': False, 'message': 'JWT Failed: Token Expired', 'detail': str(e)}, 200
-    except jwt.InvalidTokenError as e:
-        return {'status': False, 'message': 'JWT Failed: Token Invalid', 'detail': str(e)}, 200
-    except Exception as e:
-        return {'status': False, 'message': 'JWT Failed: ' + str(e)}, 200
-
 @authorize_blueprint.route(root + '/jwtverify', methods=['POST'])
 def jwt_verify():
     token = request.headers.get('Authorization').split(' ')[1]
-    response, status_code = verify_jwt(token)
+    response, status_code = verify_JWTtoken(token)
     return jsonify(response), status_code
 
 
 @authorize_blueprint.route(root + '/delete', methods=['DELETE'])
 def deleteAccount():
     JWTtoken = request.args.get("JWTtoken")
-    response, status_code = verify_jwt(JWTtoken)
+    response, status_code = verify_JWTtoken(JWTtoken)
     if not response['status']:
         return jsonify(response), status_code
 
@@ -44,7 +31,7 @@ def deleteAccount():
     userID_column = ""
     match account_type:
         case "Native":
-            userID_column = "user_ID"
+            userID_column = "userID"
         case "Google":
             userID_column = "google_userID"
         case "Apple":
@@ -129,7 +116,7 @@ def login():
         return jsonify({'status': True, 'message': message, 'JWTtoken': token}), 200
 
     def get_user_by_field(field, value):
-        sql = f"SELECT role, username, {field}, account_type FROM users WHERE {field} = %s"
+        sql = f"SELECT role, userID, username, {field}, account_type FROM users WHERE {field} = %s"
         cursor.execute(sql, (value,))
         return cursor.fetchone()
 
@@ -154,10 +141,10 @@ def login():
             else:
                 return jsonify({'status': False, 'message': 'Login Failed: Account does not exist'}), 200
 
-            sql = "SELECT user_ID, hashed_password, salt, role, username FROM users WHERE email = %s"
+            sql = "SELECT userID, hashed_password, salt, role, username FROM users WHERE email = %s"
             cursor.execute(sql, (email,))
             result = cursor.fetchone()
-            userID = result["user_ID"]
+            userID = result["userID"]
             stored_hashed_password = result["hashed_password"]
             salt = result["salt"]
             role = result["role"]
@@ -192,40 +179,18 @@ def login():
                 role = 'User'
                 username = name
                 create_new_user(email, name, role, google_userID=google_userID)
+                userID = cursor.lastrowid
                 message = 'Register Successful'
             else:
-                role, username, db_google_userID, account_type = result
+                role = result["role"]
+                username = result["username"]
+                google_userID = result["google_userID"] 
+                account_type = result["account_type"]
+                userID = result["userID"]
                 message = 'Login Successful'
 
-            additional_payload = {'picture': picture}
-            return generate_response(loginType, username, role, db_google_userID, additional_payload)
-
-        # case "Facebook":
-        #     fb_res = data.get('fbRes')
-        #     email = fb_res.get('email')
-        #     name = fb_res.get('name')
-        #     picture = fb_res.get('picture')['data']['url']
-        #     facebook_userID = fb_res.get('id')
-
-        #     result = check_email_exists(email)
-        #     if result:
-        #         db_email, db_account_type = result
-        #         if db_email and db_account_type != loginType:
-        #             return jsonify({'status': False, 'message': 'Login Failed: account exists.', 'JWTtoken': None, 'account_type': db_account_type}), 200
-
-        #     result = get_user_by_field('facebook_userID', facebook_userID)
-            
-        #     if not result:
-        #         role = 'User'
-        #         username = name
-        #         create_new_user(email, username, role, facebook_userID=facebook_userID)
-        #         message = "Register Successful"
-        #     else:
-        #         role, username, db_facebook_userID, account_type = result
-        #         message = "Login Successful"
-
-        #     additional_payload = {'name': name, 'picture': picture}
-        #     return generate_response(loginType, username, role, additional_payload)
+            additional_payload = {'google_userID': google_userID,'picture': picture}
+            return generate_response(loginType, username, role, userID, additional_payload)
 
         case "Apple":
             appleRes = data.get('appleRes')
@@ -247,18 +212,24 @@ def login():
                 role = 'User'
                 username = appleRes.get("user")["name"]["lastName"] + appleRes.get("user")["name"]["firstName"]
                 create_new_user(email, username, role, apple_userID=apple_userID)
+                userID = cursor.lastrowid
                 message = 'Register Successful'
             elif not initLogin and not result: #使用者已註冊過但資料庫沒有資料
                 role = 'User'
                 username = "使用者"
                 create_new_user(email, username, role, apple_userID=apple_userID)
+                userID = cursor.lastrowid
                 message = 'Register Successful'
             else:
-                role, username, apple_userID, account_type = result
+                role = result["role"]
+                username = result["username"]
+                apple_userID = result["apple_userID"] 
+                account_type = result["account_type"]
+                userID = result["userID"]
                 message = 'Login Successful'
 
-            additional_payload = {'userID': apple_userID}
-            return generate_response(loginType, username, role, apple_userID, additional_payload)
+            additional_payload = {'apple_userID': apple_userID}
+            return generate_response(loginType, username, role, userID, additional_payload)
 
         case _:
             return jsonify({'status': False, 'message': 'Bad Request'}), 400
@@ -272,7 +243,7 @@ REDIRECT_URI = "https://timmyhungback.pettw.online/api/authorization/discord/cal
 FRONTEND_URL = "https://timmyhung.pettw.online"
 
 @authorize_blueprint.route(root + '/discord/callback', methods=['GET'])
-def callback():
+def discord_callback():
     code = request.args.get('code')
     if not code:
         return redirect(f"{FRONTEND_URL}/login?error=Code is missing")
@@ -301,12 +272,13 @@ def callback():
         return redirect(f"{FRONTEND_URL}/login?error=Failed to fetch user info")
 
     user_info = user_info_response.json()
-    user_id = user_info['id']
+    discord_user_id = user_info['id']
     username = user_info['global_name']
     email = user_info['email']
-    picture = "https://cdn.discordapp.com/avatars/" + user_id + "/" + user_info['avatar'] + ".png"
+    picture = "https://cdn.discordapp.com/avatars/" + discord_user_id + "/" + user_info['avatar'] + ".png"
 
     cursor, connection = get_db_cursor()
+    
     def create_new_user(email, username, role, discord_userID):
         sql = """
             INSERT INTO users (email, username, role, discord_userID, account_type) 
@@ -315,14 +287,14 @@ def callback():
         cursor.execute(sql, (email, username, role, discord_userID, 'Discord'))
         cursor.connection.commit()
 
-    def generate_response(username, role, additional_payload={}):
-        payload = {'account_type': 'Discord', 'username': username, 'role': role}
+    def generate_response(username, role, userID, additional_payload={}):
+        payload = {'account_type': 'Discord', 'username': username, 'role': role, 'userID': userID}
         payload.update(additional_payload)
         token = generate_jwt(payload)
         return token
 
     def get_user_by_field(field, value):
-        sql = f"SELECT role, username, {field}, account_type FROM users WHERE {field} = %s"
+        sql = f"SELECT role, username, {field}, account_type, userID FROM users WHERE {field} = %s"
         cursor.execute(sql, (value,))
         return cursor.fetchone()
 
@@ -340,18 +312,23 @@ def callback():
         if db_email and db_account_type != 'Discord':
             return redirect(f"{FRONTEND_URL}/login?message=Login Failed: account exists&account_type={db_account_type}&status=false")
 
-    result = get_user_by_field('discord_userID', user_id)
+    result = get_user_by_field('discord_userID', discord_user_id)
     
     if not result: # 使用者第一次登入
         role = 'User'
-        create_new_user(email, username, role, user_id)
+        create_new_user(email, username, role, discord_user_id)
         message = 'Register Successful'
+        userID = cursor.lastrowid
     else:
-        role, username, db_discord_userID, account_type = result
+        role = result["role"]
+        username = result["username"]
+        discord_user_id = result["discord_userID"]
+        account_type = result["account_type"]
+        userID = result["userID"]
         message = 'Login Successful'
 
-    additional_payload = {'username': username, 'picture': picture}
-    jwt_token = generate_response(username, role, additional_payload)
+    additional_payload = {'discord_userID': discord_user_id, 'picture': picture}
+    jwt_token = generate_response(username, role, userID, additional_payload)
 
     connection.close()
     return redirect(f"{FRONTEND_URL}/login?token={jwt_token}&message={message}&status=true")
