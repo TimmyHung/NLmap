@@ -128,17 +128,16 @@ def save_manual_query():
     model_name = "manual" if manualQuery else None
 
     try:
-
         # 保存歷史記錄和查詢日誌
         if manualQuery:
-            save_queryLog(user_id, query, "manual", 0, 0, 0, valid)
+            save_queryLog(user_id, query_text, query, "manual", 0, 0, 0, valid)
         else:
             response_metadata = data.get("response_metadata")
             model_name = response_metadata["model_name"]
             prompt_tokens = response_metadata["token_usage"]["prompt_tokens"]
             completion_tokens = response_metadata["token_usage"]["completion_tokens"]
             total_tokens = response_metadata["token_usage"]["total_tokens"]
-            save_queryLog(user_id, query, model_name, prompt_tokens, completion_tokens, total_tokens, valid)
+            save_queryLog(user_id, query_text, query, model_name, prompt_tokens, completion_tokens, total_tokens, valid)
         
         if user_id != None and len(data.get('geoRawJson').get("elements",[])) > 0:
             cursor, connection = get_db_cursor()
@@ -152,10 +151,10 @@ def save_manual_query():
         return jsonify({'statusCode': 200, 'message': 'Query saved successfully'}), 200
     
     except Exception as e:
-        print(f"手動查詢保存失敗: {e}")
+        print(f"儲存歷史紀錄時發生錯誤: {e}")
         if connection:
             connection.rollback()
-        return jsonify({'statusCode': 500, 'message': 'Failed to save manual query', 'error': str(e)}), 200
+        return jsonify({'statusCode': 500, 'message': 'Failed to save query', 'error': str(e)}), 200
     finally:
         if cursor:
             cursor.close()
