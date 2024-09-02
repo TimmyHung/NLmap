@@ -99,7 +99,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
       <Popup map={mapInstance.current} />
       
       { showInfo &&
-        <div className="absolute bottom-[8vh] left-2 bg-white bg-opacity-80 p-2 rounded-md">
+        <div className="absolute bottom-[8vh] md:bottom-2 left-2 bg-white bg-opacity-80 p-2 rounded-md">
         <div>{"經度 " + mapState.center[0].toFixed(2) + "    緯度 " + mapState.center[1].toFixed(2)}</div>
         <div>{"縮放等級 " + mapState.zoom.toFixed(2)}</div>
       </div>}

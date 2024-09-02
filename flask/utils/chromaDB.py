@@ -134,19 +134,9 @@ def query(chromaDB, model, prompt, JWTtoken, bounds):
         osmquery = response["content"].split("|||")[1].replace("data=", "")
 
         JWTresponse = verify_JWTtoken(JWTtoken)[0]
-
-        user_id = JWTresponse["data"]["userID"] if JWTresponse["status"] else None
-        query = osmquery.replace("{{bbox}}", bounds)
-        model_name = response["response_metadata"]["model_name"]
-        prompt_tokens = response["response_metadata"]["token_usage"]["prompt_tokens"]
-        completion_tokens = response["response_metadata"]["token_usage"]["completion_tokens"]
-        total_tokens = response["response_metadata"]["token_usage"]["total_tokens"]
-        valid = osmquery != "null"
-        # 儲存查詢日誌
-        save_queryLog(user_id, query, model_name, prompt_tokens, completion_tokens, total_tokens, valid)
         
         # 資料返回給前端
         if osmquery == "null":
-            return {'statuscode': 400, 'message': '查詢失敗，無效的查詢字詞。'}
+            return {'statuscode': 400, 'message': '查詢失敗，無效的查詢字詞。', 'osmquery': osmquery, 'query_name': query_name, 'response_metadata': response["response_metadata"]}
         else:
             return {'statuscode': 200, 'message': '查詢成功', 'osmquery': osmquery, 'query_name': query_name, 'response_metadata': response["response_metadata"]}

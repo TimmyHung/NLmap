@@ -142,14 +142,14 @@ export const deleteHistoryRecords = async (JWTtoken: string, record_id: number) 
   }
 };
 
-export const saveManualQueryHistoryRecords = async (JWTtoken: string, queryName: string, query: string, valid: boolean, geoRawJson: String, manualQuery: boolean, model_name: string) => {
+export const saveQueryHistoryRecords = async (JWTtoken: string, queryName: string, query: string, valid: boolean, geoRawJson: Record<string, any>, manualQuery: boolean, response_metadata?: string) => {
   const data = {
       query_text: queryName,
       query: query,
       valid: valid,
       geoRawJson: geoRawJson,
       manualQuery: manualQuery,
-      model_name: model_name,
+      response_metadata: response_metadata,
   };
 
   const headers = {
@@ -157,10 +157,10 @@ export const saveManualQueryHistoryRecords = async (JWTtoken: string, queryName:
   };
 
   try {
-      const response = await postRequest("api/user/historyRecords/save", data, headers, 5000);
-      return response;
+    const response = await postRequest("api/user/historyRecords/save", data, headers, 20000);
+    return response;
   } catch (err) {
-      console.error('API Save Manual Query 錯誤:', err.response ? err.response.data : err.message);
-      return { status: false, message: err.response ? err.response.data : err.message };
+    console.error('API Save Manual Query 錯誤:', err.response ? err.response.data : err.message);
+    return { status: false, message: err.response ? err.response.data : err.message };
   }
 };

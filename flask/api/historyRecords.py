@@ -114,25 +114,31 @@ def delete_history_record():
 @history_blueprint.route(root + '/save', methods=['POST'])
 def save_manual_query():
     cursor, connection = None, None
-    try:
-        JWTtoken = request.headers.get('Authorization', '').split(' ')[-1]
-        JWTresponse = verify_JWTtoken(JWTtoken)[0]
-        
-        user_id = JWTresponse["data"]["userID"] if JWTresponse["status"] else None
-        data = request.json
-        query_text = data.get('query_text')
-        query = data.get('query')
-        valid = data.get('valid')
-        manualQuery = data.get('manualQuery')
-        geoRawJson = data.get('geoRawJson')
-        model_name = data.get('model_name')
+    # try:
+    JWTtoken = request.headers.get('Authorization', '').split(' ')[-1]
+    JWTresponse = verify_JWTtoken(JWTtoken)[0]
+    
+    user_id = JWTresponse["data"]["userID"] if JWTresponse["status"] else None
+    data = request.json
+    query_text = data.get('query_text')
+    query = data.get('query')
+    valid = data.get('valid')
+    manualQuery = data.get('manualQuery')
+    geoRawJson = data.get('geoRawJson')
+    model_name = "manual" if manualQuery else None
 
-        if not query_text or not query:
-            return jsonify({"statusCode": 400, "message": "Missing query_text or query"}), 400
+    try:
 
         # 保存歷史記錄和查詢日誌
         if manualQuery:
             save_queryLog(user_id, query, "manual", 0, 0, 0, valid)
+        else:
+            response_metadata = data.get("response_metadata")
+            model_name = response_metadata["model_name"]
+            prompt_tokens = response_metadata["token_usage"]["prompt_tokens"]
+            completion_tokens = response_metadata["token_usage"]["completion_tokens"]
+            total_tokens = response_metadata["token_usage"]["total_tokens"]
+            save_queryLog(user_id, query, model_name, prompt_tokens, completion_tokens, total_tokens, valid)
         
         if user_id != None and len(data.get('geoRawJson').get("elements",[])) > 0:
             cursor, connection = get_db_cursor()
@@ -149,7 +155,7 @@ def save_manual_query():
         print(f"手動查詢保存失敗: {e}")
         if connection:
             connection.rollback()
-        return jsonify({'statusCode': 500, 'message': 'Failed to save manual query', 'error': str(e)}), 500
+        return jsonify({'statusCode': 500, 'message': 'Failed to save manual query', 'error': str(e)}), 200
     finally:
         if cursor:
             cursor.close()

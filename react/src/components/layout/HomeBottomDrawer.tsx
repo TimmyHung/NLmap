@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, ReactElement, useEffect } from 'react';
-import { getOverPassQL, getGeoJsonData, saveManualQueryHistoryRecords } from '@/components/lib/API';
+import { getOverPassQL, getGeoJsonData, saveQueryHistoryRecords } from '@/components/lib/API';
 import css from "@/css/Home.module.css";
 import Toast from '@/components/ui/Toast';
 import Swal from 'sweetalert2';
@@ -32,7 +32,7 @@ export default function HomeBottomDrawer({ setGeoJsonData, bounds }: HomeBottomD
   const [extractedQuery, setExtractedQuery] = useState<null | QueryResponse>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const handleGeoJsonResponse = useCallback(async (query_text: string, query: string, manualQuery: boolean, model_name: string) => {
+  const handleGeoJsonResponse = useCallback(async (query_text: string, query: string, manualQuery: boolean, response_metadata?: string) => {
     let valid = false;
     let geoJsonResponse = null;
 
@@ -46,7 +46,7 @@ export default function HomeBottomDrawer({ setGeoJsonData, bounds }: HomeBottomD
                 setGeoJsonData(geoJsonResponse.geoJson);
                 valid = true;
             }
-          await saveManualQueryHistoryRecords(JWTtoken,query_text, query, valid, geoJsonResponse?.rawJson || null, manualQuery, model_name);
+          await saveQueryHistoryRecords(JWTtoken,query_text, query, valid, geoJsonResponse?.rawJson || null, manualQuery, response_metadata);
         } else {
             Toast.fire({
                 icon: 'error',
@@ -63,7 +63,9 @@ export default function HomeBottomDrawer({ setGeoJsonData, bounds }: HomeBottomD
     }
 }, [bounds, setGeoJsonData]);
 
-const handleSearch = useCallback(async (e: React.FormEvent) => {
+
+
+  const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (activeTab === 'askgpt') {
@@ -90,30 +92,32 @@ const handleSearch = useCallback(async (e: React.FormEvent) => {
     try {
         let response: QueryResponse;
         var manualQuery = false;
-        var model = null;
+        var overpassQLResponse;
+        var query_text;
         const inputText = textAreaRef.current?.value.trim() || ' ';
         if (activeTab === 'askgpt') {
-          model = gptModel;
-          const overpassQLResponse = await getOverPassQL(inputText, model, JWTtoken, bounds);
+          overpassQLResponse = await getOverPassQL(inputText, gptModel, JWTtoken, bounds);
           if (overpassQLResponse.statuscode != 200){
             throw new Error(overpassQLResponse.message?.toString() || '');
           }
           response = { osmquery: overpassQLResponse.osmquery, query_name: overpassQLResponse.query_name, response_metadata: overpassQLResponse.response_metadata};
         } else {
-          model = "manual";
           manualQuery = true;
           response = { osmquery: queryFieldRef.current?.value || '', query_name: inputRef.current?.value || ''};
         }
-        var query_text = manualQuery ? response.query_name : inputText; 
+        query_text = manualQuery ? response.query_name : inputText; 
         setExtractedQuery(response);
         setQueryState('extracting_from_osm');
-        handleGeoJsonResponse(query_text, response.osmquery, manualQuery, model);
+        handleGeoJsonResponse(query_text, response.osmquery, manualQuery, response.response_metadata);
     } catch (error: any) {
-        setQueryState('idle');
         Toast.fire({
             icon: 'error',
             title: error.message,
         });
+        if(!manualQuery){
+          await saveQueryHistoryRecords(JWTtoken, null, null, false, {}, manualQuery, overpassQLResponse.response_metadata);
+        }
+        setQueryState('idle');
     }
   }, [activeTab, handleGeoJsonResponse, gptModel, bounds]);
 

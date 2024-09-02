@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import axios from 'axios';
 import clockIcon from "@/assets/clock.png";
 import location_icon from '@/assets/location_icon.svg';
 import MapModal from '@/components/layout/MapModal';
 import { osmToGeoJson } from "@/components/lib/Utils";
-import postRequest, { getGeoJsonData, getOverPassQL, getRequest } from '../lib/API';
-import osmtogeojson from 'osmtogeojson';
 import Toast from '../ui/Toast';
 
 
