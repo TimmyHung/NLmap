@@ -34,18 +34,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const fetchData = async () => {
         const response = await verifyJWT(JWTtoken);
         switch (response.message) {
-          case "Token Expired":
-            logout("您已登出", "帳號驗證已過期請重新登入");
-            break;
-          case "Token Invalid":
-            logout("您已登出", "帳號驗證問題請重新登入");
-            break;
-          case "Unknown Error":
-            logout("您已登出", "帳號驗證問題請重新登入");
-            break;
-          case "Timeout":
-            logout("您已登出", "帳號驗證問題請重新登入");
-            break;
           case "Token Normal":
             setUsername(response.data.username);
             setRole(response.data.role);
@@ -53,6 +41,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setAccountType(response.data.account_type);
             setUserID(response.data.userID);
             break;
+          case "JWT Failed: Token Expired":
+            logout("您已登出", "帳號驗證已過期請重新登入");
+            break;
+          case "JWT Failed: Token Invalid":
+            logout("您已登出", "帳號驗證問題請重新登入");
+            break;
+          default:
+            logout("您已登出", "帳號驗證問題請重新登入");
+            break;
+          
         }
       };
       fetchData();
