@@ -11,7 +11,6 @@ export type Tabs = 'manual' | 'askgpt';
 export type GPTModel = 'gpt35' | 'gpt4' | 'gpt4o';
 export type QueryResponse = {
   osmquery: string;
-  query_name: string;
   response_metadata?: string;
 };
 
@@ -47,7 +46,6 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
               setGeoJsonData(geoJsonResponse.geoJson);
               valid = true;
           }
-          console.log(valid);
           await saveQueryHistoryRecords(JWTtoken,query_text, query, valid, geoJsonResponse?.rawJson || null, manualQuery, response_metadata);
         } else {
             Toast.fire({
@@ -97,29 +95,30 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
         var overpassQLResponse;
         var query_text;
         const inputText = textAreaRef.current?.value.trim() || ' ';
+        const manualInputText = inputRef.current?.value || '';
         if (activeTab === 'askgpt') {
           overpassQLResponse = await getOverPassQL(inputText, gptModel, JWTtoken, bounds);
           if (overpassQLResponse.statuscode != 200){
             throw new Error(overpassQLResponse.message?.toString() || '');
           }
-          response = { osmquery: overpassQLResponse.osmquery, query_name: overpassQLResponse.query_name, response_metadata: overpassQLResponse.response_metadata};
+          response = { osmquery: overpassQLResponse.osmquery, response_metadata: overpassQLResponse.response_metadata};
         } else {
           manualQuery = true;
-          response = { osmquery: queryFieldRef.current?.value || '', query_name: inputRef.current?.value || ''};
+          response = { osmquery: queryFieldRef.current?.value || ''};
         }
-        query_text = manualQuery ? response.query_name : inputText; 
+        query_text = manualQuery ? manualInputText : inputText; 
         setExtractedQuery(response);
         setQueryState('extracting_from_osm');
         handleGeoJsonResponse(query_text, response.osmquery, manualQuery, response.response_metadata);
     } catch (error: any) {
-        Toast.fire({
-            icon: 'error',
-            title: error.message,
-        });
-        if(!manualQuery){
-          await saveQueryHistoryRecords(JWTtoken, null, null, false, {}, manualQuery, overpassQLResponse.response_metadata);
-        }
-        setQueryState('idle');
+      Toast.fire({
+          icon: 'error',
+          title: error.message,
+      });
+      if(!manualQuery){
+        await saveQueryHistoryRecords(JWTtoken, null, null, false, {}, manualQuery, overpassQLResponse.response_metadata);
+      }
+      setQueryState('idle');
     }
   }, [activeTab, handleGeoJsonResponse, gptModel, bounds]);
 
@@ -168,7 +167,7 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
               ref={queryFieldRef}
               placeholder={activeTab === 'askgpt' ? '生成後的查詢語言會顯示在這...' : '輸入OverPass Query Language'}
               value={extractedQuery?.osmquery || ''}
-              onChange={(e) => setExtractedQuery({ osmquery: e.target.value, query_name: extractedQuery?.query_name || '' })}
+              onChange={(e) => setExtractedQuery({ osmquery: e.target.value})}
               rows={7}
               disabled={activeTab === 'askgpt'}
             />
@@ -179,7 +178,7 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
             <input
                 ref={textAreaRef}
                 placeholder="例如：台北市的停車場"
-                onChange={(e) => setExtractedQuery({ osmquery: extractedQuery?.osmquery || '', query_name: e.target.value })}
+                onChange={(e) => setExtractedQuery({ osmquery: extractedQuery?.osmquery || ''})}
                 disabled={queryState !== 'idle'}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.shiftKey) {
@@ -193,7 +192,7 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
             <input
                 ref={inputRef}
                 placeholder="這筆查詢的名稱"
-                onChange={(e) => setExtractedQuery({ osmquery: extractedQuery?.osmquery || '', query_name: e.target.value })}
+                onChange={(e) => setExtractedQuery({ osmquery: extractedQuery?.osmquery || ''})}
                 disabled={queryState !== 'idle'}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.shiftKey) {

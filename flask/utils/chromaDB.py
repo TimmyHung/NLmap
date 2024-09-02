@@ -86,11 +86,9 @@ def loadData():
 
 
 def combineSystemRoleText(search_results, prompt):
-    # promptText = f"Help me generate Overpass Query Language for querying OpenStreetMap, related to the term: {prompt}\n"
-    promptText = "Respond with just the `query_name` and `data`. Do not include `{` or `}` in the response. After `data=`, include the entire query string without any explanation.\n"
-    promptText += "Format your response like this: query_name={NAME PLACEHOLDER}|||data=[out:json][timeout:60];{INSERT_QUERY_HERE};out;>;out skel qt;\n"
-    promptText += "Ensure that you replace the entire `{NAME PLACEHOLDER}` with the appropriate Traditional Chinese (zh_tw) words representing this query.\n"
-    promptText += "If you determine that the prompt is not a valid query, respond with: query_name=null|||data=null\n"
+    promptText = "Respond with just the `data` after `data=`, include the entire query string without any explanation.\n"
+    promptText += "Format your response like this: data=[out:json][timeout:60];{INSERT_QUERY_HERE};out;>;out skel qt;\n"
+    promptText += "If you determine that the prompt is not a valid query, respond with: data=null\n"
     promptText += "I will provide a few example phrases for reference, but please note these are only for guidance. If you find the example phrases unhelpful, feel free to generate them yourself.\n"
     promptText += "Example phrases and expected responses are:\n"
 
@@ -103,9 +101,9 @@ def combineSystemRoleText(search_results, prompt):
             seen_queries.add(result.page_content)
     
     for i in range(min(len(unique_results), 5)):  # 防止結果不足5個
-        promptText += str(unique_results[i].page_content) + "\n" + "query_name={NAME PLACEHOLDER}|||" + str(DataList[unique_results[i].page_content]) + "\n"
+        promptText += str(unique_results[i].page_content) + "\n" + str(DataList[unique_results[i].page_content]) + "\n"
     
-    promptText += "Now only generate one query response."
+    promptText += "Now, generate only one best query response."
 
     print("\n==================\n" + promptText + "\n=================\n")
     return promptText
@@ -130,13 +128,12 @@ def query(chromaDB, model, prompt, JWTtoken, bounds):
     else:
         
         print(response["content"])
-        query_name = response["content"].split("|||")[0].replace("query_name=", "").replace("{","").replace("}","")
-        osmquery = response["content"].split("|||")[1].replace("data=", "")
+        osmquery = response["content"].replace("data=", "")
 
         JWTresponse = verify_JWTtoken(JWTtoken)[0]
         
         # 資料返回給前端
         if osmquery == "null":
-            return {'statuscode': 400, 'message': '查詢失敗，無效的查詢字詞。', 'osmquery': osmquery, 'query_name': query_name, 'response_metadata': response["response_metadata"]}
+            return {'statuscode': 400, 'message': '查詢失敗，無效的查詢字詞。', 'osmquery': osmquery, 'response_metadata': response["response_metadata"]}
         else:
-            return {'statuscode': 200, 'message': '查詢成功', 'osmquery': osmquery, 'query_name': query_name, 'response_metadata': response["response_metadata"]}
+            return {'statuscode': 200, 'message': '查詢成功', 'osmquery': osmquery, 'response_metadata': response["response_metadata"]}

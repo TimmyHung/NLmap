@@ -5,6 +5,7 @@ import location_icon from '@/assets/location_icon.svg';
 import MapModal from '@/components/layout/MapModal';
 import { osmToGeoJson } from "@/components/lib/Utils";
 import Toast from '../ui/Toast';
+import Swal from 'sweetalert2';
 
 
 const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
@@ -57,6 +58,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         { value: "花蓮縣", label: "花蓮縣" },
         { value: "金門縣", label: "金門縣" },
         { value: "連江縣", label: "連江縣" },
+        { value: "未知", label: "未歸類"}
     ], []);
 
     const fetchLocationInfo = async (lng, lat) => {
@@ -167,31 +169,43 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     
             for (const record of records) {
                 if (record?.tags && Object.keys(record.tags).length > 0) {
-                    let ctyName = standardizeCityName(record.tags["addr:city"]);
-                    let townName = record.tags["addr:district"];
+                    let ctyName = standardizeCityName(record.tags["addr:city"]) || "未知";
+                    let townName = record.tags["addr:district"] || "未知";
                     record.displayName = getDisplayName(record);
-    
+                    
+                    // 優先過濾掉未命名紀錄(如果有開啟設定)
                     if (hideUnknownRecords && record.displayName === '未命名紀錄') {
                         setProcessedCount(prevCount => prevCount + 1);
                         continue;
                     }
-    
+                    
+                    // 替每一個搜尋結果設定經緯度
                     const location = getLatLon(record, records);
-                    if ((!ctyName || !townName) && !skipFetchLocationInfo) {
+
+                    // 透過國土鑑測API根據經緯度去取得大概地理位置
+                    if ((ctyName === "未知" || townName === "未知") && !skipFetchLocationInfo) {
                         const locationInfo = await fetchLocationInfo(location.lon, location.lat);
                         ctyName = standardizeCityName(locationInfo[0]);
                         townName = locationInfo[1];
                     }
 
-                    if (ctyName === "未知" || townName === "未知") {
-                        setProcessedCount(prevCount => prevCount + 1);
-                        continue;
+                    // 透過國土鑑測API根據經緯度去取得大概地理位置(有部分地址的額外請求)
+                    if ((ctyName === "未知" || townName === "未知") && record.tags["addr:street"]) {
+                        const locationInfo = await fetchLocationInfo(location.lon, location.lat);
+                        ctyName = standardizeCityName(locationInfo[0]);
+                        townName = locationInfo[1];
                     }
-    
+                    
+
+                    // if (ctyName === "未知" || townName === "未知") {
+                    //     setProcessedCount(prevCount => prevCount + 1);
+                    //     continue;
+                    // }
+
                     record.ctyName = ctyName;
                     record.townName = townName;
                     record.displayAddress = getDisplayAddress(record);
-    
+                    
                     citySet.add(ctyName);
                     if (ctyName === selectedCity || !selectedCity) {
                         districtSet.add(townName);
@@ -218,7 +232,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
             });
     
             setFilteredRecords(filtered);
-            setDisplayedRecords(new Set(filtered.slice(0, batchSize))); // 初始加載第一批
+            setDisplayedRecords(new Set(filtered.slice(0, batchSize)));
             setAvailableCities([...citySet]);
             setAvailableDistricts([...districtSet]);
             setLoading(false);
@@ -308,9 +322,9 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         let streetName = record.tags["addr:street"] || "";
         let housenumber = record.tags["addr:housenumber"] || "";
         let floor = record.tags["addr:floor"] || "";
-
+        
         if (record.ctyName) parts.push(record.ctyName);
-        if (record.townName) parts.push(record.townName);
+        if (record.townName && record.ctyName != "未知") parts.push(record.townName);
         if (streetName) parts.push(streetName);
         if (housenumber) parts.push(housenumber + "號");
         if (floor) parts.push(floor + "樓");
@@ -319,16 +333,24 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     }
 
     const handleDeleteRecord = async () => {
-        const confirmDelete = window.confirm(`確定要刪除這條紀錄嗎？`);
-        if (!confirmDelete) return;
-
-        onDelete(recordSet);
+        Swal.fire({
+            title: "這項動作不可復原",
+            text: "確定要刪除 " + title + " 嗎?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "是的，請刪除！",
+            cancelButtonText: "我再考慮一下"
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+                onDelete(recordSet);
+            }
+          });
     };
 
-    const showCitySelector = availableCities.length > 1;
-    const showDistrictSelector = (availableCities.length === 1 && availableDistricts.length > 1) || (availableCities.length > 1 && selectedCity);
-
     const handleMapShow = async (record) => {
+        
         console.log(record);
         const feature = geoJsonData.features.find(f => f.id === `${record.type}/${record.id}`);
         
@@ -356,9 +378,6 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
             const minZoomLevel = 6.5;
             const zoomLevel = Math.min(Math.max(baseZoomLevel - Math.log2(maxDiff * 200), minZoomLevel), maxZoomLevel);
 
-            console.log((minLon + maxLon) / 2);
-            console.log((minLat + maxLat) / 2);
-    
             const center: [number, number] = [(minLon + maxLon) / 2, (minLat + maxLat) / 2];
     
             setSelectedGeoJson(filteredGeoJson);
@@ -379,6 +398,10 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         setIsMapModalVisible(false);
         setSelectedGeoJson(null);
     };
+
+    const showCitySelector = availableCities.length > 1;
+    const showDistrictSelector = (availableCities.length === 1 && availableDistricts.length > 1) || (availableDistricts.length > 1 && selectedCity);
+
 
     return (
         <section className="mx-6 md:mx-10 my-8">
@@ -462,19 +485,19 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                                             onClick={() => handleMapShow(record)}>
                                             地圖顯示
                                         </a>
-                                        <MapModal
-                                            isVisible={isMapModalVisible}
-                                            textTitle={selectedDisplayName}
-                                            onClose={handleCloseModal}
-                                            geoJsonData={selectedGeoJson}
-                                            center={mapCenter}
-                                            zoom={mapZoom}
-                                        />
                                     </div>
                                 </div>
                             </article>
                         ))
                     )}
+                    <MapModal
+                        isVisible={isMapModalVisible}
+                        textTitle={selectedDisplayName}
+                        onClose={handleCloseModal}
+                        geoJsonData={selectedGeoJson}
+                        center={mapCenter}
+                        zoom={mapZoom}
+                    />
                 </div>
             </main>
         </section>

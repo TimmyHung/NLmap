@@ -11,7 +11,6 @@ export type Tabs = 'manual' | 'askgpt';
 export type GPTModel = 'gpt35' | 'gpt4' | 'gpt4o';
 export type QueryResponse = {
   osmquery: string;
-  query_name: string;
   response_metadata?: string;
 };
 
@@ -92,34 +91,35 @@ export default function HomeBottomDrawer({ setGeoJsonData, bounds }: HomeBottomD
     setQueryState('generating_query');
 
     try {
-        let response: QueryResponse;
-        var manualQuery = false;
-        var overpassQLResponse;
-        var query_text;
-        const inputText = textAreaRef.current?.value.trim() || ' ';
-        if (activeTab === 'askgpt') {
-          overpassQLResponse = await getOverPassQL(inputText, gptModel, JWTtoken, bounds);
-          if (overpassQLResponse.statuscode != 200){
-            throw new Error(overpassQLResponse.message?.toString() || '');
-          }
-          response = { osmquery: overpassQLResponse.osmquery, query_name: overpassQLResponse.query_name, response_metadata: overpassQLResponse.response_metadata};
-        } else {
-          manualQuery = true;
-          response = { osmquery: queryFieldRef.current?.value || '', query_name: inputRef.current?.value || ''};
+      let response: QueryResponse;
+      var manualQuery = false;
+      var overpassQLResponse;
+      var query_text;
+      const inputText = textAreaRef.current?.value.trim() || ' ';
+      const manualInputText = inputRef.current?.value || '';
+      if (activeTab === 'askgpt') {
+        overpassQLResponse = await getOverPassQL(inputText, gptModel, JWTtoken, bounds);
+        if (overpassQLResponse.statuscode != 200){
+          throw new Error(overpassQLResponse.message?.toString() || '');
         }
-        query_text = manualQuery ? response.query_name : inputText; 
-        setExtractedQuery(response);
-        setQueryState('extracting_from_osm');
-        handleGeoJsonResponse(query_text, response.osmquery, manualQuery, response.response_metadata);
+        response = { osmquery: overpassQLResponse.osmquery, response_metadata: overpassQLResponse.response_metadata};
+      } else {
+        manualQuery = true;
+        response = { osmquery: queryFieldRef.current?.value || ''};
+      }
+      query_text = manualQuery ? manualInputText : inputText; 
+      setExtractedQuery(response);
+      setQueryState('extracting_from_osm');
+      handleGeoJsonResponse(query_text, response.osmquery, manualQuery, response.response_metadata);
     } catch (error: any) {
-        Toast.fire({
-            icon: 'error',
-            title: error.message,
-        });
-        if(!manualQuery){
-          await saveQueryHistoryRecords(JWTtoken, null, null, false, {}, manualQuery, overpassQLResponse.response_metadata);
-        }
-        setQueryState('idle');
+      Toast.fire({
+          icon: 'error',
+          title: error.message,
+      });
+      if(!manualQuery){
+        await saveQueryHistoryRecords(JWTtoken, null, null, false, {}, manualQuery, overpassQLResponse.response_metadata);
+      }
+      setQueryState('idle');
     }
   }, [activeTab, handleGeoJsonResponse, gptModel, bounds]);
 
@@ -214,7 +214,6 @@ export default function HomeBottomDrawer({ setGeoJsonData, bounds }: HomeBottomD
                   onChange={(e) =>
                     setExtractedQuery({
                       osmquery: e.target.value,
-                      query_name: extractedQuery?.query_name || "",
                     })
                   }
                   rows={7}
@@ -230,7 +229,6 @@ export default function HomeBottomDrawer({ setGeoJsonData, bounds }: HomeBottomD
                 onChange={(e) =>
                   setExtractedQuery({
                     osmquery: extractedQuery?.osmquery || "",
-                    query_name: e.target.value,
                   })
                 }
                 disabled={queryState !== "idle"}
@@ -249,7 +247,6 @@ export default function HomeBottomDrawer({ setGeoJsonData, bounds }: HomeBottomD
                 onChange={(e) =>
                   setExtractedQuery({
                     osmquery: extractedQuery?.osmquery || "",
-                    query_name: e.target.value,
                   })
                 }
                 disabled={queryState !== "idle"}
