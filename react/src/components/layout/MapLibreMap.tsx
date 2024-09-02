@@ -85,7 +85,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
 
   return (
     <>
-      <div ref={mapRef} className="w-full md:h-full" style={{ height: 'calc(100vh - 3rem)' }} />
+      <div ref={mapRef} className="w-full h-full" />
       {geoJsonDataArray.map((geoJsonData) => (
         <GeojsonLayer
           key={geoJsonData.id}

@@ -164,3 +164,29 @@ export const saveQueryHistoryRecords = async (JWTtoken: string, queryName: strin
     return { status: false, message: err.response ? err.response.data : err.message };
   }
 };
+
+export const transcribeAudio = async (audioFile: File, JWTtoken: string, platform: string, timeout = 20000): Promise<any> => {
+  const url = baseURL + "api/whisper";
+  
+  const headers = {
+    'Authorization': JWTtoken ? `Bearer ${JWTtoken}` : "",
+    'Content-Type': 'multipart/form-data'
+  };
+
+  const formData = new FormData();
+  formData.append('file', audioFile);
+  formData.append('platform', platform);
+
+  try {
+
+    const response = await axios.post(url, formData, {
+      headers: headers,
+      timeout: timeout
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('API Whisper 錯誤:', error.response ? error.response.data : error.message);
+    return {status: false, message: error.response ? error.response.data : error.message};
+  }
+};

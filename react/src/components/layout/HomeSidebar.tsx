@@ -4,6 +4,7 @@ import css from "@/css/Home.module.css";
 import Toast from '@/components/ui/Toast';
 import Swal from 'sweetalert2';
 import { useAuth } from '@/components/lib/AuthProvider';
+import WhisperButton from '../ui/WhisperButton';
 
 export type QueryStates = 'idle' | 'generating_query' | 'extracting_from_osm' | 'extraction_done';
 export type Tabs = 'manual' | 'askgpt';
@@ -30,6 +31,7 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
   const [activeTab, setActiveTab] = useState<Tabs>('askgpt');
   const [gptModel, setGPTModel] = useState<GPTModel>('gpt35');
   const [extractedQuery, setExtractedQuery] = useState<null | QueryResponse>(null);
+  const [isRecording, setRecording] = useState<boolean>(false);
 
   const handleGeoJsonResponse = useCallback(async (query_text: string, query: string, manualQuery: boolean, response_metadata?: string) => {
     let valid = false;
@@ -38,13 +40,14 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
     try {
         geoJsonResponse = await getGeoJsonData(query, bounds);
         if (geoJsonResponse.status) {
-            if (geoJsonResponse.geoJson.features.length === 0) {
-                Swal.fire('查無結果');
-            } else {
-                Swal.fire('查詢成功');
-                setGeoJsonData(geoJsonResponse.geoJson);
-                valid = true;
-            }
+          if (geoJsonResponse.geoJson.features.length === 0) {
+              Swal.fire('查無結果');
+          } else {
+              Swal.fire('查詢成功');
+              setGeoJsonData(geoJsonResponse.geoJson);
+              valid = true;
+          }
+          console.log(valid);
           await saveQueryHistoryRecords(JWTtoken,query_text, query, valid, geoJsonResponse?.rawJson || null, manualQuery, response_metadata);
         } else {
             Toast.fire({
@@ -121,12 +124,6 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
   }, [activeTab, handleGeoJsonResponse, gptModel, bounds]);
 
 
-  const printData = useCallback(() => {
-    console.log("extractedQuery: " + extractedQuery?.osmquery);
-    console.log("queryName:" + extractedQuery?.query_name);
-    console.log("queryState: " + queryState);
-  }, [extractedQuery, queryState]);
-
   return (
     <div className="w-1/4 bg-[#e5e9ec] h-full px-6 py-4 hidden md:flex flex-col justify-between border-l border-black">
       
@@ -155,9 +152,6 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
       }
 
       <div className="">
-        {/* <button onClick={printData}>
-          Debug
-        </button> */}
  
         {activeTab === "askgpt" &&
           <div className="flex flex-row gap-2 whitespace-nowrap overflow-x-auto pb-1 mb-2">
@@ -209,12 +203,13 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
                 className="pl-[1em] text-[1em] mb-[3px] h-[3rem] w-full rounded-[10px] border border-black"
             />
         )}
-        <button
-            className="w-full rounded-lg bg-slateBlue hover:bg-darkSlateBlue my-1"
+        <div className="flex flex-row justify-center items-center gap-1">
+          <button
+            className="w-full rounded-lg bg-slateBlue hover:bg-darkSlateBlue my-1 disabled:hover:bg-slateBlue"
             type="button"
-            disabled={queryState !== "idle" && queryState !== "extraction_done"}
+            disabled={(queryState !== "idle" && queryState !== "extraction_done") || isRecording}
             style={{
-              cursor: queryState !== "idle" && queryState !== "extraction_done" ? 'not-allowed' : "pointer",
+              cursor: ((queryState !== "idle" && queryState !== "extraction_done") || isRecording) ? 'not-allowed' : "pointer",
             }}
             onClick={(e) => {
                 handleSearch(e);
@@ -223,27 +218,37 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
             {(queryState === "generating_query" || queryState === "extracting_from_osm") && (<span className={css.loading_dots}></span>)}
           </button>
 
-        <hr />
+          {activeTab === 'askgpt' &&
+            <WhisperButton
+              platform={"PC"}
+              disabled={queryState !== "idle" && queryState !== "extraction_done"}
+              onTranscription={(transcription) => textAreaRef.current.value = transcription} 
+              onRecording={(recording) => setRecording(recording)}
+            />
+          }
+        </div>
+        
+        <hr className="border-t border-t-[1px] border-t-black my-1 mb-2" />
 
         <div className="flex">
           <button
-            className={activeTab === 'askgpt' ? "bg-lightblack text-white hover:bg-lightblack cursor-not-allowed px-0 w-full" : `text-black px-0 w-full hover:bg-darkSlateBlue ${(queryState==="generating_query" || queryState==="extracting_from_osm")&& "cursor-not-allowed hover:bg-transparent"}`}
+            className={activeTab === 'askgpt' ? "bg-lightblack text-white hover:bg-lightblack cursor-not-allowed px-0 w-full" : `text-black px-0 w-full hover:bg-darkSlateBlue ${((queryState==="generating_query" || queryState==="extracting_from_osm") || isRecording) && "cursor-not-allowed hover:bg-transparent disabled:text-black"}`}
             onClick={() => {
               setActiveTab('askgpt');
               setQueryState('idle');
             }}
-            disabled={queryState==="generating_query"}
+            disabled={queryState==="generating_query" || isRecording}
           >
             GPT生成
           </button>
           <div className="px-0.5"/>
           <button
-            className={activeTab === 'manual' ? "bg-lightblack text-white hover:bg-lightblack cursor-not-allowed px-0 w-full" : `text-black px-0 w-full hover:bg-darkSlateBlue ${(queryState==="generating_query" || queryState==="extracting_from_osm") && "cursor-not-allowed hover:bg-transparent"}`}
+            className={activeTab === 'manual' ? "bg-lightblack text-white hover:bg-lightblack cursor-not-allowed px-0 w-full" : `text-black px-0 w-full hover:bg-darkSlateBlue ${((queryState==="generating_query" || queryState==="extracting_from_osm") || isRecording) && "cursor-not-allowed hover:bg-transparent disabled:text-black"}`}
             onClick={() => {
               setActiveTab('manual');
               setQueryState('idle');
             }}
-            disabled={queryState==="generating_query"}
+            disabled={queryState==="generating_query"  || isRecording}
           >
             手動查詢
           </button>
