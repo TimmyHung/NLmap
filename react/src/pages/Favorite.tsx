@@ -121,7 +121,7 @@ const CreateNewComponent = ({ onCreate }) => {
       onClick={onCreate}
     >
       <div className="flex items-center w-full font-normal gap-2 text-gray-100 text-base md:text-lg mb-2 bg-darkBlueGrey rounded-t-xl pl-4 py-2">
-        <i className="fa-solid fa-list"></i>空空如野
+        <i className="fa-solid fa-list"></i>空空如也
       </div>
       <div className="flex flex-row w-full h-full items-center justify-center items-center gap-2">
         <i className="fa-solid fa-plus text-2xl"></i>
