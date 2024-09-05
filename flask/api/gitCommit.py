@@ -10,7 +10,7 @@ REPO_NAME = "Graduation-Project"
 
 @git_blueprint.route('/api/gitCommit', methods=['GET'])
 def get_commits():
-    url = f'https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/commits'
+    url = f'https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/commits?per_page=100&page=1'
     headers = {'Authorization': f'token {GITHUB_TOKEN}'}
     try:
         response = requests.get(url, headers=headers)

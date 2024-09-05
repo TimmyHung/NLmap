@@ -27,7 +27,7 @@ def whisper_transcription():
     JWTresponse = verify_JWTtoken(JWTtoken)[0]
     
     if not JWTresponse["status"]:
-        return jsonify({'statusCode': 401, 'message': 'Invalid JWTtoken token'}), 200
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
 
     user_id = JWTresponse["data"]["userID"]
 
@@ -67,7 +67,7 @@ def whisper_transcription():
             audio_data = BytesIO(audio_segment.read())  # 轉換後的MP3內容
             audio_data.seek(0)
     except Exception as e:
-        return jsonify({'statusCode': 400, 'message': 'Invalid audio file content'}), 200
+        return jsonify({'statusCode': 400, 'message': '無效的音訊檔案，請重新錄製'}), 200
 
     # 確保在上傳到OpenAI API之前重置指針
     audio_data.seek(0)

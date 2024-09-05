@@ -13,11 +13,11 @@ def get_history_records():
         JWTtoken = request.headers.get('Authorization')
 
         if JWTtoken is None:
-            return jsonify({'statusCode': 401, 'message': 'Invalid token'}), 200
+            return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
 
         response, status_code = verify_JWTtoken(JWTtoken.split(' ')[1])
         if not response["status"]:
-            return jsonify({'statusCode': 401, 'message': 'Invalid token'}), 200
+            return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
 
         user_id = response["data"]["userID"]
 
@@ -63,7 +63,7 @@ def get_history_records():
         print(f"查詢歷史記錄失敗: {e}")
         if connection:
             connection.rollback()
-        return jsonify({'statusCode': 500, 'message': 'Failed to retrieve history records', 'error': str(e)}), 200
+        return jsonify({'statusCode': 500, 'message': '無法取得歷史紀錄', 'error': str(e)}), 200
     finally:
         if cursor:
             cursor.close()
@@ -78,11 +78,11 @@ def delete_history_record():
     try:
         JWTtoken = request.headers.get('Authorization')
         if JWTtoken is None:
-            return jsonify({'statusCode': 401, 'message': 'Invalid token'}), 200
+            return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
 
         response, status_code = verify_JWTtoken(JWTtoken.split(' ')[1])
         if not response["status"]:
-            return jsonify({'statusCode': 401, 'message': 'Invalid token'}), 200
+            return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
 
         user_id = response["data"]["userID"]
         record_id = request.json.get('record_id')
@@ -97,14 +97,14 @@ def delete_history_record():
         connection.commit()
 
         if cursor.rowcount > 0:
-            return jsonify({'statusCode': 200, 'message': 'Record deleted successfully'}), 200
+            return jsonify({'statusCode': 200, 'message': '紀錄刪除成功'}), 200
         else:
             return jsonify({'statusCode': 404, 'message': 'Record not found'}), 200
     except Exception as e:
         print(f"刪除歷史紀錄失敗: {e}")
         if connection:
             connection.rollback()
-        return jsonify({'statusCode': 500, 'message': 'Failed to delete history record', 'error': str(e)}), 200
+        return jsonify({'statusCode': 500, 'message': '無法刪除歷史紀錄', 'error': str(e)}), 200
     finally:
         if cursor:
             cursor.close()
@@ -155,6 +155,48 @@ def save_manual_query():
         if connection:
             connection.rollback()
         return jsonify({'statusCode': 500, 'message': 'Failed to save query', 'error': str(e)}), 200
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+@history_blueprint.route(root + "/edit", methods=["PUT"])
+def edit_history():
+    cursor, connection = None, None
+    try:
+        JWTtoken = request.headers.get('Authorization', '').split(' ')[-1]
+        JWTresponse = verify_JWTtoken(JWTtoken)[0]
+        if not JWTresponse['status']:
+            return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
+
+        user_id = JWTresponse['data']['userID']
+        data = request.json
+        query_history_id = data.get("query_history_id")
+        geoRawJson = json.dumps(data.get('geoRawJson'))
+
+        if not geoRawJson:
+            return jsonify({'statusCode': 400, 'message': 'Missing geoRawJson'}), 200
+
+        cursor, connection = get_db_cursor()
+        update_recordset_sql = """
+            UPDATE query_history 
+            SET result = %s 
+            WHERE id = %s AND user_id = %s
+        """
+        cursor.execute(update_recordset_sql, (geoRawJson, query_history_id, user_id))
+
+        connection.commit()
+
+        if cursor.rowcount > 0:
+            return jsonify({'statusCode': 200, 'message': '歷史紀錄更新成功'}), 200
+        else:
+            return jsonify({'statusCode': 404, 'message': '無任何改動或找不到對應的歷史紀錄'}), 200
+
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        return jsonify({'statusCode': 500, 'message': '無法更新歷史紀錄', 'error': str(e)}), 200
     finally:
         if cursor:
             cursor.close()
