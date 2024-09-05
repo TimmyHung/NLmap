@@ -25,10 +25,10 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
             const filtered = favoriteList.recordset.elements.filter(item => {
                 const searchLower = searchTerm.toLowerCase().trim();
                 const itemNameLower = item.displayName != null ? item.displayName.toLowerCase() : '';
-    
+
                 // 移除所有的注音符號，只保留文字部分
                 const cleanedSearchTerm = searchLower.replace(/[ㄅ-ㄩ˙ˊˇˋ]/g, '');
-                
+                    
                 if(searchTerm === ""){
                     return item.displayName != null;
                 }else{
@@ -138,33 +138,49 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
 
     // 保存修改的紀錄
     const handleSaveEdit = async (updatedRecord) => {
-        // 更新 filteredItems 中的相應紀錄
-        const updatedItems = filteredItems.map((item) =>
-            item.id === updatedRecord.id
-                ? { ...item, displayName: updatedRecord.displayName, displayAddress: updatedRecord.displayAddress }
-                : item
-        );
+        // 獲取所有 elements，包括 node、way 和 relation
+        const updatedElements = favoriteList.recordset.elements.map((item) => {
+            if (item.id === updatedRecord.id && item.type === updatedRecord.type) {
+                return {
+                    ...item,
+                    displayName: updatedRecord.displayName || item.displayName,
+                    displayAddress: updatedRecord.displayAddress || item.displayAddress,
+                    tags: {
+                        ...item.tags,
+                        ...updatedRecord.tags,
+                    },
+                    lats: updatedRecord.lats || item.lats,
+                    lons: updatedRecord.lons || item.lons,
+                    nodes: updatedRecord.nodes || item.nodes,
+                };
+            } else {
+                return item;
+            }
+        });
     
-        setFilteredItems(updatedItems); // 更新前端的顯示狀態
+        // 前端同步更新
+        setFilteredItems(updatedElements.filter(item => item.displayName != null));
+    
+        // 同步更新 selectedRecord
+        setSelectedRecord(updatedRecord);
     
         // 更新 favoriteList.recordset 並傳給後端
         const updatedRecordset = {
             ...favoriteList.recordset,
-            elements: updatedItems, // 使用更新後的紀錄
+            elements: updatedElements,
         };
     
-        // 將更新後的 recordset 傳給後端 API
         const response = await updateFavorite(JWTtoken, favoriteList.id, { new_recordset: updatedRecordset });
     
         if (response.statusCode === 200) {
-            Swal.fire("更新成功", "收藏清單成功更新", "success");
-            setIsEditModalVisible(false); // 隱藏編輯對話框
+            // Swal.fire("更新成功", "", "success");
+            setIsEditModalVisible(false);
         } else {
             Swal.fire("更新失敗", response.message, "error");
         }
     };
     
-
+    
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={handleCloseModal}>
             <div className="bg-white rounded-xl h-[80%] w-11/12 md:w-3/4 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -229,7 +245,11 @@ const RightSide = ({ setSearchTerm, searchTerm, filteredItems, setFilteredItems,
     
     // 當項目排序結束後的回調函數
     const handleOnDragEnd = (result) => {
-        if (!result.destination) return; // 如果拖放到無效位置，返回
+        // 如果拖放到無效位置，返回
+        if (!result.destination) return;
+
+        // 如果項目拖回原位置，不進行任何更新
+        if (result.source.index === result.destination.index) return;
 
         const items = Array.from(filteredItems);
         const [reorderedItem] = items.splice(result.source.index, 1);
@@ -416,39 +436,17 @@ const LeftSide = ({ ItemLength, navigate, searchTerm, selectedRecord, geoJsonDat
 const EditRecordModal = ({ record, onClose, onSave }) => {
     const [displayName, setDisplayName] = useState(record.displayName);
     const [displayAddress, setDisplayAddress] = useState(record.displayAddress);
-    const [tags, setTags] = useState(Object.entries(record.tags || {})); // 將 tags 轉換為 key-value 陣列
 
     const handleSave = () => {
-        // 將 tags 陣列轉換回物件
-        const updatedTags = tags.reduce((acc, [key, value]) => {
-            if (key && value) {
-                acc[key] = value;
-            }
-            return acc;
-        }, {});
-
-        const updatedRecord = { ...record, displayName, displayAddress, tags: updatedTags };
+        const updatedRecord = { ...record, displayName, displayAddress};
         onSave(updatedRecord);
     };
 
-    const handleTagChange = (index, key, value) => {
-        const updatedTags = [...tags];
-        updatedTags[index] = [key, value]; // 更新對應索引的 key 和 value
-        setTags(updatedTags);
-    };
-
-    const handleAddTag = () => {
-        setTags([...tags, ['', '']]); // 添加新的空標籤行
-    };
-
-    const handleRemoveTag = (index) => {
-        const updatedTags = tags.filter((_, i) => i !== index); // 移除指定索引的標籤
-        setTags(updatedTags);
-    };
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-xl md:w-1/3 shadow-lg animate__animated animate__bounceIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={onClose}>
+            <div className="bg-white p-6 rounded-xl md:w-1/3 shadow-lg animate__animated animate__bounceIn"
+                onClick={(e)=>{e.stopPropagation()}}
+            >
                 <h2 className="text-2xl mb-4">修改地點資訊</h2>
                 <div className="mb-4">
                     <label>顯示名稱</label>
@@ -468,57 +466,6 @@ const EditRecordModal = ({ record, onClose, onSave }) => {
                         className="border p-2 w-full"
                     />
                 </div>
-
-                {/* 表格顯示標籤 */}
-                {/* <div className="mb-4 max-h-[400px] overflow-y-auto">
-                    <label>標籤</label>
-                    <table className="min-w-full border-collapse border border-gray-200">
-                        <thead>
-                            <tr>
-                                <th className="border p-2">Key</th>
-                                <th className="border p-2">Value</th>
-                                <th className="border p-2">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {tags.map(([key, value], index) => (
-                                <tr key={index}>
-                                    <td className="border p-2">
-                                        <input
-                                            type="text"
-                                            value={key}
-                                            onChange={(e) => handleTagChange(index, e.target.value, value)}
-                                            className="border p-1 w-full"
-                                        />
-                                    </td>
-                                    <td className="border p-2">
-                                        <input
-                                            type="text"
-                                            value={value as string}
-                                            onChange={(e) => handleTagChange(index, key, e.target.value)}
-                                            className="border p-1 w-full"
-                                        />
-                                    </td>
-                                    <td className="border p-2 text-center">
-                                        <button
-                                            onClick={() => handleRemoveTag(index)}
-                                            className="bg-red-500 text-white px-2 py-1 rounded"
-                                        >
-                                            刪除
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <button
-                        onClick={handleAddTag}
-                        className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
-                    >
-                        添加標籤
-                    </button>
-                </div> */}
-
                 <div className="flex justify-center gap-4">
                     <button onClick={handleSave} className="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded">保存</button>
                     <button onClick={onClose} className="bg-slateBlue text-white hover:bg-darkSlateBlue px-4 py-2 rounded">取消</button>
