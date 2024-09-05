@@ -21,9 +21,7 @@ const GoogleLoginBtn: React.FC<successProps> = ({ onSuccess }) => {
             const response = await postRequest('api/authorization/login', requestData);
             onSuccess(response);
         },
-        onError: () => {
-            // console.log('Login Failed')
-        }, // cancel login
+        onError: () => {}, // cancel login
     });
 
     return (

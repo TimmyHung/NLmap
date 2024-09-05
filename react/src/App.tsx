@@ -28,8 +28,12 @@ export default function App(): ReactElement {
               <Routes>
                 <Route element={<MainNavigation />}>
                   <Route path="/" element={<Home />} />
-                  <Route path="/history" element={<History />} />
-                  <Route path="/favorites" element={<Favorite />} />
+                  <Route element={<PrivateRoute requiredRoles={['User','Admin']} />}>
+                    <Route path="/history" element={<History />} />
+                  </Route>
+                  <Route element={<PrivateRoute requiredRoles={['User','Admin']} />}>
+                    <Route path="/favorites" element={<Favorite />} />
+                  </Route>
                   <Route path="/tutorial" element={<Tutorial />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/diary" element={<Diary />} />

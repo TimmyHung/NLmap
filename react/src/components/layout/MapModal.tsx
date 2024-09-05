@@ -6,11 +6,12 @@ interface MapModalProps {
   textTitle: string;
   onClose: () => void;
   geoJsonData: GeoJSON.FeatureCollection | null;
-  center: [number, number];
+  center?: [number, number];
   zoom?: number;
+  ChildComponent: boolean;
 }
 
-const MapModal: React.FC<MapModalProps> = ({ isVisible, textTitle, onClose, geoJsonData, center, zoom = 12 }) => {
+const MapModal: React.FC<MapModalProps> = ({ isVisible, textTitle, onClose, geoJsonData, center, zoom = 12, ChildComponent}) => {
   if (!isVisible) return null;
 
   const handleMapClick = (e: React.MouseEvent) => {
@@ -31,10 +32,11 @@ const MapModal: React.FC<MapModalProps> = ({ isVisible, textTitle, onClose, geoJ
         <div className="w-full h-full border-4 border-grey-500">
           <MapLibreMap 
               geoJsonDataArray={[{ id: 'modalMap', data: geoJsonData }]} 
-              onBoundsChange={() => {}} 
+              onBoundsChange={() => {}}
               initialCenter={center}
               initialZoom={zoom}
               showInfo={false}
+              ChildComponent={ChildComponent}
           />
         </div>
       </div>

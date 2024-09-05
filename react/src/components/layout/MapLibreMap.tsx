@@ -1,9 +1,11 @@
 import React, { useRef, useEffect, useState, ReactElement } from 'react';
-import maplibregl, { LngLatLike, Map, MapOptions } from 'maplibre-gl';
+import maplibregl, { LngLatLike, Map, MapOptions, LngLatBoundsLike } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import GeojsonLayer from "@/components/lib/GeojsonLayer";
 import Popup from "@/components/lib/Popup";
 import getRandomDarkColor from '@/components/lib/Utils';
+// @ts-ignore
+import bbox from '@turf/bbox';
 
 interface GeoJsonData {
   id: string;
@@ -16,6 +18,7 @@ interface MapLibreMapProps {
   initialCenter?: LngLatLike;
   initialZoom?: number;
   showInfo?: boolean;
+  ChildComponent?: boolean;
 }
 
 const MapLibreMap: React.FC<MapLibreMapProps> = ({
@@ -24,6 +27,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
   initialCenter = [120.76, 23.80],
   initialZoom = 7,
   showInfo = true,
+  ChildComponent = false,
 }): ReactElement => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<Map | null>(null);
@@ -33,6 +37,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
   });
   const [colors, setColors] = useState<{ [key: string]: string }>({});
 
+  // 初始化地圖
   useEffect(() => {
     if (mapRef.current && !mapInstance.current) {
       const mapOptions: MapOptions = {
@@ -73,6 +78,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
     }
   }, [mapState.center, mapState.zoom, onBoundsChange]);
 
+  // 根據 geoJsonDataArray 設定隨機顏色
   useEffect(() => {
     const newColors = geoJsonDataArray.reduce((acc, geoJsonData) => {
       if (!acc[geoJsonData.id]) {
@@ -83,20 +89,49 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
     setColors((prevColors) => ({ ...prevColors, ...newColors }));
   }, [geoJsonDataArray]);
 
+  // 跳轉到指定經緯度和縮放級別
+  useEffect(() => {
+    if (mapInstance.current && ChildComponent) {
+      mapInstance.current.flyTo({
+        center: initialCenter,
+        zoom: initialZoom,
+        essential: true,
+        duration: 2000,
+      });
+    }
+  }, [initialCenter, initialZoom]);
+
+  // 自動跳轉到所有 GeoJSON 的範圍
+  useEffect(() => {
+    if (mapInstance.current && geoJsonDataArray.length > 0 && !ChildComponent) {
+      const allGeoJsonFeatures = {
+        type: 'FeatureCollection',
+        features: geoJsonDataArray.flatMap((geoJsonData) => geoJsonData.data.features),
+      };
+      const bounds = bbox(allGeoJsonFeatures) as LngLatBoundsLike;
+      if (bounds) {
+        mapInstance.current.fitBounds(bounds, {
+          padding: 300,
+          duration: 2000,
+        });
+      }
+    }
+  }, [geoJsonDataArray]);
+
   return (
     <>
       <div ref={mapRef} className="w-full h-full" />
-      {geoJsonDataArray.map((geoJsonData) => (
-        <GeojsonLayer
-          key={geoJsonData.id}
-          map={mapInstance.current}
-          maploaded={!!mapInstance.current}
-          id={geoJsonData.id}
-          geojson={geoJsonData.data}
-          color={colors[geoJsonData.id]} 
-        />
-      ))}
-      <Popup map={mapInstance.current} />
+        {geoJsonDataArray.map((geoJsonData) => (
+          <GeojsonLayer
+            key={geoJsonData.id}
+            map={mapInstance.current}
+            maploaded={!!mapInstance.current}
+            id={geoJsonData.id}
+            geojson={geoJsonData.data}
+            color={colors[geoJsonData.id]} 
+          />
+        ))}
+      <Popup map={mapInstance.current}/>
       
       { showInfo &&
         <div className="absolute bottom-[8vh] md:bottom-2 left-2 bg-white bg-opacity-80 p-2 rounded-md">

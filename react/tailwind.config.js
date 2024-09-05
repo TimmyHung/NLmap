@@ -19,9 +19,10 @@ module.exports = {
         nodeIDBlue: 'rgb(25, 111, 250)',
         lightblack: 'rgb(30, 30, 30)',
         bluegrey: 'rgb(106, 117, 134)',
-        slateBlue: 'rgb(20, 69, 131)',
-        darkSlateBlue: 'rgb(16, 54, 105)',
-        darkBlueGrey: 'rgb(52, 72, 81)'
+        slateBlue: 'rgb(20, 70, 110)',
+        darkSlateBlue: 'rgb(20, 60, 100)',
+        darkBlueGrey: 'rgb(60 ,80, 100)',
+        recordBlack: 'rgb(60, 60, 60)'
       }
     }
   },

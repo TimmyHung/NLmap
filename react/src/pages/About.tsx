@@ -2,7 +2,7 @@ import css from '../css/About.module.css';
 
 export default function About() {
     return (
-        <div className={css.About}>
+        <div className={`bg-darkBlueGrey ${css.About}`}>
             <section className={css.About_section}>
                 <div className={css.text2}>
                     <h2>關於我們</h2>

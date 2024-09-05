@@ -42,7 +42,6 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
           if (geoJsonResponse.geoJson.features.length === 0) {
               Swal.fire('查無結果');
           } else {
-              Swal.fire('查詢成功');
               setGeoJsonData(geoJsonResponse.geoJson);
               valid = true;
           }

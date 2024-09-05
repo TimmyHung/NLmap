@@ -6,9 +6,13 @@ import MapModal from '@/components/layout/MapModal';
 import { osmToGeoJson } from "@/components/lib/Utils";
 import Toast from '../ui/Toast';
 import Swal from 'sweetalert2';
+import { useAuth } from "@/components/lib/AuthProvider";
+import { AddResultModal, FavoriteModal } from './FavoriteSelectionModal';
+import { editQueryHistoryRecords } from '../lib/API';
 
 
 const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
+    const { JWTtoken } = useAuth();
     const [filteredRecords, setFilteredRecords] = useState([]);
     const [displayedRecords, setDisplayedRecords] = useState(new Set());
     const [currentBatch, setCurrentBatch] = useState(1);
@@ -19,10 +23,14 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     const [loading, setLoading] = useState(true);
     const [processedCount, setProcessedCount] = useState(0);
     const [isMapModalVisible, setIsMapModalVisible] = useState(false);
+    const [isFavoriteModalVisible, setIsFavoriteModalVisible] = useState(false);
+    const [isAddResultModalVisible, setIsAddResultModalVisible] = useState(false);
+    const [resultDuplicatedItems, setResultDuplicatedItems] = useState([]);
     const [selectedGeoJson, setSelectedGeoJson] = useState<GeoJSON.FeatureCollection | null>(null);
     const [selectedDisplayName, setSelectedDisplayName] = useState('');
     const [mapCenter, setMapCenter] = useState<[number, number]>([120.55, 23.67]);
     const [mapZoom, setMapZoom] = useState<number>(12);
+    const [selectedRecordList, setSelectedRecordList] = useState([]);
     const geoJsonData = osmToGeoJson(recordSet.records);
     const containerRef = useRef(null);
 
@@ -33,7 +41,6 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
 
     const title = recordSet.title;
     const records = recordSet.records.elements;
-
 
     const cities = useMemo(() => [
         { value: "基隆市", label: "基隆市" },
@@ -61,6 +68,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         { value: "未知", label: "未歸類"}
     ], []);
 
+    // 透過國土鑑測API取得大略縣市、鄉鎮市區
     const fetchLocationInfo = async (lng, lat) => {
         try {
             const requestURL = `https://api.nlsc.gov.tw/other/TownVillagePointQuery1/${lng}/${lat}`;
@@ -74,11 +82,13 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         }
     };
 
+    // 替換文字
     const standardizeCityName = (cityName) => {
         if (cityName != null)
             return cityName.replace(/台/g, '臺');
     };
 
+    // 在Node、Way、Relations內取得經緯度
     const getLatLon = (record, allRecords) => {
         const calculateAverageLatLon = (latLonArray) => {
             const total = latLonArray.length;
@@ -106,7 +116,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
             }
             return latLonArray;
         };
-    
+        
         const findLatLonInRelation = (relation) => {
             const latLonArray = [];
             for (const member of relation.members) {
@@ -159,7 +169,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         return null;
     };
     
-
+    //整理每一筆Record資訊(設置標籤、取得大概位置、經緯度)
     useEffect(() => {
         const filterRecordsByCityAndDistrict = async () => {
             setLoading(true);
@@ -242,6 +252,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         filterRecordsByCityAndDistrict();
     }, [records, batchSize, selectedCity, selectedDistrict]);
 
+    // 監聽到滑動時的判定
     const handleScroll = useCallback(() => {
         const container = containerRef.current;
         const scrollTolerance = 10;
@@ -255,7 +266,8 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
             loadMoreRecords();
         }
     }, [currentBatch, filteredRecords]);
-
+    
+    // 載入更多紀錄
     const loadMoreRecords = useCallback(() => {
         const newBatch = currentBatch + 1;
         const newRecords = filteredRecords.slice(batchSize * (newBatch - 1), batchSize * newBatch);
@@ -267,6 +279,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         setCurrentBatch(newBatch);
     }, [currentBatch, filteredRecords, batchSize]);
 
+    // 監聽滑鼠滾動事件
     useEffect(() => {
         const container = containerRef.current;
         if (!container) {
@@ -280,38 +293,33 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         };
     }, [handleScroll]);
 
+    // 取得顯示名稱
     function getDisplayName(record) {
-        if (record?.tags["brand:zh"] && record?.tags?.branch) {
+        if (record?.tags["brand:zh"] && record?.tags?.branch)
             return `${record.tags["brand:zh"]}-${record.tags.branch}`;
-        }
         
-        if (record?.tags?.name && record?.tags?.branch) {
+        if (record?.tags?.name && record?.tags?.branch)
             return `${record.tags.name}-${record.tags.branch}`;
-        }
 
-        if (record?.tags?.brand && record?.tags?.branch) {
+        if (record?.tags?.brand && record?.tags?.branch)
             return `${record.tags.brand}-${record.tags.branch}`;
-        }
 
-        if (record?.tags?.full_name) {
+        if (record?.tags?.full_name)
             return record.tags.full_name;
-        }
 
-        if (record?.tags?.name) {
+        if (record?.tags?.name)
             return record.tags.name;
-        }
 
-        if (record?.tags["name:en"]) {
+        if (record?.tags["name:en"])
             return record.tags["name:en"];
-        }
 
-        if (record?.tags?.is_in) {
+        if (record?.tags?.is_in)
             return record.tags.is_in;
-        }
 
         return '未命名紀錄';
     }
 
+    //取得顯示的地址
     function getDisplayAddress(record) {
         if (record.tags["addr:full"] != null) {
             const fullAddress = record.tags["addr:full"].replace(/^\d+/, "");
@@ -332,6 +340,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
         return parts.length > 0 ? parts.join('') : "未知";
     }
 
+    // 刪除紀錄
     const handleDeleteRecord = async () => {
         Swal.fire({
             title: "這項動作不可復原",
@@ -349,39 +358,44 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
           });
     };
 
-    const handleMapShow = async (record) => {
-        
-        console.log(record);
-        const feature = geoJsonData.features.find(f => f.id === `${record.type}/${record.id}`);
-        
-        if (feature) {
+    // 點擊"地圖顯示"後的邏輯
+    const handleMapShow = (records) => {
+        if (!Array.isArray(records)) {
+            records = [records]; // 若只傳入單筆資料，將其轉為陣列
+        }
+    
+        const features = records.map(record => {
+            return geoJsonData.features.find(f => f.id === `${record.type}/${record.id}`);
+        }).filter(f => f !== undefined); // 過濾掉找不到地圖數據的紀錄
+    
+        if (features.length > 0) {
             const filteredGeoJson: GeoJSON.FeatureCollection = {
                 type: "FeatureCollection",
-                features: [feature as GeoJSON.Feature<GeoJSON.Geometry>]
+                features: features as GeoJSON.Feature<GeoJSON.Geometry>[]
             };
     
-            const lats = record.lats;
-            const lons = record.lons;
+            // 計算所有選取紀錄的經緯度範圍
+            const lats = records.flatMap(record => record.lats);
+            const lons = records.flatMap(record => record.lons);
     
             const minLat = Math.min(...lats);
             const maxLat = Math.max(...lats);
             const minLon = Math.min(...lons);
             const maxLon = Math.max(...lons);
-
+    
             const latDiff = maxLat - minLat;
             const lonDiff = maxLon - minLon;
-    
             const maxDiff = Math.max(latDiff, lonDiff);
-            
-            const baseZoomLevel = 14
+    
+            const baseZoomLevel = 14;
             const maxZoomLevel = 17.5;
             const minZoomLevel = 6.5;
             const zoomLevel = Math.min(Math.max(baseZoomLevel - Math.log2(maxDiff * 200), minZoomLevel), maxZoomLevel);
-
+    
             const center: [number, number] = [(minLon + maxLon) / 2, (minLat + maxLat) / 2];
     
             setSelectedGeoJson(filteredGeoJson);
-            setSelectedDisplayName(record.displayName);
+            setSelectedDisplayName(records.length > 1 ? `批量顯示 ${records.length} 筆紀錄` : records[0].displayName);
             setIsMapModalVisible(true);
             setMapCenter(center);
             setMapZoom(Math.round(zoomLevel));
@@ -394,14 +408,165 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     };
     
 
-    const handleCloseModal = () => {
-        setIsMapModalVisible(false);
-        setSelectedGeoJson(null);
+    // 處理點擊事件，選取紀錄並變更邊框顏色
+    const handleRecordClick = (record) => {
+        setSelectedRecordList(prevSelected => {
+            if (prevSelected.includes(record)) {
+                return prevSelected.filter(r => r !== record); // 如果已選取，則取消選取
+            } else {
+                return [...prevSelected, record]; // 否則加入選取列表
+            }
+        });
     };
 
+    // 用於檢查是否該紀錄已選取
+    const isSelected = (record) => selectedRecordList.includes(record);
+
+    // 處理批次作業
+    const handleMultiTask = (event) => {
+        const value = event.target.value;
+    
+        switch (value) {
+            case "全選": {
+                setSelectedRecordList(filteredRecords);
+                break;
+            }
+            case "取消全選": {
+                setSelectedRecordList([]);
+                break;
+            }
+            case "加入收藏": {
+                setIsFavoriteModalVisible(true);
+                break;
+            }
+            case "地圖顯示": {
+                if (selectedRecordList.length > 0) {
+                    handleMapShow(selectedRecordList);
+                } else {
+                    Toast.fire({
+                        icon: 'warning',
+                        title: "請先選擇紀錄",
+                    });
+                }
+                break;
+            }
+            case "移除": {
+                Swal.fire({
+                    title: `你確定要刪除這 ${selectedRecordList.length} 筆紀錄嗎？`,
+                    text: "此操作將無法復原！",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "是的，刪除！",
+                    cancelButtonText: "取消"
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        const updatedRecordSet = generateUpdatedRecordSet(recordSet, selectedRecordList, false);
+                        const updatedRecordElements = updatedRecordSet.records.elements;
+                        let tempRecordSet = recordSet;
+                
+                        // 檢查長度，如果沒有任何一筆紀錄了，則直接刪掉這一整筆歷史紀錄。
+                        if(updatedRecordElements.length === 0){
+                            onDelete(recordSet);
+                        }else{
+                            tempRecordSet.records.elements = updatedRecordElements;
+                            // 同步資料庫狀態
+                            const response = await editQueryHistoryRecords(JWTtoken, recordSet.id, tempRecordSet.records);
+                            if(response.statusCode != 200){
+                                Toast.fire({
+                                    icon: "error",
+                                    text: response.message
+                                })
+                                return;
+                            }
+                        }
+                        
+                        // 更新本地狀態
+                        recordSet.records.elements = updatedRecordElements;
+                        setFilteredRecords(updatedRecordElements);
+                        setDisplayedRecords(new Set(updatedRecordElements.slice(0, batchSize)));
+                
+                        // 清空選中的紀錄
+                        setSelectedRecordList([]);
+                
+                        Swal.fire({
+                            icon: "success",
+                            title: "刪除成功",
+                            text: `${selectedRecordList.length} 筆紀錄已刪除`,
+                        });
+                    }
+                });
+                break;
+            }
+            case "匯出": {
+                 // 將 recordSet 轉換為 JSON 格式
+                const jsonString = JSON.stringify(recordSet, null, 2);  // 格式化 JSON
+
+                // 建立一個 Blob，並設置類型為 application/json
+                const blob = new Blob([jsonString], { type: "application/json" });
+
+                // 使用 URL.createObjectURL 生成一個下載連結
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `${recordSet.title || "recordSet"}.json`;  // 設定下載檔案名稱
+
+                // 模擬點擊下載連結
+                link.click();
+
+                // 釋放 URL.createObjectURL 所佔用的記憶體
+                URL.revokeObjectURL(link.href);
+                break;
+            }
+        }
+    
+        event.target.value = "批量操作";
+    };
+
+    //將選擇的record轉換成新的recordSet並返回
+    const generateUpdatedRecordSet = (recordSet, selectedRecordList, whitelist = true) => {
+        const nodesToInclude = new Set();
+        const selectedIds = new Set();
+    
+        // 收集選中的 way 或 relation 及其相關的節點
+        selectedRecordList.forEach(record => {
+            selectedIds.add(record.id);  // 儲存當前選中的 way 或 relation 的 ID
+    
+            if (record.type === 'way' || record.type === 'relation') {
+                // 如果是 way 或 relation，將其節點一併加入
+                record.nodes?.forEach(nodeId => nodesToInclude.add(nodeId));
+    
+                // 若為 relation，處理其子 relation 或 ways
+                if (record.type === 'relation') {
+                    record.members?.forEach(member => {
+                        if (member.type === 'node') {
+                            nodesToInclude.add(member.ref);
+                        } else {
+                            selectedIds.add(member.ref);  // 處理 relation 中的 members
+                        }
+                    });
+                }
+            }
+        });
+    
+        // 使用 `whitelist` 來決定是保留選中的項目還是排除選中的項目
+        const updatedRecords = recordSet.records.elements.filter(record => {
+            const isSelected = selectedIds.has(record.id) || nodesToInclude.has(record.id);
+            return whitelist ? isSelected : !isSelected;
+        });
+    
+        return {
+            ...recordSet,
+            records: {
+                ...recordSet.records,
+                elements: updatedRecords,
+            },
+        };
+    };
+
+    // 一些用來判定篩選下拉選單是否顯示的變數
     const showCitySelector = availableCities.length > 1;
     const showDistrictSelector = (availableCities.length === 1 && availableDistricts.length > 1) || (availableDistricts.length > 1 && selectedCity);
-
 
     return (
         <section className="mx-6 md:mx-10 my-8">
@@ -413,10 +578,15 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                             className="w-7 sm:w-8 ml-1"
                         />
                         <div className='text-xl sm:text-2xl md:max-w-full break-all mr-4'>
-                            {title} ({loading ? `${processedCount}/${records.length}筆資料處理中...請稍後` : `${filteredRecords.length}筆`})
+                            {title} ({loading ? `${processedCount}/${records.length}筆資料處理中...請稍後` : selectedRecordList.length > 0 ? `已選取${selectedRecordList.length}/${filteredRecords.length}筆` : `${filteredRecords.length}筆`})
                         </div>
                     </div>
-                    <div className="w-full sm:w-0 flex items-center justify-end gap-2 md:gap-4 relative h-8">
+                    <div className="flex items-center justify-end gap-2 relative h-8 w-full md:w-auto overflow-x-auto whitespace-nowrap"
+                        style={{
+                            scrollbarWidth: 'none',
+                            msOverflowStyle: 'none',
+                          }}
+                    >
                         {showCitySelector && (
                             <select
                                 id="citySelect"
@@ -456,12 +626,27 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                             </select>
                         )}
 
-                        <div className="hover:bg-red-700 border border-black rounded-xl h-full flex justify-center items-center bg-gray-200"
+                        {selectedRecordList.length > 0 && (
+                            <select className="text-center bg-gray-200 border border-black rounded-xl text-xl px-1 cursor-pointer h-full"
+                                onChange={(e)=>handleMultiTask(e)}
+                                value="批量操作"
+                            >
+                                <option disabled>批量操作</option>
+                                {selectedRecordList.length !== filteredRecords.length ? <option value="全選">全選</option> : <option value="取消全選">取消全選</option>}
+                                <option value="加入收藏">加入收藏</option>
+                                <option value="地圖顯示">地圖顯示</option>
+                                <option value="移除">移除</option>
+                                <option value="匯出">匯出</option>
+                            </select>
+                        )}
+
+                        <div className="hover:bg-red-700 border border-black rounded-xl h-full flex justify-center items-center bg-gray-200 cursor-pointer"
                             onClick={() => handleDeleteRecord()}
                         >
-                            <i className="fa-solid fa-x cursor-pointer px-4 hover:text-white"></i>
+                            <i className="fa-solid fa-x px-4 hover:text-white"></i>
                         </div>
                     </div>
+
                 </div>
 
                 <div ref={containerRef} className="flex flex-nowrap overflow-x-auto pb-4 gap-6 scroll-container">
@@ -471,32 +656,50 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                         ))
                     ) : (
                         Array.from(displayedRecords).map((record: RecordType, index) => (
-                            <article key={index} className="rounded-xl shadow-lg flex flex-col w-auto h-auto min-h-40 box-border border-4 border-white flex-shrink-0">
-                                <h3 className="bg-darkBlueGrey text-white text-xl rounded-t-xl flex box-border relative px-2 py-2">
-                                    {index + 1}. {record.displayName}
-                                </h3>
-                                <div className="bg-gray-200 flex flex-col text-2xl px-4 py-2 flex-grow justify-between rounded-b-xl">
-                                    <div className="flex gap-2 text-lg cursor-pointer" title="點擊複製地址" onClick={() => navigator.clipboard.writeText(record.displayAddress)}>
-                                        <img className="h-7 self-start" src={location_icon} />
-                                        <p>{record.displayAddress}</p>
-                                    </div>
-                                    <div className="flex flex-row justify-end">
-                                        <a className="text-[#144583] text-lg underline font-bold underline-offset-4 cursor-pointer"
-                                            onClick={() => handleMapShow(record)}>
-                                            地圖顯示
-                                        </a>
-                                    </div>
-                                </div>
-                            </article>
+                            <HistoryRecordComponent
+                                key={record.id}
+                                index={index}
+                                handleRecordClick={handleRecordClick}
+                                record={record}
+                                isSelected={isSelected}
+                                handleMapShow={handleMapShow}
+                            />
                         ))
                     )}
                     <MapModal
                         isVisible={isMapModalVisible}
                         textTitle={selectedDisplayName}
-                        onClose={handleCloseModal}
+                        onClose={()=>{setIsMapModalVisible(false);setSelectedGeoJson(null);}}
                         geoJsonData={selectedGeoJson}
                         center={mapCenter}
                         zoom={mapZoom}
+                        ChildComponent={true}
+                    />
+                    <FavoriteModal
+                        isVisible={isFavoriteModalVisible}
+                        JWTtoken={JWTtoken}
+                        updatedRecord={generateUpdatedRecordSet(recordSet, selectedRecordList, true)}
+                        onClose={()=>{setIsFavoriteModalVisible(false);}}
+                        onAddRecord={(duplicatedItems) => {
+                            if (duplicatedItems.length > 0) {
+                                setIsFavoriteModalVisible(false);
+                                setIsAddResultModalVisible(true); // 應該在這裡觸發顯示
+                                setResultDuplicatedItems(duplicatedItems);
+                            } else {
+                                Swal.fire({
+                                    icon: "success",
+                                    title: "成功新增至收藏清單",
+                                    confirmButtonColor: "rgb(20, 70, 110)",
+                                    confirmButtonText: "好的",
+                                });
+                            }
+                            setSelectedRecordList([]);
+                        }}   
+                    />
+                    <AddResultModal 
+                        isVisible={isAddResultModalVisible} 
+                        duplicatedItems={resultDuplicatedItems} 
+                        onClose={()=>{setIsAddResultModalVisible(false)}}
                     />
                 </div>
             </main>
@@ -514,6 +717,38 @@ const Skeleton = () => {
         </div>
     );
 };
+
+export const HistoryRecordComponent = ({index, handleRecordClick, record, isSelected, handleMapShow}) => {
+    return(
+        <article
+            key={index}
+            className={`rounded-xl shadow-lg flex flex-col w-auto min-h-[150px] max-h-40 box-border border-4 flex-shrink-0 ${isSelected(record) ? 'border-[#888888] ' : 'border-white '}`}
+            onClick={() => handleRecordClick(record)}
+        >
+            <h3 className="bg-darkBlueGrey text-white text-xl rounded-t-lg flex box-border relative px-2 py-2">
+                {index + 1}. {record.displayName}
+            </h3>
+            <div className={`flex flex-col text-2xl px-4 py-2 flex-grow justify-between rounded-b-xl`}>
+                <div className="flex gap-2 text-lg cursor-pointer" title="點擊複製地址" onClick={() => navigator.clipboard.writeText(record.displayAddress)}>
+                    <img className="h-7 self-start" src={location_icon} />
+                    <p>{record.displayAddress}</p>
+                </div>
+                {
+                    handleMapShow &&
+                    <div className="flex flex-row justify-end">
+                        <a className="text-[#144583] text-lg underline font-bold underline-offset-4 cursor-pointer"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleMapShow(record);
+                            }}>
+                            地圖顯示
+                        </a>
+                    </div>
+                }
+            </div>
+        </article>
+    )
+}
 
 interface RecordType {
     displayName: string;
