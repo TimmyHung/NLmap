@@ -37,7 +37,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     //Custom Settings
     const filterCities = true;
     const hideUnknownRecords = true;
-    const skipFetchLocationInfo = true;
+    const skipFetchLocationInfo = false;
 
     const title = recordSet.title;
     const records = recordSet.records.elements;
