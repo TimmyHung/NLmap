@@ -120,21 +120,6 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
         });
     };
 
-    // 保存排序變更到本地端跟資料庫
-    const handleSaveOrder = async (newItems) => {
-        const updatedRecordset = {
-            ...favoriteList.recordset,
-            elements: newItems,
-        };
-
-        const response = await updateFavorite(JWTtoken, favoriteList.id, { new_recordset: updatedRecordset });
-        if (response.statusCode !== 200) {
-            Toast.fire({
-                icon: "error",
-                text: "更新順序失敗: " +  response.message
-            })
-        }
-    };
 
     // 保存修改的紀錄
     const handleSaveEdit = async (updatedRecord) => {
@@ -218,13 +203,14 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
                         handleDeleteRecord={handleDeleteRecord}
                     />
                     <RightSide
+                        favoriteList={favoriteList}
+                        JWTtoken={JWTtoken}
                         setSearchTerm={setSearchTerm}
                         searchTerm={searchTerm}
                         filteredItems={filteredItems}
                         setFilteredItems={setFilteredItems}
                         selectedRecord={selectedRecord}
                         setSelectedRecord={setSelectedRecord}
-                        handleSaveOrder={handleSaveOrder}
                     />
                 </div>
                 {isEditModalVisible && (
@@ -241,23 +227,37 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
 
 export default FavoriteDetail;
 
-const RightSide = ({ setSearchTerm, searchTerm, filteredItems, setFilteredItems, selectedRecord, setSelectedRecord, handleSaveOrder }) => {
-    
-    // 當項目排序結束後的回調函數
-    const handleOnDragEnd = (result) => {
-        // 如果拖放到無效位置，返回
-        if (!result.destination) return;
+const RightSide = ({ favoriteList, JWTtoken, setSearchTerm, searchTerm, filteredItems, setFilteredItems, selectedRecord, setSelectedRecord }) => {
 
-        // 如果項目拖回原位置，不進行任何更新
+    // 當項目排序結束後的回調函數
+    const handleOnDragEnd = async (result) => {
+        if (!result.destination) return;
+    
         if (result.source.index === result.destination.index) return;
 
-        const items = Array.from(filteredItems);
+        const items = favoriteList.recordset.elements;
         const [reorderedItem] = items.splice(result.source.index, 1);
         items.splice(result.destination.index, 0, reorderedItem);
+        
+        // 更新本地狀態
+        setFilteredItems(items.filter(item => item.displayName != null)); 
+    
+        const updatedRecordset = {
+            ...favoriteList.recordset,
+            elements: items,
+        };
 
-        setFilteredItems(items); // 更新本地狀態
-        handleSaveOrder(items); // 將更新後的順序同步到後端
+        // 將更新後的 recordset 傳給後端 API 同步到資料庫
+        const response = await updateFavorite(JWTtoken, favoriteList.id, { new_recordset: updatedRecordset });
+    
+        if (response.statusCode !== 200) {
+            Toast.fire({
+                icon: "error",
+                text: "更新順序失敗: " + response.message
+            });
+        }
     };
+    
 
     return (
         <div className="w-[30%] h-full flex flex-col pt-4 pl-4 border-l overflow-y-auto">

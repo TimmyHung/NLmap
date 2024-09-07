@@ -18,7 +18,7 @@ export default function Diary() {
     }, [dispatch, isLoaded]);
 
     function calculateDaysRemaining() {
-        const targetDate = new Date('2024-09-16T00:00:00');
+        const targetDate = new Date('2024-09-21T00:00:00');
         const currentDate = new Date();
         const timeDifference = targetDate.getTime() - currentDate.getTime();
         const daysRemaining = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
@@ -47,7 +47,7 @@ export default function Diary() {
                     </div>
                     :
                     commits.map((commit, index) => (
-                        <div key={index} className="w-full flex justify-between mb-2 md:mb-2.5 px-4 py-2 border border-gray-400 rounded-lg">
+                        <div key={index} className="bg-gray-100 w-full flex justify-between mb-2 md:mb-2.5 px-4 py-2 border border-gray-400 rounded-lg">
                             <div className="flex items-center">
                                 <div className="">
                                     {commit.message.split('\n').map((line, i) => (
