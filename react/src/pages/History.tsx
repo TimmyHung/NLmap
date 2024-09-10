@@ -41,7 +41,7 @@ const History = () => {
 
     const handleDeleteRecord = async (recordToDelete) => {
         const response = await deleteHistoryRecords(JWTtoken, recordToDelete.id);
-
+        loadMoreRecords();
         setRecordsSet((prevRecords) =>
             prevRecords.filter(
                 (record) =>

@@ -15,7 +15,7 @@ export type QueryResponse = {
 };
 
 interface HomeSideBarProps {
-  setGeoJsonData: (data: GeoJSON.FeatureCollection | null) => void;
+  setGeoJsonData;
   bounds: string;
 }
 
@@ -42,7 +42,7 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
           if (geoJsonResponse.geoJson.features.length === 0) {
               Swal.fire('查無結果');
           } else {
-              setGeoJsonData(geoJsonResponse.geoJson);
+              setGeoJsonData([geoJsonResponse.geoJson,geoJsonResponse.rawJson]);
               valid = true;
           }
           await saveQueryHistoryRecords(JWTtoken,query_text, query, valid, geoJsonResponse?.rawJson || null, manualQuery, response_metadata);

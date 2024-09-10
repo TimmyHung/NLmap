@@ -3,11 +3,11 @@ import axios from 'axios';
 import clockIcon from "@/assets/clock.png";
 import location_icon from '@/assets/location_icon.svg';
 import MapModal from '@/components/layout/MapModal';
-import { osmToGeoJson } from "@/components/lib/Utils";
+import { osmToGeoJson, record_getDisplayAddress, record_getDisplayName } from "@/components/lib/Utils";
 import Toast from '../ui/Toast';
 import Swal from 'sweetalert2';
 import { useAuth } from "@/components/lib/AuthProvider";
-import { AddResultModal, FavoriteModal } from './FavoriteSelectionModal';
+import { FavoriteAndResultModal } from './FavoriteSelectionModal';
 import { editQueryHistoryRecords } from '../lib/API';
 
 
@@ -24,8 +24,6 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     const [processedCount, setProcessedCount] = useState(0);
     const [isMapModalVisible, setIsMapModalVisible] = useState(false);
     const [isFavoriteModalVisible, setIsFavoriteModalVisible] = useState(false);
-    const [isAddResultModalVisible, setIsAddResultModalVisible] = useState(false);
-    const [resultDuplicatedItems, setResultDuplicatedItems] = useState([]);
     const [selectedGeoJson, setSelectedGeoJson] = useState<GeoJSON.FeatureCollection | null>(null);
     const [selectedDisplayName, setSelectedDisplayName] = useState('');
     const [mapCenter, setMapCenter] = useState<[number, number]>([120.55, 23.67]);
@@ -181,7 +179,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                 if (record?.tags && Object.keys(record.tags).length > 0) {
                     let ctyName = standardizeCityName(record.tags["addr:city"]) || "未知";
                     let townName = record.tags["addr:district"] || "未知";
-                    record.displayName = getDisplayName(record);
+                    record.displayName = record_getDisplayName(record);
                     
                     // 優先過濾掉未命名紀錄(如果有開啟設定)
                     if (hideUnknownRecords && record.displayName === '未命名紀錄') {
@@ -214,7 +212,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
 
                     record.ctyName = ctyName;
                     record.townName = townName;
-                    record.displayAddress = getDisplayAddress(record);
+                    record.displayAddress = record_getDisplayAddress(record);
                     
                     citySet.add(ctyName);
                     if (ctyName === selectedCity || !selectedCity) {
@@ -292,53 +290,6 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
             container.removeEventListener("scroll", handleScroll);
         };
     }, [handleScroll]);
-
-    // 取得顯示名稱
-    function getDisplayName(record) {
-        if (record?.tags["brand:zh"] && record?.tags?.branch)
-            return `${record.tags["brand:zh"]}-${record.tags.branch}`;
-        
-        if (record?.tags?.name && record?.tags?.branch)
-            return `${record.tags.name}-${record.tags.branch}`;
-
-        if (record?.tags?.brand && record?.tags?.branch)
-            return `${record.tags.brand}-${record.tags.branch}`;
-
-        if (record?.tags?.full_name)
-            return record.tags.full_name;
-
-        if (record?.tags?.name)
-            return record.tags.name;
-
-        if (record?.tags["name:en"])
-            return record.tags["name:en"];
-
-        if (record?.tags?.is_in)
-            return record.tags.is_in;
-
-        return '未命名紀錄';
-    }
-
-    //取得顯示的地址
-    function getDisplayAddress(record) {
-        if (record.tags["addr:full"] != null) {
-            const fullAddress = record.tags["addr:full"].replace(/^\d+/, "");
-            return fullAddress;
-        }
-
-        const parts = [];
-        let streetName = record.tags["addr:street"] || "";
-        let housenumber = record.tags["addr:housenumber"] || "";
-        let floor = record.tags["addr:floor"] || "";
-        
-        if (record.ctyName) parts.push(record.ctyName);
-        if (record.townName && record.ctyName != "未知") parts.push(record.townName);
-        if (streetName) parts.push(streetName);
-        if (housenumber) parts.push(housenumber + "號");
-        if (floor) parts.push(floor + "樓");
-
-        return parts.length > 0 ? parts.join('') : "未知";
-    }
 
     // 刪除紀錄
     const handleDeleteRecord = async () => {
@@ -675,32 +626,14 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                         zoom={mapZoom}
                         ChildComponent={true}
                     />
-                    <FavoriteModal
+                    <FavoriteAndResultModal
                         isVisible={isFavoriteModalVisible}
                         JWTtoken={JWTtoken}
-                        updatedRecord={generateUpdatedRecordSet(recordSet, selectedRecordList, true)}
-                        onClose={()=>{setIsFavoriteModalVisible(false);}}
-                        onAddRecord={(duplicatedItems) => {
-                            if (duplicatedItems.length > 0) {
-                                setIsFavoriteModalVisible(false);
-                                setIsAddResultModalVisible(true); // 應該在這裡觸發顯示
-                                setResultDuplicatedItems(duplicatedItems);
-                            } else {
-                                Swal.fire({
-                                    icon: "success",
-                                    title: "成功新增至收藏清單",
-                                    confirmButtonColor: "rgb(20, 70, 110)",
-                                    confirmButtonText: "好的",
-                                });
-                            }
-                            setSelectedRecordList([]);
-                        }}   
+                        recordToAppend={generateUpdatedRecordSet(recordSet, selectedRecordList, true)}
+                        onClose={() => { setIsFavoriteModalVisible(false); }}
+                        onSuccessAppendFavorite={() => setSelectedRecordList([])}
                     />
-                    <AddResultModal 
-                        isVisible={isAddResultModalVisible} 
-                        duplicatedItems={resultDuplicatedItems} 
-                        onClose={()=>{setIsAddResultModalVisible(false)}}
-                    />
+
                 </div>
             </main>
         </section>

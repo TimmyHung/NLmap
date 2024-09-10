@@ -1,11 +1,11 @@
 import { useState, useCallback, ReactElement } from 'react';
 import MapLibreMap from "@/components/layout/MapLibreMap";
-import css from "@/css/Home.module.css";
 import HomeSideBar from '@/components/layout/HomeSidebar';
 import HomeBottomDrawer from '@/components/layout/HomeBottomDrawer';
 
 interface GeoJsonData {
   id: string;
+  overpassJson;
   data: GeoJSON.FeatureCollection;
 }
 
@@ -18,10 +18,11 @@ export default function Home(): ReactElement {
     setBounds(newBounds);
   }, []);
 
-  const handleGeoJsonData = useCallback((data: GeoJSON.FeatureCollection) => {
+  const handleGeoJsonData = useCallback((data) => {
     const newGeoJsonData: GeoJsonData = {
       id: `${Date.now()}`, //使用時間作為唯一的ID(這是React Array的要求)
-      data
+      overpassJson: data[1],
+      data: data[0],
     };
     setGeoJsonDataArray((prevDataArray) => [...prevDataArray, newGeoJsonData]);
   }, []);

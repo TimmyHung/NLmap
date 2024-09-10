@@ -104,7 +104,7 @@ button.swal2-styled{
   height: unset;
 }
 input.swal2-input{
-  border-radius: 50px;
+  border-radius: 12px;
 }
 div.swal2-modal{
   border-radius: 12px;

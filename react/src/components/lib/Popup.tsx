@@ -2,18 +2,25 @@ import React, { useRef, useEffect, useState } from "react";
 import maplibregl from "maplibre-gl";
 import css from "@/css/Home.module.css";
 import axios from "axios";
+import { record_getDisplayName } from "./Utils";
+import Swal from 'sweetalert2';
+import { FavoriteAndResultModal } from "../layout/FavoriteSelectionModal";
 
 interface PopupProps {
   map: maplibregl.Map;
   children?: React.ReactNode;
   disablePopup?: boolean;
   onFeatureClick?: (feature: maplibregl.MapGeoJSONFeature) => void;
+  onAppendCollection;
+  disableAppend?: boolean;
 }
 
 const Popup: React.FC<PopupProps> = ({
   map,
   disablePopup = false,
   onFeatureClick = () => {},
+  onAppendCollection,
+  disableAppend = false,
 }) => {
   const popupRef = useRef<HTMLDivElement>(null);
   const [popupProperties, setPopupProperties] = useState<any>(null);
@@ -25,6 +32,8 @@ const Popup: React.FC<PopupProps> = ({
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [locationInfo, setLocationInfo] = useState<{ ctyName: string; townName: string; villageName: string } | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
 
   useEffect(() => {
     if (!map) return;
@@ -53,30 +62,54 @@ const Popup: React.FC<PopupProps> = ({
       }
       return null;
     };
-
+    
     const handleClick = (e: maplibregl.MapMouseEvent) => {
       const features = map.queryRenderedFeatures(e.point);
       if (features.length > 0) {
         if (!disablePopup) {
           const clickedFeature = features[0];
           onFeatureClick(clickedFeature);
-          
+    
           const featureIdRaw = clickedFeature.properties["id"];
+          let displayName = "";
+    
+          let parsedTags;
+          try {
+            parsedTags = JSON.parse(clickedFeature.properties.tags);
+          } catch (error) {
+            console.error("Failed to parse tags:", error);
+            parsedTags = {};
+          }
+          clickedFeature.properties.tags = parsedTags;
+    
           if (typeof featureIdRaw === "string" && featureIdRaw.includes("/")) {
             const featureId = featureIdRaw.split("/")[1];
             const rawType = featureIdRaw.split("/")[0];
             const type = rawType.charAt(0).toUpperCase() + rawType.slice(1).toLowerCase();
-
+    
             setFeatureId(featureId?.toString() || null);
             setFeatureType(type);
+    
+            displayName = record_getDisplayName(clickedFeature.properties);
+          } else if (typeof featureIdRaw === "number") {
+            const featureId = featureIdRaw;
+            const rawType = clickedFeature.properties["type"];
+            const type = rawType.charAt(0).toUpperCase() + rawType.slice(1).toLowerCase();
+    
+            setFeatureId(featureId?.toString() || null);
+            setFeatureType(type);
+    
+            displayName = record_getDisplayName(clickedFeature.properties);
           } else {
             console.error("Invalid feature ID:", featureIdRaw);
             setFeatureId(null);
             setFeatureType(null);
+            displayName = "地點獲取失敗";
           }
-
-          const { id: _, ...filteredProperties } = clickedFeature.properties;
-          setPopupProperties(filteredProperties);
+    
+          setDisplayName(displayName);
+          setPopupProperties(parsedTags);
+          setSelectedRecord(clickedFeature); 
 
           if (clickedFeature.geometry.type === "Point") {
             const coordinates = clickedFeature.geometry.coordinates;
@@ -99,8 +132,8 @@ const Popup: React.FC<PopupProps> = ({
             setLatitude(null);
             setLocationInfo(null);
           }
-
-          setIsExpanded(false); // 點擊時重置展開狀態
+    
+          setIsExpanded(false);
     
           const newPopup = new maplibregl.Popup({
             maxWidth: "none",
@@ -130,69 +163,82 @@ const Popup: React.FC<PopupProps> = ({
     };
   }, [map, disablePopup, popup]);
 
+  // 處理加入收藏的邏輯
+  const handleAddToFavorites = () => {
+    if (selectedRecord) {
+      onAppendCollection(selectedRecord);
+    }
+  };
+
   return (
     <div
-        ref={popupRef}
-        className="max-w-full sm:max-w-lg lg:max-w-xl max-h-64 w-full sm:w-auto overflow-auto break-words"
-        >
-        {loading ? (
-            <div>資料載入中...</div>
-        ) : (
+      ref={popupRef}
+      className="max-w-full sm:max-w-lg lg:max-w-xl max-h-64 w-full sm:w-auto overflow-auto break-words"
+    >
+      {loading ? (
+        <div>資料載入中...</div>
+      ) : (
+        <div className="w-full flex flex-col overflow-y-auto">
+
+          {featureType && featureId && (
+            <div>
+              {displayName && (
+                <div className="text-lg font-semibold text-base">{displayName}</div>
+              )}
+              {featureType}
+              <a
+                href={`https://www.openstreetmap.org/${featureType.toLowerCase()}/${featureId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2 text-nodeIDBlue"
+              >
+                {featureId}
+              </a>
+            </div>
+          )}
+          {latitude !== null && longitude !== null && (
             <>
-            {featureType && featureId && (
-                <div className="text-lg">
-                    {featureType}
-                    <a
-                        href={`https://www.openstreetmap.org/${featureType.toLowerCase()}/${featureId}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="px-2 text-nodeIDBlue"
-                    > 
-                        {featureId}
-                    </a>
-                </div>
-            )}
-            {latitude !== null && longitude !== null && (
-                <>
-                <div className={css.coordinates}>
-                    經度: {longitude}
-                </div>
-                <div>
-                    緯度: {latitude}
-                </div>
-                </>
-            )}
-            {locationInfo && (
-                <div>
-                <div>{`${locationInfo.ctyName} / ${locationInfo.townName} / ${locationInfo.villageName}`}</div>
-                </div>
-            )}
-            {popupProperties && (
-                <div className="max-h-32">
-                <div
-                    onClick={() => setIsExpanded(!isExpanded)} 
-                    className="text-lg"
-                >
-                    [標籤]{isExpanded ? '▾' : '▸'}
-                </div>
-                {isExpanded && (
-                    <div className="max-h-32">
-                    {Object.keys(popupProperties).map((prop, i) => (
-                        <div className="flex flex-wrap" key={`prop-${i}`}>
-                        <span className="font-semibold truncate">{prop}</span>
-                        <span className="mx-2 whitespace-nowrap">=</span>
-                        <span className="whitespace-nowrap">
-                            {popupProperties[prop]}
-                        </span>
-                        </div>
-                    ))}
-                    </div>
-                )}
-                </div>
-            )}
+              <div className={css.coordinates}>經度: {longitude}</div>
+              <div>緯度: {latitude}</div>
             </>
-        )}
+          )}
+          {locationInfo && (
+            <div>
+              <div>{`${locationInfo.ctyName} / ${locationInfo.townName} / ${locationInfo.villageName}`}</div>
+            </div>
+          )}
+          {
+            !disableAppend &&
+            <div className="text-base cursor-pointer" onClick={handleAddToFavorites}>
+              [加入收藏]▸
+            </div>
+          }
+          {popupProperties && (
+            <div className="max-h-32">
+              <div
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-base cursor-pointer"
+              >
+                [標籤]{isExpanded ? '▾' : '▸'}
+              </div>
+              {isExpanded && (
+                <div className="max-h-32">
+                    {Object.keys(popupProperties).map((prop, i) => (
+                    <div className="flex flex-wrap" key={`prop-${i}`}>
+                      <span className="font-semibold truncate">{prop}</span>
+                      <span className="mx-2 whitespace-nowrap">=</span>
+                      <span className="whitespace-nowrap">
+                            {popupProperties[prop]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
+      )}
+    </div>
   );
 };
 

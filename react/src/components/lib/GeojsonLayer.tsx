@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import * as turf from "@turf/turf"; // 引入 turf.js
 
 interface ContainingGeometry {
   type: string;
@@ -12,6 +13,7 @@ interface GeoJsonLayerProps {
   geojson: GeoJSON.FeatureCollection;
   color: string;
   containingGeometries?: ContainingGeometry[];
+  zoomLevel: number;
 }
 
 const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
@@ -20,6 +22,7 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
   id,
   geojson,
   color,
+  zoomLevel,
   containingGeometries = [
     { type: 'Point', visibleOnMap: true },
     { type: 'Line', visibleOnMap: true },
@@ -36,6 +39,7 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
       });
     }
 
+    // 添加 Polygon 層
     if (!map.getLayer(`${id}-Polygon`)) {
       map.addLayer({
         id: `${id}-Polygon`,
@@ -55,6 +59,7 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
       });
     }
 
+    // 添加 Line 層
     if (!map.getLayer(`${id}-Line`)) {
       map.addLayer({
         id: `${id}-Line`,
@@ -74,6 +79,7 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
       });
     }
 
+    // 添加 Point 層
     if (!map.getLayer(`${id}-Point`)) {
       map.addLayer({
         id: `${id}-Point`,
@@ -129,6 +135,65 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
     };
   }, [map, maploaded, geojson, id, color]);
 
+  // 根據 zoomLevel 動態顯示 Polygon 或 Point
+  useEffect(() => {
+    if (!map || !maploaded || !geojson || !zoomLevel) return;
+
+    const updatedGeojson = { ...geojson };
+
+    updatedGeojson.features = geojson.features.map((feature) => {
+      if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
+        const polygonArea = turf.area(feature); // 使用 Turf.js 計算 Polygon 面積
+
+        // 根據面積計算出顯示閾值
+        let thresholdZoom;
+        if (polygonArea > 1000000) {
+          thresholdZoom = Math.log(polygonArea) / Math.log(3.7);
+        } else if(polygonArea > 500000)   {
+          // 對於非常大的多邊形，調整顯示縮放等級
+          thresholdZoom = Math.log(polygonArea) / Math.log(3.3);
+        } else if(polygonArea > 200000)   {
+          // 對於非常大的多邊形，調整顯示縮放等級
+          thresholdZoom = Math.log(polygonArea) / Math.log(3);
+        } else if(polygonArea > 100000)   {
+          // 對於非常大的多邊形，調整顯示縮放等級
+          thresholdZoom = Math.log(polygonArea) / Math.log(2.65);
+        } else if(polygonArea > 50000)   {
+          // 對於非常大的多邊形，調整顯示縮放等級
+          thresholdZoom = Math.log(polygonArea) / Math.log(2.5);
+        } else if (polygonArea > 10000) {
+          thresholdZoom = Math.log(polygonArea) / Math.log(2.4);
+        } else if (polygonArea > 1000) {
+          // 對於中等大小的多邊形，使用較合理的縮放級別
+          thresholdZoom = Math.log(polygonArea) / Math.log(2) + 4;
+        } else {
+          // 對於小的多邊形
+          thresholdZoom = Math.log(polygonArea) / Math.log(2) + 9;
+        }
+
+
+        // console.log(polygonArea);
+        // console.log(thresholdZoom);
+        // console.log(zoomLevel);
+
+        // 如果當前 zoomLevel 小於閾值，將其轉換為 Point
+        if (zoomLevel < thresholdZoom) {
+          const centroid = turf.centroid(feature);
+          return {
+            ...centroid,
+            properties: feature.properties,
+          };
+        }
+      }
+      return feature;
+    });
+
+    if (map.getSource(`${id}-source`)) {
+      map.getSource(`${id}-source`).setData(updatedGeojson);
+    }
+  }, [map, geojson, zoomLevel, maploaded, id]);
+
+  // 動態改變顏色
   useEffect(() => {
     if (!map || !maploaded || !color) return;
 
@@ -143,6 +208,7 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
     });
   }, [map, color, id, maploaded]);
 
+  // 動態控制幾何物件的可見性
   useEffect(() => {
     if (!map || !maploaded) return;
 
