@@ -11,7 +11,7 @@ from opencc import OpenCC
 
 whisper_blueprint = Blueprint('whisper', __name__)
 
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY_WHISPER')
 ALLOWED_EXTENSIONS = {'wav', 'mp3', 'aac', 'm4a'}
 MAX_AUDIO_DURATION = 30
 

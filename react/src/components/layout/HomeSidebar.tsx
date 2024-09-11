@@ -8,7 +8,7 @@ import WhisperButton from '../ui/WhisperButton';
 
 export type QueryStates = 'idle' | 'generating_query' | 'extracting_from_osm' | 'extraction_done';
 export type Tabs = 'manual' | 'askgpt';
-export type GPTModel = 'gpt35' | 'gpt4' | 'gpt4o';
+export type GPTModel = 'gpt35' | 'gpt4o';
 export type QueryResponse = {
   osmquery: string;
   response_metadata?: string;
@@ -133,18 +133,12 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
               }}>
             GPT-3.5
           </div>
-          <div className={`cursor-pointer py-2 w-full text-center border-r-[1px] border-black ${gptModel === "gpt4" && "bg-gray-300 shadow-custom-inner"}`} 
+          <div className={`cursor-pointer py-2 w-full text-center border-r-[1px] border-black ${gptModel === "gpt4o" && "bg-gray-300 shadow-custom-inner"}`} 
               onClick={() => {
-                setGPTModel("gpt4");
+                setGPTModel("gpt4o");
               }}>
-            GPT-4
+            GPT-4o
           </div>
-        
-          { isAdmin &&  /*自費購買的API金鑰所以不直接公開 */
-            <div className={`cursor-pointer py-2 w-full text-center border-black ${gptModel === "gpt4o" && "bg-gray-300 shadow-custom-inner"}`} onClick={()=>setGPTModel("gpt4o")}>
-              GPT-4o
-            </div>
-          }
         </div>
         : <div></div>
       }

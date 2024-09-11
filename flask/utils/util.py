@@ -46,20 +46,3 @@ def verify_JWTtoken(token):
         return {'status': False, 'message': 'JWT Failed: Token Invalid', 'detail': str(e)}, 200
     except Exception as e:
         return {'status': False, 'message': 'JWT Failed: ' + str(e)}, 200
-
-
-
-# from openai import OpenAI
-# 自費OpenAI Token
-# def self_chat_completion(prompt):
-#     client = OpenAI(
-#         api_key = os.getenv("OPENAI_API_KEY"),
-#     )
-#     response = client.chat.completions.create(
-#         model="gpt-3.5-turbo",
-#         messages=[{"role": "user", "content": prompt}]
-#     )
-#     return response.choices[0].message.content.strip()
-
-
-    

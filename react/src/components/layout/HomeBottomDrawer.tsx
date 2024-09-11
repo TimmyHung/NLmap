@@ -8,7 +8,7 @@ import WhisperButton from '../ui/WhisperButton';
 
 export type QueryStates = 'idle' | 'generating_query' | 'extracting_from_osm' | 'extraction_done';
 export type Tabs = 'manual' | 'askgpt';
-export type GPTModel = 'gpt35' | 'gpt4' | 'gpt4o';
+export type GPTModel = 'gpt35' | 'gpt4o';
 export type QueryResponse = {
   osmquery: string;
   response_metadata?: string;
@@ -161,25 +161,14 @@ export default function HomeBottomDrawer({ setGeoJsonData, bounds }: HomeBottomD
               </div>
               <div
                 className={`cursor-pointer py-2 w-full text-center border-r-[1px] border-black ${
-                  gptModel === "gpt4" && "bg-gray-300 shadow-custom-inner"
+                  gptModel === "gpt4o" && "bg-gray-300 shadow-custom-inner"
                 }`}
                 onClick={() => {
-                  setGPTModel("gpt4");
+                  setGPTModel("gpt4o");
                 }}
               >
-                GPT-4
+                GPT-4o
               </div>
-  
-              {isAdmin && (
-                <div
-                  className={`cursor-pointer py-2 w-full text-center border-black ${
-                    gptModel === "gpt4o" && "bg-gray-300 shadow-custom-inner"
-                  }`}
-                  onClick={() => setGPTModel("gpt4o")}
-                >
-                  GPT-4o
-                </div>
-              )}
             </div>
           ) : (
             <div></div>

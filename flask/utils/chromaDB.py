@@ -1,6 +1,6 @@
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from utils.azure_openai import chat_completion
+from utils.openai_API import chat_completion
 from utils.util import save_queryLog, verify_JWTtoken
 import os
 import json
@@ -86,7 +86,8 @@ def loadData():
 
 
 def combineSystemRoleText(search_results, prompt):
-    promptText = "Respond with just the `data` after `data=`, include the entire query string without any explanation.\n"
+    promptText = "You are a helpful overpassQL expert, help me generate result about Taiwan.\n"
+    promptText += "Respond with just the `data` after `data=`, include the entire query string without any explanation.\n"
     promptText += "Format your response like this: data=[out:json][timeout:60];{INSERT_QUERY_HERE};out;>;out skel qt;\n"
     promptText += "If you determine that the prompt is not a valid query, respond with: data=null\n"
     promptText += "I will provide a few example phrases for reference, but please note these are only for guidance. If you find the example phrases unhelpful, feel free to generate them yourself.\n"
@@ -111,15 +112,17 @@ def combineSystemRoleText(search_results, prompt):
 def query(chromaDB, model, prompt, JWTtoken, bounds):
     search_results = chromaDB.similarity_search(prompt, k=5)
 
-    if(model == "gpt4o"):
-        return {'statuscode': 403, 'message': '查詢失敗\nGPT-4o暫時不開放使用。'}
+    # if(model == "gpt4o"):
+    #     return {'statuscode': 403, 'message': '查詢失敗\nGPT-4o暫時不開放使用。'}
 
     promptText = [
-        (
-            "system",
-            combineSystemRoleText(search_results, prompt)
-        ),
-        ("human", prompt),
+        {
+            "role": "system",
+            "content": combineSystemRoleText(search_results, prompt)
+        },
+        {   "role": "user",
+            "content": prompt
+        },
     ]
     response = chat_completion(model, promptText)
 

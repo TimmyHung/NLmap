@@ -22,5 +22,4 @@ def getQuery():
 
     # 執行生成Overpass QL的邏輯
     query_response = chroma_query(chromaDB, model, promptText, JWTtoken, bounds)
-
     return jsonify(query_response), 200
