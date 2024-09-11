@@ -417,30 +417,25 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                         const updatedRecordElements = updatedRecordSet.records.elements;
                         let tempRecordSet = recordSet;
                 
-                        // 檢查長度，如果沒有任何一筆紀錄了，則直接刪掉這一整筆歷史紀錄。
                         if(updatedRecordElements.length === 0){
                             onDelete(recordSet);
-                        }else{
+                        } else {
                             tempRecordSet.records.elements = updatedRecordElements;
-                            // 同步資料庫狀態
                             const response = await editQueryHistoryRecords(JWTtoken, recordSet.id, tempRecordSet.records);
                             if(response.statusCode != 200){
                                 Toast.fire({
                                     icon: "error",
                                     text: response.message
-                                })
+                                });
                                 return;
                             }
                         }
                         
-                        // 更新本地狀態
                         recordSet.records.elements = updatedRecordElements;
                         setFilteredRecords(updatedRecordElements);
                         setDisplayedRecords(new Set(updatedRecordElements.slice(0, batchSize)));
-                
-                        // 清空選中的紀錄
                         setSelectedRecordList([]);
-                
+                        
                         Swal.fire({
                             icon: "success",
                             title: "刪除成功",
@@ -451,20 +446,38 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                 break;
             }
             case "匯出": {
-                 // 將 recordSet 轉換為 JSON 格式
-                const jsonString = JSON.stringify(recordSet, null, 2);  // 格式化 JSON
-
-                // 建立一個 Blob，並設置類型為 application/json
-                const blob = new Blob([jsonString], { type: "application/json" });
-
-                // 使用 URL.createObjectURL 生成一個下載連結
-                const link = document.createElement("a");
+                // 開始生成 KML
+                let kmlData = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+                kmlData += `<kml xmlns="http://www.opengis.net/kml/2.2">\n`;
+                kmlData += `<Document>\n`;
+                kmlData += `<name>${recordSet.title || 'Exported Records'}</name>\n`;
+    
+                selectedRecordList.forEach((record) => {
+                    const name = record.displayName || "未命名";
+                    // 確保有經緯度
+                    if (record.lats !== undefined && record.lons !== undefined) {
+                        const tempLat = record.lat = record.lats.reduce((acc, lat) => acc + lat, 0)/record.lats.length;
+                        const tempLon = record.lon = record.lons.reduce((acc, lon) => acc + lon, 0)/record.lons.length;
+                        kmlData += `<Placemark>\n`;
+                        kmlData += `<name>${name}</name>\n`;
+                        kmlData += `<Point>\n<coordinates>${tempLon},${tempLat}</coordinates>\n</Point>\n`;
+                        kmlData += `</Placemark>\n`;
+                    }
+                });
+    
+                kmlData += `</Document>\n</kml>`;
+    
+                // 建立一個 Blob，並設置類型為 KML
+                const blob = new Blob([kmlData], { type: 'application/vnd.google-earth.kml+xml' });
+    
+                // 使用 URL.createObjectURL 生成下載連結
+                const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `${recordSet.title || "recordSet"}.json`;  // 設定下載檔案名稱
-
+                link.download = `${recordSet.title || "recordSet"}.kml`;
+    
                 // 模擬點擊下載連結
                 link.click();
-
+    
                 // 釋放 URL.createObjectURL 所佔用的記憶體
                 URL.revokeObjectURL(link.href);
                 break;
@@ -473,6 +486,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     
         event.target.value = "批量操作";
     };
+    
 
     //將選擇的record轉換成新的recordSet並返回
     const generateUpdatedRecordSet = (recordSet, selectedRecordList, whitelist = true) => {

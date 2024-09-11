@@ -164,7 +164,57 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
             Swal.fire("更新失敗", response.message, "error");
         }
     };
+
+    //下載KML格式
+    const handleDownload = () => {
+        if (favoriteList.recordset && Array.isArray(favoriteList.recordset.elements)) {
+            // 過濾掉名稱為 "Unnamed" 的項目
+            const filteredElements = favoriteList.recordset.elements.filter(element => element.displayName && element.displayName !== "未命名");
     
+            // 開始生成 KML
+            let kmlData = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+            kmlData += `<kml xmlns="http://www.opengis.net/kml/2.2">\n`;
+            kmlData += `<Document>\n`;
+            kmlData += `<name>${favoriteList.title}</name>\n`;
+    
+            filteredElements.forEach((element) => {
+                const name = element.displayName;
+    
+                // 確保 lats 和 lons 存在且為陣列
+                if (Array.isArray(element.lats) && Array.isArray(element.lons) && element.lats.length > 0 && element.lons.length > 0) {
+                    const coordinates = element.lons.map((lon, index) => `${lon},${element.lats[index]}`).join(" ");
+                    
+                    kmlData += `<Placemark>\n`;
+                    kmlData += `<name>${name}</name>\n`;
+                    kmlData += `<Point>\n<coordinates>${coordinates}</coordinates>\n</Point>\n`;
+                    kmlData += `</Placemark>\n`;
+                } else if (element.lat && element.lon) { 
+                    // 處理只有單一經緯度的 node
+                    kmlData += `<Placemark>\n`;
+                    kmlData += `<name>${name}</name>\n`;
+                    kmlData += `<Point>\n<coordinates>${element.lon},${element.lat}</coordinates>\n</Point>\n`;
+                    kmlData += `</Placemark>\n`;
+                }
+            });
+    
+            kmlData += `</Document>\n</kml>`;
+    
+            // 創建 Blob 以便下載
+            const blob = new Blob([kmlData], { type: 'application/vnd.google-earth.kml+xml' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${favoriteList.title}.kml`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else {
+            Toast.fire({
+                icon: 'error',
+                text: '無可下載的資料',
+            });
+        }
+    };
+
     
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={handleCloseModal}>
@@ -186,6 +236,9 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
                     <div className="flex flex-row gap-2">
                         <button className="text-black hover:bg-red-700" onClick={handleDeleteList}>
                             <i className="fa-solid fa-trash text-2xl"></i>
+                        </button>
+                        <button className="text-black" onClick={handleDownload}>
+                            <i className="fa-solid fa-download text-2xl"></i>
                         </button>
                         <button className="text-black" onClick={handleCloseModal}>
                             <i className="fa-solid fa-times text-2xl"></i>

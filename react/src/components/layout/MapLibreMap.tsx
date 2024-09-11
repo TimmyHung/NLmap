@@ -5,19 +5,11 @@ import GeojsonLayer from "@/components/lib/GeojsonLayer";
 import Popup from "@/components/lib/Popup";
 import getRandomDarkColor, { record_getDisplayAddress, record_getDisplayName } from '@/components/lib/Utils';
 import bbox from '@turf/bbox';
-import { osmToGeoJson } from "@/components/lib/Utils"; // 引入這個函數來處理overpassJson
 import { useAuth } from "@/components/lib/AuthProvider";
 import { FavoriteAndResultModal } from './FavoriteSelectionModal';
-import Swal from 'sweetalert2';
-
-interface GeoJsonData {
-  id: string;
-  data: GeoJSON.FeatureCollection;
-  overpassJson: any;
-}
 
 interface MapLibreMapProps {
-  geoJsonDataArray: GeoJsonData[];
+  geoJsonDataArray;
   onBoundsChange: (bounds: maplibregl.LngLatBounds) => void;
   initialCenter?: LngLatLike;
   initialZoom?: number;
