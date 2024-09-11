@@ -6,7 +6,7 @@ const defaultHeaders = {
   'Content-Type': 'application/json'
 };
 
-export const postRequest = async (url: string, requestData: any, headers = {}, timeout = 5000) => {
+export const postRequest = async (url: string, requestData: any, headers = {}, timeout = 10000) => {
   try {
     const response = await axios.post(url.startsWith("http") ? url : baseURL + url, requestData, {
       headers: { ...defaultHeaders, ...headers },
@@ -21,7 +21,7 @@ export const postRequest = async (url: string, requestData: any, headers = {}, t
 
 export default postRequest;
 
-export const getRequest = async (url: string, requestData: any, headers = {}, timeout = 5000) => {
+export const getRequest = async (url: string, requestData: any, headers = {}, timeout = 10000) => {
   try {
     const response = await axios.get(url.startsWith("http") ? url : baseURL + url, {
       headers: { ...defaultHeaders, ...headers },
@@ -35,7 +35,7 @@ export const getRequest = async (url: string, requestData: any, headers = {}, ti
   }
 };
 
-export const deleteRequest = async (url: string, requestData: any, headers = {}, timeout = 5000) => {
+export const deleteRequest = async (url: string, requestData: any, headers = {}, timeout = 10000) => {
   try {
     const response = await axios.delete(url.startsWith("http") ? url : baseURL + url, {
       headers: { 
@@ -53,7 +53,7 @@ export const deleteRequest = async (url: string, requestData: any, headers = {},
   }
 };
 
-export const putRequest = async (url: string, requestData: any, headers = {}, timeout = 5000) => {
+export const putRequest = async (url: string, requestData: any, headers = {}, timeout = 10000) => {
   try {
     const response = await axios.put(url.startsWith("http") ? url : baseURL + url, requestData, {
       headers: { 
@@ -300,5 +300,30 @@ export const updateFavorite = async ( JWTtoken: string, favorite_id: number, upd
     return response;
   } catch (error: any) {
     return { statusCode: 500, message: error.response ? error.response.data : error.message };
+  }
+};
+
+//發送重置密碼OTP
+export const sendOTP = async (email: string) => {
+  const data = { email };
+  try {
+    const response = await postRequest("api/authorization/otp", data, {});
+    return response;
+  } catch (err) {
+    return { statusCode: 500, message: err };
+  }
+};
+
+//發送重製密碼請求
+export const resetPassword = async (email, otp, newPassword) => {
+  const data = { email, otp, new_password: newPassword };
+  
+  try {
+    // 發送 POST 請求到後端 API 進行確認
+    const response = await postRequest("api/authorization/reset", data, {});
+    return response
+  } catch (err) {
+    // 捕捉錯誤並返回錯誤訊息
+    return { statusCode: 500, message: err };
   }
 };

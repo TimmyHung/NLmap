@@ -208,10 +208,10 @@ const Popup: React.FC<PopupProps> = ({
             </div>
           )}
           {
-            !disableAppend &&
-            <div className="text-base cursor-pointer" onClick={handleAddToFavorites}>
-              [加入收藏]▸
-            </div>
+            (!disableAppend && featureType) && 
+              <div className="text-base cursor-pointer" onClick={handleAddToFavorites}>
+                [加入收藏]▸
+              </div>
           }
           {popupProperties && (
             <div className="max-h-32">

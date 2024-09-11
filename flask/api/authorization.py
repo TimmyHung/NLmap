@@ -3,7 +3,7 @@ import requests
 import jwt
 from flask import Blueprint, request, jsonify, redirect
 from utils.MySQL import get_db_cursor
-from utils.util import hash_password, generate_jwt, verify_google_token, verify_apple_token, verify_JWTtoken
+from utils.util import hash_password, generate_jwt, verify_google_token, verify_apple_token, verify_JWTtoken, generate_otp_code
 
 authorize_blueprint = Blueprint('authorize', __name__)
 root = "/api/authorization"
@@ -75,7 +75,8 @@ def register():
     check_result = cursor.fetchone()
 
     if check_result:
-        email, account_type = check_result
+        email = check_result["email"]
+        account_type = check_result["account_type"]
         return jsonify({'status': False, 'message': 'Account already exists', 'account_type': account_type}), 200
 
     salt = os.urandom(16).hex()
@@ -332,3 +333,162 @@ def discord_callback():
 
     connection.close()
     return redirect(f"{FRONTEND_URL}/login?token={jwt_token}&message={message}&status=true")
+
+
+#重設密碼
+@authorize_blueprint.route(root + "/reset", methods=["POST"])
+def resetPassword():
+    data = request.get_json()
+    email = data.get('email')
+    otp = data.get('otp')
+    new_password = data.get('new_password')
+
+    if not email:
+        return jsonify({'statusCode': 400, 'message': '請提供電子郵件'}), 200
+    if not otp:
+        return jsonify({'statusCode': 400, 'message': '請提供驗證碼'}), 200
+    if not new_password:
+        return jsonify({'statusCode': 400, 'message': '請提供新密碼'}), 200
+
+    cursor, connection = get_db_cursor()
+
+    # 檢查 OTP 是否正確
+    check_otp_query = "SELECT otp, account_type, salt FROM users WHERE email = %s"
+    cursor.execute(check_otp_query, (email,))
+    user = cursor.fetchone()
+
+    if not user:
+        return jsonify({'statusCode': 400, 'message': '無效的電子郵件或驗證碼'}), 200
+
+    if user['otp'] != otp:
+        return jsonify({'statusCode': 400, 'message': '驗證碼錯誤'}), 200
+
+    if user['account_type'] != 'Native':
+        return jsonify({'statusCode': 400, 'message': '只有原生帳戶可以重設密碼'}), 200
+
+    # 為新密碼生成 hash 和 salt
+    new_salt = os.urandom(16).hex()
+    new_hashed_password = hash_password(new_password, new_salt)
+
+    # 更新資料庫中的密碼和 salt
+    update_password_query = "UPDATE users SET hashed_password = %s, salt = %s, otp = NULL WHERE email = %s"
+    try:
+        cursor.execute(update_password_query, (new_hashed_password, new_salt, email))
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        return jsonify({'statusCode': 500, 'message': f'重設密碼失敗: {str(e)}'}), 200
+    finally:
+        connection.close()
+
+    return jsonify({'statusCode': 200, 'message': '密碼重設成功'}), 200
+
+
+#發送密碼重設OTP信件
+@authorize_blueprint.route(root + "/otp", methods=["POST"])
+def sendOTP():
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return jsonify({'statusCode': 400, 'message': 'Email is required'}), 200
+
+    cursor, connection = get_db_cursor()
+
+    # 檢查帳號類型是否為 Native
+    check_user_exist_query = "SELECT userID, account_type FROM users WHERE email = %s"
+    cursor.execute(check_user_exist_query, (email,))
+    user = cursor.fetchone()
+
+    # 即使找不到用戶，還是返回同樣的訊息，避免洩露是否存在該信箱
+    if user and user['account_type'] == 'Native':
+        # 生成六位數的 OTP
+        reset_code = generate_otp_code()
+
+        # 更新資料庫中的 OTP 欄位
+        update_otp_query = "UPDATE users SET otp = %s WHERE email = %s"
+        try:
+            cursor.execute(update_otp_query, (reset_code, email))
+            connection.commit()
+        except Exception as e:
+            connection.rollback()
+            return jsonify({'statusCode': 500, 'message': f'Failed to update OTP: {str(e)}'}), 200
+        finally:
+            connection.close()
+
+        # 寄送 OTP 到使用者的 email
+        send_mail(reset_code, email)
+
+    # 無論帳號是否存在，皆回傳相同的訊息。
+    return jsonify({'statusCode': 200, 'message': '如果這個信箱有註冊，系統會寄送重設密碼。', 'email': email}), 200
+
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.utils import formataddr
+from email.header import Header
+# 寄送含有OTP的郵件
+def send_mail(reset_code, recipient_email):
+    smtp_server = os.getenv('SMTP_SERVER')
+    smtp_port = os.getenv('SMTP_PORT')
+    smtp_username = os.getenv('SMTP_USERNAME')
+    smtp_password = os.getenv('SMTP_PASSWORD')
+
+    sender_name = 'NLmap'
+    sender_email = os.getenv('SMTP_USERNAME')
+
+    # 建立郵件內容
+    msg = MIMEMultipart('alternative')
+    msg['From'] = formataddr((str(Header(sender_name, 'utf-8')), sender_email))
+    msg['To'] = recipient_email
+    msg['Subject'] = Header('密碼重設請求', 'utf-8')
+
+    # HTML 郵件內容
+    html_content = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; margin: 0;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 10px;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="text-align: center; padding: 5px;">
+                    <tr>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <img src="https://i.imgur.com/XUko08E.png" alt="Logo" style="height: 40px; display: inline-block; vertical-align: middle;"/>
+                            <h2 style="color: #14466e; margin: 0; font-size: 24px; display: inline-block; vertical-align: middle;">NLmap 密碼重設請求</h2>
+                        </td>
+                    </tr>
+                </table>
+                
+                <p style="text-align: center; font-size: 20px; color: #333;">這是您的密碼重置驗證碼：</p>
+                <div style="text-align: center; font-size: 36px; font-weight: bold; letter-spacing: 6px; color: #000;">
+                    {reset_code}
+                </div>
+                <p style="text-align: center; color: #666; font-size: 14px;">
+                    若您沒提出此要求，您可以安全的忽略這封電子郵件。
+                </p>
+                
+                <hr style="border: 0; height: 1px; background-color: #eeeeee; margin: 20px 0;">
+                
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="text-align: center; font-size: 12px; color: #999;">
+                    <tr>
+                        <td>
+                            &copy; 2024 NLmap | 
+                            <a href="https://timmyhung.pettw.online" style="color: #14466e; text-decoration: none;">NLmap 網站</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </body>
+    </html>
+    """
+
+    # 將 HTML 郵件內容加入 MIMEText
+    msg.attach(MIMEText(html_content, 'html', 'utf-8'))
+
+    # try:
+    # 發送郵件
+    server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+    server.login(smtp_username, smtp_password)
+    server.sendmail(sender_email, recipient_email, msg.as_string())
+    server.quit()
+    print("密碼重置郵件發送成功！")
+    # except Exception as e:
+    #     print(f"郵件發送失敗: {e}")

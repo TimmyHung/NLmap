@@ -58,7 +58,7 @@ def add_favorite_item():
         new_recordSet = request.json.get('records')
 
         if not favorite_id or not new_recordSet:
-            return jsonify({'statusCode': 400, 'message': 'Favorite ID and Recordset ID are required'}), 200
+            return jsonify({'statusCode': 400, 'message': 'Favorite ID and Recordset are required'}), 200
 
         cursor, connection = get_db_cursor()
 

@@ -101,8 +101,18 @@ textarea{
 
 /* SWAL2 */
 button.swal2-styled{
-  height: unset;
+  height: unset; 
 }
+button.swal2-confirm{
+  background-color: rgb(66 203 131) !important;
+}
+button.swal2-deny{
+  /* background-color: rgb(20, 70, 110) !important; */
+}
+button.swal2-cancel{
+  /* background-color: rgb(20, 70, 110) !important; */
+}
+
 input.swal2-input{
   border-radius: 12px;
 }

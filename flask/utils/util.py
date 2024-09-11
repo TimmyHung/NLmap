@@ -2,7 +2,11 @@ import hashlib
 import jwt
 import os
 import requests
+import random
 from utils.MySQL import get_db_cursor
+
+def generate_otp_code():
+    return str(random.randint(100000, 999999))
 
 def hash_password(password, salt):
     return hashlib.sha256((password + salt).encode('utf-8')).hexdigest()

@@ -2,7 +2,7 @@ import { useState, useEffect, ReactElement } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import GoogleLoginBtn, { DiscordLoginBtn, AppleLoginBtn } from '@/components/ui/OAuth_Button';
 import css from '@/css/Login.module.css';
-import postRequest from '@/components/lib/API';
+import postRequest, { resetPassword, sendOTP } from '@/components/lib/API';
 import { useAuth } from '@/components/lib/AuthProvider';
 import Swal from 'sweetalert2';
 
@@ -94,20 +94,89 @@ export default function Login(): ReactElement {
   }
 
   async function passwordRecovery() {
-    const { value: email } = await Swal.fire({
+    await Swal.fire({
       title: "請輸入你的登入信箱",
       input: "email",
+      inputAttributes: {
+        autocapitalize: "off"
+      },
       showCancelButton: true,
       confirmButtonText: "繼續",
       cancelButtonText: "取消",
       inputPlaceholder: "在這輸入你的信箱",
       validationMessage: "請輸入正確的信箱格式",
+      showLoaderOnConfirm: true,
+      preConfirm: async (email) => {
+        try {
+          const response = await sendOTP(email);  // 發送 OTP 請求
+          if (response.statusCode != 200) {
+            return Swal.showValidationMessage(`發生錯誤: ${response.message}`);
+          }
+          return response;
+        } catch (error) {
+          return Swal.showValidationMessage(`重置密碼失敗: ${error}`);
+        }
+      },
+      allowOutsideClick: () => !Swal.isLoading(),
+    }).then(async (response) => {
+      if (response.isConfirmed) {
+        // 進入 OTP 驗證和密碼重設流程
+        await Swal.fire({
+          title: "輸入六位數驗證碼和新密碼",
+          html: `
+            <input type="text" id="otp" class="swal2-input" placeholder="6位數驗證碼" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6)">
+            <input type="password" id="newPassword" class="swal2-input" placeholder="新密碼">
+            <input type="password" id="confirmPassword" class="swal2-input" placeholder="再次輸入新密碼">
+          `,
+          showCancelButton: true,
+          confirmButtonText: "重設密碼",
+          cancelButtonText: "取消",
+          showLoaderOnConfirm: true,
+          preConfirm: async () => {
+            const otpInput = Swal.getPopup().querySelector("#otp") as HTMLInputElement;
+            const newPasswordInput = Swal.getPopup().querySelector("#newPassword") as HTMLInputElement;
+            const confirmPasswordInput = Swal.getPopup().querySelector("#confirmPassword") as HTMLInputElement;
+  
+            const otp = otpInput.value;
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+  
+            // 驗證 OTP
+            if (!otp || otp.length !== 6) {
+              return Swal.showValidationMessage("請輸入六位數驗證碼");
+            }
+            // 驗證新密碼
+            if (!newPassword) {
+              return Swal.showValidationMessage("請輸入新密碼");
+            }
+            // 驗證確認密碼
+            if (newPassword !== confirmPassword) {
+              return Swal.showValidationMessage("重複輸入的密碼不一致，請再次確認。");
+            }
+  
+            try {
+              const resetResponse = await resetPassword(response.value.email, otp, newPassword); 
+              if (resetResponse.statusCode != 200) {
+                return Swal.showValidationMessage(`發生錯誤: ${resetResponse.message}`);
+              }
+              return resetResponse;
+            } catch (error) {
+              return Swal.showValidationMessage(`重設密碼失敗: ${error}`);
+            }
+          },          
+          allowOutsideClick: () => !Swal.isLoading(),
+        }).then((resetResponse) => {
+          if (resetResponse.isConfirmed) {
+            Swal.fire({
+              icon: "success",
+              title: "密碼已成功重設",
+              confirmButtonText: "確定"
+            });
+          }
+        });
+      }
     });
-    if (email) {
-      Swal.fire("信件還沒有發送至你的信箱\n請不要查收！！！");
-    }
   }
-
 
   return (
     <div className={"h-full w-full flex justify-center " + css.backgroundImage}>

@@ -7,6 +7,7 @@ from pydub import AudioSegment
 from io import BytesIO
 from utils.util import verify_JWTtoken
 from utils.MySQL import get_db_cursor
+from opencc import OpenCC
 
 whisper_blueprint = Blueprint('whisper', __name__)
 
@@ -71,54 +72,54 @@ def whisper_transcription():
 
     # 確保在上傳到OpenAI API之前重置指針
     audio_data.seek(0)
-    try:
-        response = requests.post(
-            'https://api.openai.com/v1/audio/transcriptions',
-            headers={
-                'Authorization': f'Bearer {OPENAI_API_KEY}',
-            },
-            files={
-                'file': (filename, audio_data, mime_type)
-            },
-            data={
-                'model': 'whisper-1',
-                'language': 'zh',
-                'response_format': 'verbose_json'
-            }
-        )
+    # try:
+    response = requests.post(
+        'https://api.openai.com/v1/audio/transcriptions',
+        headers={
+            'Authorization': f'Bearer {OPENAI_API_KEY}',
+        },
+        files={
+            'file': (filename, audio_data, mime_type)
+        },
+        data={
+            'model': 'whisper-1',
+            'language': 'zh',
+            'response_format': 'verbose_json'
+        }
+    )
 
-        response.raise_for_status()
+    response.raise_for_status()
 
-        data = response.json()
-        no_speech_prob = data['segments'][0]['no_speech_prob']
+    data = response.json()
+    no_speech_prob = data['segments'][0]['no_speech_prob']
 
-        print(data)
+    if(no_speech_prob > no_speech_prob_threshold):
+        return jsonify({'statusCode': 400, 'message': '無法識別語音輸入，請嘗試表達的更清楚一點，或大聲一些。', 'transcript': ""}), 200
 
-        if(no_speech_prob > no_speech_prob_threshold):
-            return jsonify({'statusCode': 400, 'message': '無法識別語音輸入，請嘗試表達的更清楚一點，或大聲一些。', 'transcript': ""}), 200
+    # 過濾過程
+    filtered_segments = [
+        segment for segment in data["segments"]
+        if segment["avg_logprob"] > avg_logprob_threshold and segment["no_speech_prob"] <= no_speech_prob_threshold
+    ]
+    # 將過濾後的段落重新組織為完整文字
+    filtered_text = " ".join(segment["text"] for segment in filtered_segments)
 
-        # 過濾過程
-        filtered_segments = [
-            segment for segment in data["segments"]
-            if segment["avg_logprob"] > avg_logprob_threshold and segment["no_speech_prob"] <= no_speech_prob_threshold
-        ]
-        # 將過濾後的段落重新組織為完整文字
-        filtered_text = " ".join(segment["text"] for segment in filtered_segments)
+    transcript = None if data['text'] == "" else data['text']
 
-        transcript = None if data['text'] == "" else data['text']
+    # 保存轉錄結果到資料庫
+    save_transcription_to_db(
+        user_id=user_id,
+        raw_audio_duration=data["duration"],
+        audio_duration=real_round(data["duration"]),
+        transcript=transcript,
+        platform=platform,
+    )
 
-        # 保存轉錄結果到資料庫
-        save_transcription_to_db(
-            user_id=user_id,
-            raw_audio_duration=data["duration"],
-            audio_duration=real_round(data["duration"]),
-            transcript=transcript,
-            platform=platform,
-        )
+    zhTW_TextResult = OpenCC('s2t').convert(data["text"])
 
-        return jsonify({'statusCode': 200, 'message': 'Success', 'transcript': data['text']}), 200
-    except requests.exceptions.RequestException as e:
-        return jsonify({'statusCode': 500, 'message': str(e)}), 200
+    return jsonify({'statusCode': 200, 'message': 'Success', 'transcript': zhTW_TextResult}), 200
+    # except requests.exceptions.RequestException as e:
+    #     return jsonify({'statusCode': 500, 'message': str(e)}), 200
 
 def save_transcription_to_db(user_id, raw_audio_duration, audio_duration, transcript, platform):
     try:
