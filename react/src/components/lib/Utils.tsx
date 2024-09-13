@@ -84,7 +84,7 @@ export default function getRandomDarkColor(): string {
     const greenHex = green.toString(16).padStart(2, "0");
     const blueHex = blue.toString(16).padStart(2, "0");
 
-    newColor = `#${redHex}${greenHex}${blueHex}`;
+    newColor = `rgba(${red}, ${green}, ${blue}, 0.6)`;
   } while (isColorTooSimilar(newColor, usedColors));
 
   usedColors.push(newColor);

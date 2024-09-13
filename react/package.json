@@ -10,13 +10,23 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/material": "^6.1.0",
+    "@mui/styled-engine-sc": "^6.1.0",
+    "@mui/x-charts": "^7.16.0",
     "@react-oauth/google": "^0.12.1",
     "@reduxjs/toolkit": "^2.2.5",
     "@turf/bbox": "^7.1.0",
     "@turf/turf": "^7.1.0",
+    "@visx/responsive": "^3.10.2",
+    "@visx/scale": "^3.5.0",
+    "@visx/text": "^3.3.0",
+    "@visx/wordcloud": "^3.3.0",
     "animate.css": "^4.1.1",
     "autoprefixer": "^10.4.20",
     "axios": "^1.6.8",
+    "dayjs": "^1.11.13",
     "lodash": "^4.17.21",
     "maplibre-gl": "^4.3.1",
     "osmtogeojson": "^2.2.12",
@@ -32,6 +42,7 @@
     "react-select": "^5.8.0",
     "redux": "^5.0.1",
     "redux-thunk": "^3.1.0",
+    "styled-components": "^6.1.13",
     "sweetalert2": "^11.6.13",
     "tailwindcss": "^3.4.10"
   },
@@ -48,5 +59,8 @@
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
     "vite-tsconfig-paths": "^4.3.2"
+  },
+  "resolutions": {
+    "@mui/styled-engine": "@mui/styled-engine-sc"
   }
 }

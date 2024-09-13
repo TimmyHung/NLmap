@@ -94,7 +94,7 @@ export const getOverPassQL = async (inputValue: string, model: string, JWTtoken:
   }
 };
 
-// 取得GepJson資料
+// 取得GeoJson資料
 export const getGeoJsonData = async (overpassQL: string, bounds: string) => {
   try {
     console.log("正在取得: " + "https://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}", bounds));
@@ -122,6 +122,42 @@ export const verifyJWT = async (JWTtoken: string) => {
     return { status: false, message: "Timeout", error: error };
   }
 };
+
+// 刪除帳號
+export const deleteAccount = async (JWTtoken: string, userID: number, account_type: string) => {
+  
+  const headers = {
+    "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : "",
+  };
+
+  const data = {
+    userID: userID,
+    account_type: account_type
+  }
+  try{
+    const response = await deleteRequest('api/authorization/delete', data, headers);
+    return response
+  }catch (err){
+    return { status: 500, message: err}
+  }
+}
+
+export const updateUserRole = async (JWTtoken: string, userID: number, newRole: string) => {
+  const headers = {
+    "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : "",
+  };
+
+  const data = {
+    userID: userID,
+    newRole: newRole
+  }
+  try{
+    const response = await postRequest('api/authorization/updateRole', data, headers);
+    return response
+  }catch (err){
+    return { status: 500, message: err}
+  }
+}
 
 // 取得歷史紀錄
 export const getHistoryRecords = async (JWTtoken: string, page: number = 1, per_page: number = 5) => {
@@ -161,6 +197,17 @@ export const deleteHistoryRecords = async (JWTtoken: string, record_id: number) 
     return { statucode: 500, message: err };
   }
 };
+
+// 紀錄每日訪客
+export const setDailyVisitRecord = async(ip: string)=>{
+
+  try{
+    const response = await postRequest('/api/record-visit', {ip});
+    return response
+  }catch (err){
+    return { status: 500, message: err}
+  }
+}
 
 // 儲存歷史紀錄
 export const saveQueryHistoryRecords = async (JWTtoken: string, queryName: string, query: string, valid: boolean, geoRawJson: Record<string, any>, manualQuery: boolean, response_metadata?: string) => {
@@ -247,6 +294,8 @@ export const createFavoriteList = async (JWTtoken: string, title: string) => {
 export const addFavoriteItem = async (JWTtoken: string, favorite_id: number, records: Record<string, any>) => {
   const data = { favorite_id, records };
 
+  console.log(data);
+
   const headers = {
     "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : "",
   };
@@ -327,3 +376,14 @@ export const resetPassword = async (email, otp, newPassword) => {
     return { statusCode: 500, message: err };
   }
 };
+
+export const getTopSearch = async () => {
+  try {
+    // 發送 POST 請求到後端 API 進行確認
+    const response = await getRequest("api/dashboard/getTopFavorites", {});
+    return response
+  } catch (err) {
+    // 捕捉錯誤並返回錯誤訊息
+    return { statusCode: 500, message: err };
+  }
+}

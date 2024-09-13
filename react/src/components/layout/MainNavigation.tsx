@@ -5,6 +5,7 @@ import { useAuth } from '@/components/lib/AuthProvider';
 import css from "@/css/MainNavigation.module.css";
 import Swal from 'sweetalert2';
 import logo from "@/assets/logo.png";
+import { setDailyVisitRecord } from "../lib/API";
 
 export default function MainNavigation() {
   const { JWTtoken, username, role, picture, logout } = useAuth();
@@ -49,6 +50,29 @@ export default function MainNavigation() {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    const visitKey = 'dailyVisit';
+    const today = new Date().toISOString().slice(0, 10);
+
+    const lastVisit = localStorage.getItem(visitKey);
+
+    // 定義異步函數來處理 async/await
+    const checkAndSetDailyVisit = async () => {
+      if (lastVisit !== today) {
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const data = await ipResponse.json();
+        const response = await setDailyVisitRecord(data.ip);
+        if (response.statusCode === 200) {
+          localStorage.setItem(visitKey, today);
+        }
+      }
+    };
+
+    // 呼叫異步函數
+    checkAndSetDailyVisit();
+  }, []);
+
   
 
   const navLinks = [

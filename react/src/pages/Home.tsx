@@ -1,7 +1,6 @@
-import { useState, useCallback, ReactElement } from 'react';
+import { useState, useCallback, ReactElement, useEffect } from 'react';
 import MapLibreMap from "@/components/layout/MapLibreMap";
 import HomeSideBar from '@/components/layout/HomeSidebar';
-import HomeBottomDrawer from '@/components/layout/HomeBottomDrawer';
 
 interface GeoJsonData {
   id: string;
@@ -12,6 +11,7 @@ interface GeoJsonData {
 export default function Home(): ReactElement {
   const [geoJsonDataArray, setGeoJsonDataArray] = useState<GeoJsonData[]>([]);
   const [bounds, setBounds] = useState("21.20,117.67,26.25,124.18");
+
 
   const handleBoundsChange = useCallback((rawBounds: any) => {
     const newBounds = `${parseFloat(rawBounds._sw.lat).toFixed(2)},${parseFloat(rawBounds._sw.lng).toFixed(2)},${parseFloat(rawBounds._ne.lat).toFixed(2)},${parseFloat(rawBounds._ne.lng).toFixed(2)}`;
@@ -36,10 +36,6 @@ export default function Home(): ReactElement {
         />
       </div>
       <HomeSideBar
-        setGeoJsonData={handleGeoJsonData}
-        bounds={bounds}
-      />
-      <HomeBottomDrawer
         setGeoJsonData={handleGeoJsonData}
         bounds={bounds}
       />

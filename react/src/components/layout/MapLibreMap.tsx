@@ -119,8 +119,21 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
           [bounds[0], bounds[1]],
           [bounds[2], bounds[3]]
         ];
+        
+        const screenWidth = window.innerWidth;
+        let padding;
+
+        if (screenWidth <= 480) { // 手機
+          padding = 100;  // 較小的 padding
+        } else if (screenWidth <= 768) { // 平板
+          padding = 150; // 中等 padding
+        } else { // 桌面設備
+          padding = 200; // 大 padding
+        }
+
+
         mapInstance.current.fitBounds(boundsArray, {
-          padding: 200,
+          padding,
           duration: 2000,
         });
       }
