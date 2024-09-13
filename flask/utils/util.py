@@ -36,7 +36,7 @@ def save_queryLog(user_id, query_text, query, model_name, prompt_tokens, complet
 
 def verify_JWTtoken(token):
     if not token:
-            return {'status': False, 'message': 'no token'}, 401
+        return {'status': False, 'message': 'no token'}, 401
     try:
         decoded = jwt.decode(token, os.getenv('JWT_SECRET_KEY'), algorithms=['HS256'])
         return {'status': True, 'message': 'Token Normal', 'data': decoded}, 200

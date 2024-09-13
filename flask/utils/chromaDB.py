@@ -86,11 +86,13 @@ def loadData():
 
 
 def combineSystemRoleText(search_results, prompt):
-    promptText = "You are a helpful overpassQL expert, help me generate result about Taiwan.\n"
+    promptText = f"You are a helpful OverpassQL expert, help me generate result about Taiwan location {prompt}.\n"
     promptText += "Respond with just the `data` after `data=`, include the entire query string without any explanation.\n"
     promptText += "Format your response like this: data=[out:json][timeout:60];{INSERT_QUERY_HERE};out;>;out skel qt;\n"
     promptText += "If you determine that the prompt is not a valid query, respond with: data=null\n"
-    promptText += "I will provide a few example phrases for reference, but please note these are only for guidance. If you find the example phrases unhelpful, feel free to generate them yourself.\n"
+    promptText += "I will provide a few example phrases for reference, but please note these are only for guidance.\n"
+    promptText += "If you find the example phrases unhelpful, feel free to generate them yourself.\n"
+    promptText += "If the example phrases are exactly the same as user input, just use expected responses directly.\n"
     promptText += "Example phrases and expected responses are:\n"
 
     # 檢查並去重搜尋結果
@@ -101,8 +103,8 @@ def combineSystemRoleText(search_results, prompt):
             unique_results.append(result)
             seen_queries.add(result.page_content)
     
-    for i in range(min(len(unique_results), 5)):  # 防止結果不足5個
-        promptText += str(unique_results[i].page_content) + "\n" + str(DataList[unique_results[i].page_content]) + "\n"
+    for i in range(min(len(unique_results), 3)):  # 防止結果不足5個
+        promptText += "Example Input: " + str(unique_results[i].page_content) + "\n" + "Expected Output: " + str(DataList[unique_results[i].page_content]) + "\n"
     
     promptText += "Now, generate only one best query response."
 
@@ -110,7 +112,7 @@ def combineSystemRoleText(search_results, prompt):
     return promptText
 
 def query(chromaDB, model, prompt, JWTtoken, bounds):
-    search_results = chromaDB.similarity_search(prompt, k=5)
+    search_results = chromaDB.similarity_search(prompt, k=3)
 
     # if(model == "gpt4o"):
     #     return {'statuscode': 403, 'message': '查詢失敗\nGPT-4o暫時不開放使用。'}
@@ -120,9 +122,9 @@ def query(chromaDB, model, prompt, JWTtoken, bounds):
             "role": "system",
             "content": combineSystemRoleText(search_results, prompt)
         },
-        {   "role": "user",
-            "content": prompt
-        },
+        # {   "role": "user",
+        #     "content": prompt
+        # },
     ]
     response = chat_completion(model, promptText)
 

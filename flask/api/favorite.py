@@ -94,6 +94,22 @@ def add_favorite_item():
 
             cursor.execute(insert_sql, (json.dumps(db_recordset), favorite_id, user_id))
             connection.commit()
+        
+        # 更新 favorite_leaderboard 表
+        for element in new_recordSet['elements']:
+            osm_type = element.get('type')
+            osm_id = element.get('id')
+            displayName = element.get('displayName')
+            if displayName is None or element in duplicatedItems:
+                continue
+            # 插入或更新收藏次數
+            leaderboard_sql = """
+                INSERT INTO favorite_leaderboard (osm_type, osm_id, name, favorite_count)
+                VALUES (%s, %s, %s, 1)
+                ON DUPLICATE KEY UPDATE favorite_count = favorite_count + 1
+            """
+            cursor.execute(leaderboard_sql, (osm_type, osm_id, displayName))
+            connection.commit()
 
         return jsonify({'statusCode': 200, 'message': '成功新增至收藏清單', "duplicatedItems": duplicatedItems}), 200
     except Exception as e:

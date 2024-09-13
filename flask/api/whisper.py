@@ -94,6 +94,14 @@ def whisper_transcription():
     no_speech_prob = data['segments'][0]['no_speech_prob']
 
     if(no_speech_prob > no_speech_prob_threshold):
+        # 保存轉錄結果到資料庫
+        save_transcription_to_db(
+            user_id=user_id,
+            raw_audio_duration=data["duration"],
+            audio_duration=real_round(data["duration"]),
+            transcript=None,
+            platform=platform,
+        )
         return jsonify({'statusCode': 400, 'message': '無法識別語音輸入，請嘗試表達的更清楚一點，或大聲一些。', 'transcript': ""}), 200
 
     # 過濾過程

@@ -14,19 +14,86 @@ def jwt_verify():
     response, status_code = verify_JWTtoken(token)
     return jsonify(response), status_code
 
+@authorize_blueprint.route(root + '/updateRole', methods=['POST'])
+def updateRole():
+    JWTtoken = request.headers.get('Authorization')
+    
+    # 檢查JWT token是否存在
+    if JWTtoken is None:
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
+
+    # 驗證JWT token
+    response, status_code = verify_JWTtoken(JWTtoken.split(' ')[1])
+    if not response["status"]:
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
+
+    requesterRole = response["data"]["role"]
+    requesterID = response["data"]["userID"]
+
+    data = request.get_json()
+    userID = data.get("userID")
+    newRole = data.get("newRole")
+
+    if not userID or not newRole:
+        return jsonify({'statusCode': 400, 'message': '沒有提供 userID 或 newRole'}), 200
+
+    if userID == 1:
+        return jsonify({'statusCode': 403, 'message': '受保護的帳號不得更新(網頁開發者)'}), 200
+
+    if requesterRole != "Admin":
+        return jsonify({'statusCode': 403, 'message': '你沒有權限更新他人的帳號身分組'}), 200
+
+    valid_roles = ["Admin", "User"]
+    if newRole not in valid_roles:
+        return jsonify({'statusCode': 400, 'message': '未知的身分組類型'}), 200
+
+    cursor, connection = get_db_cursor()
+
+    check_user_exist_query = "SELECT role FROM users WHERE userID = %s"
+    cursor.execute(check_user_exist_query, (userID,))
+    user = cursor.fetchone()
+
+    if not user:
+        return jsonify({'statusCode': 404, 'message': '使用者不存在'}), 200
+
+    update_role_query = "UPDATE users SET role = %s WHERE userID = %s"
+
+    try:
+        cursor.execute(update_role_query, (newRole, userID,))
+        cursor.connection.commit()
+        return jsonify({'statusCode': 200, 'message': '身分組更新成功'}), 200
+    except Exception as e:
+        cursor.connection.rollback()
+        return jsonify({'statusCode': 500, 'message': str(e)}), 500
+    finally:
+        connection.close()
+
 
 @authorize_blueprint.route(root + '/delete', methods=['DELETE'])
 def deleteAccount():
-    JWTtoken = request.args.get("JWTtoken")
-    response, status_code = verify_JWTtoken(JWTtoken)
-    if not response['status']:
-        return jsonify(response), status_code
+    JWTtoken = request.headers.get('Authorization')
+    if JWTtoken is None:
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
 
-    account_type = response['data']['account_type']
-    userID = response['data']['userID']
+    response, status_code = verify_JWTtoken(JWTtoken.split(' ')[1])
+    if not response["status"]:
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
+
+    requesterRole = response["data"]["role"]
+    requesterID = response["data"]
+
+    data = request.get_json()
+    account_type = data.get("account_type")
+    userID = data.get("userID")
+
+    if userID == 1:
+        return jsonify({'statusCode': 401, 'message': '受保護的帳號不得刪除(網頁開發者)'}), 200
+    
+    if requesterRole != "Admin" and requesterID != userID:
+        return jsonify({'statusCode': 403, 'message': '你沒有權限刪除他人的帳號'}), 200
 
     if not account_type or not userID:
-        return {"status": False, "message": "Missing account_type or userID"}, 200
+        return {"status": 400, "message": "沒有提供 account_type 或 userID"}, 200
 
     userID_column = ""
     match account_type:
@@ -39,25 +106,25 @@ def deleteAccount():
         case "Discord":
             userID_column = "discord_userID"
         case _:
-            return {"status": False, "message": "Invalid account type"}, 200
+            return {"statusCode": 400, "message": "未知的帳號類型"}, 200
 
     cursor, connection = get_db_cursor()
-    check_user_exist_query = f"SELECT email, account_type FROM users WHERE {userID_column} = %s"
-    cursor.execute(check_user_exist_query, (userID,))
+    check_user_exist_query = "SELECT email FROM users WHERE userID = %s AND account_type = %s"
+    cursor.execute(check_user_exist_query, (userID, account_type,))
     check_result = cursor.fetchone()
 
     if not check_result:
-        return {"status": False, "message": "User does not exist"}, 200
+        return {"statusCode": 404, "message": "使用者不存在"}, 200
 
-    delete_query = f"DELETE FROM users WHERE {userID_column} = %s AND account_type = %s"
+    delete_query = "DELETE FROM users WHERE userID = %s AND account_type = %s"
 
     try:
-        cursor.execute(delete_query, (userID, account_type))
+        cursor.execute(delete_query, (userID, account_type,))
         cursor.connection.commit()
-        return {"status": True, "message": "Account deleted successfully"}, 200
+        return {"statusCode": 200, "message": "帳號刪除成功"}, 200
     except Exception as e:
         cursor.connection.rollback()
-        return {"status": False, "message": str(e)}, 500
+        return {"statusCode": 500, "message": str(e)}, 500
     
     connection.close()
 
@@ -91,6 +158,10 @@ def register():
     payload = {'username': username, 'account_type': account_type, 'role': 'User', 'userID': userID}
     token = generate_jwt(payload)
 
+    update_login_time_query = "UPDATE users SET last_login_at = NOW() WHERE userID = %s"
+    cursor.execute(update_login_time_query, (userID,))
+    connection.commit()
+
     connection.close()
 
     return jsonify({'status': True, 'message': 'Register successful', 'JWTtoken': token}), 200
@@ -111,10 +182,16 @@ def login():
         cursor.connection.commit()
 
     def generate_response(loginType, username, role, userID, additional_payload={}):
+        updateLastLogin(userID)
         payload = {'account_type': loginType, 'username': username, 'role': role, 'userID': userID}
         payload.update(additional_payload)
         token = generate_jwt(payload)
         return jsonify({'status': True, 'message': message, 'JWTtoken': token}), 200
+    
+    def updateLastLogin(userID):
+        update_login_time_query = "UPDATE users SET last_login_at = NOW() WHERE userID = %s"
+        cursor.execute(update_login_time_query, (userID,))
+        connection.commit()
 
     def get_user_by_field(field, value):
         sql = f"SELECT role, userID, username, {field}, account_type FROM users WHERE {field} = %s"
@@ -273,10 +350,13 @@ def discord_callback():
         return redirect(f"{FRONTEND_URL}/login?error=Failed to fetch user info")
 
     user_info = user_info_response.json()
+    print(user_info)
     discord_user_id = user_info['id']
     username = user_info['global_name']
     email = user_info['email']
-    picture = "https://cdn.discordapp.com/avatars/" + discord_user_id + "/" + user_info['avatar'] + ".png"
+    picture = "https://cdn.discordapp.com/embed/avatars/1.png"
+    if(user_info['avatar']):
+        picture = "https://cdn.discordapp.com/avatars/" + discord_user_id + "/" + user_info['avatar'] + ".png"
 
     cursor, connection = get_db_cursor()
     
@@ -289,10 +369,16 @@ def discord_callback():
         cursor.connection.commit()
 
     def generate_response(username, role, userID, additional_payload={}):
+        updateLastLogin(userID)
         payload = {'account_type': 'Discord', 'username': username, 'role': role, 'userID': userID}
         payload.update(additional_payload)
         token = generate_jwt(payload)
         return token
+    
+    def updateLastLogin(userID):
+        update_login_time_query = "UPDATE users SET last_login_at = NOW() WHERE userID = %s"
+        cursor.execute(update_login_time_query, (userID,))
+        connection.commit()
 
     def get_user_by_field(field, value):
         sql = f"SELECT role, username, {field}, account_type, userID FROM users WHERE {field} = %s"

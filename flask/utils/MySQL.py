@@ -18,17 +18,3 @@ def get_db_cursor():
     connection = get_db_connection()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
     return cursor, connection
-
-
-# def keep_alive(connection):
-#     while True:
-#         try:
-#             with connection.cursor() as cursor:
-#                 cursor.execute("SELECT 1")
-#             connection.commit()
-#         except pymysql.MySQLError as e:
-#             print(f"[MYSQL]Keep-alive query failed: {e}")
-#         time.sleep(3600) # 每小時發送一次，確保SQL連線不會被關閉
-
-# # 啟動keep_alive線程
-# threading.Thread(target=keep_alive, args=(db,), daemon=True).start()
