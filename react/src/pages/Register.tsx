@@ -209,16 +209,17 @@ export default function Register(): ReactElement {
 
   return (
     <div className={"h-full w-full flex justify-center " + css.backgroundImage}>
-      <div className="self-center py-8 px-6 md:px-12 rounded-xl m-8 w-full max-w-[450px] bg-white">
+      <div className="self-center py-8 px-6 md:px-12 rounded-xl m-8 w-full max-w-[450px] bg-[#f9f9f9]">
         <form className="flex flex-col justify-center items-center">
           <div className="text-3xl md:text-4xl w-full flex justify-center pb-6">
             <h1>Create Account</h1>
           </div>
           <div className="">
-            <div className="flex flex-col pb-1">
-              <label>電子郵件<span className="text-red-600">*</span></label>
+            <div className="flex flex-col pb-2">
+              <label className="pb-1">電子郵件<span className="text-red-600">*</span></label>
               <input
-                className="w-full h-12"
+                className="w-full h-12 shadow-lg bg-white "
+                style={{ boxShadow: '0 3px 6px rgba(0, 0, 0, 0.1), 0 -1px 6px rgba(0, 0, 0, 0.1)'}}
                 type="email"
                 id="account"
                 onChange={(e) => setAccount(e.target.value)}
@@ -232,20 +233,24 @@ export default function Register(): ReactElement {
             </div>
 
             <div className="mb-2">
-              <label>密碼<span className="text-red-600">*</span></label>
+              <div className="flex flex-col pb-2">
+              <label className="pb-1">密碼<span className="text-red-600">*</span></label>
               <input
-                className="w-full h-12"
+                className="w-full h-12 shadow-lg bg-white "
+                style={{ boxShadow: '0 3px 6px rgba(0, 0, 0, 0.1), 0 -1px 6px rgba(0, 0, 0, 0.1)'}}
                 type="password"
                 id="password"
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="one-time-code"
               />
+              </div>
             </div>
 
             <div className="">
-              <label>使用者名稱<span className="text-red-600">*</span></label>
+              <label className="pb-1">使用者名稱<span className="text-red-600">*</span></label>
               <input
-                className="w-full h-12"
+                className="w-full h-12 shadow-lg bg-white "
+                style={{ boxShadow: '0 3px 6px rgba(0, 0, 0, 0.1), 0 -1px 6px rgba(0, 0, 0, 0.1)'}}
                 type="text"
                 id="username"
                 onChange={(e) => setUsername(e.target.value)}
