@@ -185,10 +185,11 @@ export default function Login(): ReactElement {
             <h1>Sign in</h1>
           </div>
           <form className="">
-            <div className="flex flex-col pb-1">
-              <label className="">帳號</label>
+            <div className="flex flex-col pb-4">
+              <label className="pb-1">帳號</label>
               <input
-                className="w-full h-12"
+                className="w-full h-12 shadow-lg bg-white "
+                style={{ boxShadow: '0 3px 6px rgba(0, 0, 0, 0.1), 0 -1px 6px rgba(0, 0, 0, 0.1)'}}
                 type="text"
                 id="username"
                 value={account}
@@ -197,9 +198,10 @@ export default function Login(): ReactElement {
               />
             </div>
             <div className="flex flex-col pb-8">
-              <label className="">密碼</label>
+              <label className="pb-1">密碼</label>
               <input
-                className="w-full h-12"
+                className="w-full h-12 shadow-lg bg-white "
+                style={{ boxShadow: '0 3px 6px rgba(0, 0, 0, 0.1), 0 -1px 6px rgba(0, 0, 0, 0.1)'}}
                 type="password"
                 id="password"
                 autoComplete="on"
