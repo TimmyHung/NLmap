@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
 from utils.MySQL import get_db_cursor
+from utils.util import verify_JWTtoken
 from decimal import Decimal
 
 dashboard_blueprint = Blueprint('dashBoard', __name__)
@@ -8,6 +9,20 @@ root = "/api/dashboard"
 
 @dashboard_blueprint.route(root + '/systemInfo', methods=['GET'])
 def get_systemInfo():
+
+    JWTtoken = request.headers.get('Authorization')
+    if JWTtoken is None:
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
+
+    response, status_code = verify_JWTtoken(JWTtoken.split(' ')[1])
+    if not response["status"]:
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
+
+    requesterRole = response["data"]["role"]
+    
+    if requesterRole != "Admin":
+        return jsonify({'statusCode': 403, 'message': '你沒有權限訪問後台資料'}), 200
+
     range_type = request.args.get('range', 'daily')  # 預設為每日
     data = get_db_data_for_range(range_type)
 
@@ -16,9 +31,30 @@ def get_systemInfo():
 
 @dashboard_blueprint.route(root + '/stats', methods=['GET'])
 def get_stats():
-    range_type = request.args.get('range', 'daily')
-    data = get_db_data_for_range(range_type)
+    JWTtoken = request.headers.get('Authorization')
+    if JWTtoken is None:
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
 
+    response, status_code = verify_JWTtoken(JWTtoken.split(' ')[1])
+    if not response["status"]:
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
+
+    requesterRole = response["data"]["role"]
+    
+    if requesterRole != "Admin":
+        return jsonify({'statusCode': 403, 'message': '你沒有權限訪問後台資料'}), 200
+
+    systemStatsOnly = request.args.get('systemStatsOnly', 'false').lower() == 'true'
+    print(systemStatsOnly)
+
+    
+    range_type = request.args.get('range', 'daily')
+    system_stats = get_db_data_for_range(range_type)
+
+    if systemStatsOnly:
+        return jsonify(system_stats), 200
+
+    
     # 查詢用戶統計數據
     total_users, new_users, last_week_logins, today_logins = get_user_stats()
     
@@ -29,7 +65,6 @@ def get_stats():
     today_visitors, yesterday_visitors = get_today_and_yesterday_visitors()
 
     response = {
-        'system_stats': data,
         'stats_data': {
             'total_users': total_users,
             'new_users_last_week': new_users,
@@ -48,6 +83,8 @@ def get_stats():
         'users': get_all_users(),
         'usage_data': get_monthly_usage(),
     }
+
+    print(response)
 
     return jsonify(response), 200
 
@@ -194,18 +231,19 @@ def get_query_stats():
 def get_monthly_usage():
     cursor, connection = get_db_cursor()
 
-    # GPT-3.5 and GPT-4 pricing
+    #Pricing per 1000 token if applicable
     gpt_35_input_price = 0.003
     gpt_35_output_price = 0.006
     gpt_4_input_price = 0.005
     gpt_4_output_price = 0.015
     whisper_price_per_minute = 0.006
+    text_embedding_price = 0.000130
 
     # 生成過去30天的日期列表
     today = datetime.now().date()
     last_30_days = [(today - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(30)]
 
-    # 查詢GPT和Whisper的使用日誌
+    # 查詢GPT,Whisper,TextEmbedding的使用日誌
     query_logs_sql = """
         SELECT DATE_FORMAT(timestamp, '%Y-%m-%d') as date, model_name, 
                SUM(prompt_tokens) as total_prompt_tokens, 
@@ -227,7 +265,17 @@ def get_monthly_usage():
     cursor.execute(whisper_logs_sql)
     whisper_logs = cursor.fetchall()
 
-    usage_data = {date: {'gpt_35_price': 0, 'gpt_4_price': 0, 'whisper_price': 0} for date in last_30_days}
+    text_embedding_sql = """
+        SELECT DATE_FORMAT(created_at, '%Y-%m-%d') as date, 
+               SUM(token) as total_token
+        FROM textembedding_log
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        GROUP BY date
+    """
+    cursor.execute(text_embedding_sql)
+    text_embedding_log = cursor.fetchall()
+
+    usage_data = {date: {'gpt_35_price': 0, 'gpt_4_price': 0, 'whisper_price': 0, 'text_embedding_price': 0} for date in last_30_days}
 
     # Process GPT logs
     for log in query_logs:
@@ -247,6 +295,13 @@ def get_monthly_usage():
         whisper_price = (float(log['total_audio_duration']) / 60) * whisper_price_per_minute
         usage_data[date]['whisper_price'] += round(whisper_price, 4)
 
+    # Process TextEmbedding logs
+    for log in text_embedding_log:
+        date = log['date']
+        embedding_price = (float(log['total_token']) / 60) * text_embedding_price
+        usage_data[date]['text_embedding_price'] += round(embedding_price, 4)
+
+
     # 將數據轉換為列表格式
     usage_data_list = sorted([
         {
@@ -254,6 +309,7 @@ def get_monthly_usage():
             'gpt_35_price': data['gpt_35_price'],
             'gpt_4_price': data['gpt_4_price'],
             'whisper_price': data['whisper_price'],
+            'text_embedding_price': data['text_embedding_price'],
         }
         for date, data in usage_data.items()
     ], key=lambda x: x['date'], reverse=False)  # 按日期升序排列
@@ -284,7 +340,7 @@ def get_db_data_for_range(range_type):
         start_time = now - timedelta(hours=1)
         group_by_format = '%m-%d %H:%i'  # 每小時
     elif range_type == 'daily':
-        start_time = now - timedelta(days=1)
+        start_time = now - timedelta(hours=23)
         group_by_format = '%m-%d %H:00:00'  # 每天
     elif range_type == 'weekly':
         start_time = now - timedelta(weeks=1)
@@ -352,6 +408,9 @@ def get_user_stats():
     """
     cursor.execute(sql_today_logins, (today_start,))
     today_logins = cursor.fetchone()['today_logins']
+
+    cursor.close()
+    connection.close()
 
     return total_users, new_users, last_week_logins, today_logins
 

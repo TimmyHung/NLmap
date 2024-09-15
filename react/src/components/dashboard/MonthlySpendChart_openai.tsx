@@ -9,6 +9,7 @@ const MonthlySpendChart = ({ usageData }) => {
     const gpt35Spend = usageData.map((data) => data.gpt_35_price);
     const gpt4Spend = usageData.map((data) => data.gpt_4_price);
     const whisperSpend = usageData.map((data) => data.whisper_price);
+    const textEmbeddingSpend = usageData.map((data) => data.text_embedding_price);
 
     setChartData({
       labels,
@@ -24,6 +25,10 @@ const MonthlySpendChart = ({ usageData }) => {
         {
           label: 'Whisper',
           data: whisperSpend,
+        },
+        {
+          label: '文本嵌入',
+          data: textEmbeddingSpend,
         },
       ],
     });
@@ -51,6 +56,7 @@ const MonthlySpendChart = ({ usageData }) => {
             { data: chartData.series[0].data, label: chartData.series[0].label },
             { data: chartData.series[1].data, label: chartData.series[1].label },
             { data: chartData.series[2].data, label: chartData.series[2].label },
+            { data: chartData.series[3].data, label: chartData.series[3].label },
           ]}
         />
       </div>

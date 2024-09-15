@@ -1,7 +1,5 @@
 import os
 import pymysql
-import threading
-import time
 from dotenv import load_dotenv
 
 load_dotenv()

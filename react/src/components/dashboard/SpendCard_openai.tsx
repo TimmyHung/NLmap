@@ -3,16 +3,30 @@ import { FaMoneyCheckDollar } from "react-icons/fa6";
 import { FiCpu } from "react-icons/fi";
 import { HiMiniCpuChip } from "react-icons/hi2";
 import { FaMicrophone } from "react-icons/fa";
-
+import { ImEmbed2 } from "react-icons/im";
 
 const SpendCard_openai = ({ usageData }: { usageData: any }) => {
     return (
-        <div className="grid gap-4 w-full py-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
-            <TotalSpendCard usageData={usageData} />
-            <Gpt35SpendCard usageData={usageData} />
-            <Gpt4SpendCard usageData={usageData} />
-            <WhisperSpendCard usageData={usageData} />
-        </div>
+        <>
+            <div className="flex flex-col py-4 xl:hidden">
+                <div>
+                    <TotalSpendCard usageData={usageData} />
+                </div>
+                <div className="grid gap-4 w-full py-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:hidden">
+                    <Gpt35SpendCard usageData={usageData} />
+                    <Gpt4SpendCard usageData={usageData} />
+                    <WhisperSpendCard usageData={usageData} />
+                    <TextEmbeddingSpendCard usageData={usageData} />
+                </div>
+            </div>
+            <div className="xl:grid xl:gap-4 xl:w-full xl:py-4 hidden xl:grid-cols-5">
+                <TotalSpendCard usageData={usageData} />
+                <Gpt35SpendCard usageData={usageData} />
+                <Gpt4SpendCard usageData={usageData} />
+                <WhisperSpendCard usageData={usageData} />
+                <TextEmbeddingSpendCard usageData={usageData} />
+            </div>
+        </>
     );
 };
 
@@ -130,7 +144,7 @@ const Gpt4SpendCard = ({ usageData }: { usageData: any }) => {
                 </div>
 
                 <div className="text-right">
-                    <p className="text-gray-500 text-lg">今日GPT-4o花費</p>
+                    <p className="text-gray-500 text-lg">今日GPT-4o費用</p>
                     <h2 className="text-3xl font-bold">{formatAmount(today)}</h2>
                 </div>
             </div>
@@ -166,6 +180,41 @@ const WhisperSpendCard = ({ usageData }: { usageData: any }) => {
 
                 <div className="text-right">
                     <p className="text-gray-500 text-lg">今日Whisper費用</p>
+                    <h2 className="text-3xl font-bold">{formatAmount(today)}</h2>
+                </div>
+            </div>
+            <hr />
+            <div className="flex justify-between items-center text-base font-semibold gap-1">
+                <span className="text-gray-500 ml-1">
+                    與昨天相比
+                    <span className={growthPercentage <= 0 ? 'text-green-500' : 'text-red-500'}>
+                        {growthSign}{growthPercentage}%
+                    </span>
+                </span>
+            </div>
+        </div>
+    );
+};
+
+// Text Embedding Spend Card
+const TextEmbeddingSpendCard = ({ usageData }: { usageData: any }) => {
+    const embeddingSpend = usageData.map((data) => data.text_embedding_price);
+    const yesterday = embeddingSpend[embeddingSpend.length - 2] || 0;
+    const today = embeddingSpend[embeddingSpend.length - 1] || 0;
+
+    const { growthPercentage, growthSign } = calculateGrowth(yesterday, today);
+
+    return (
+        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-5">
+            <div className="flex items-start justify-between">
+                <div className="bg-[#60009b] p-2 rounded-md mt-[-40px] shadow-lg">
+                    <IconContext.Provider value={{ size: '46px', color: 'white' }}>
+                        <ImEmbed2 />
+                    </IconContext.Provider>
+                </div>
+
+                <div className="text-right">
+                    <p className="text-gray-500 text-lg">今日文本嵌入費用</p>
                     <h2 className="text-3xl font-bold">{formatAmount(today)}</h2>
                 </div>
             </div>
