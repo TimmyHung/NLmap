@@ -1,4 +1,5 @@
 import css from '../css/About.module.css';
+import logo from "@/assets/logo.png";
 
 export default function About() {
     return (
@@ -11,7 +12,7 @@ export default function About() {
                     
                     <div className={css.leftSide}>
                         <div className={css.logo}>
-                            <img src="src/assets/logo.png" />
+                            <img src={logo} />
                         </div>
                         <div className={css.logo_name}>
                             <p>NLmap</p>
@@ -20,34 +21,35 @@ export default function About() {
 
                     <div className={css.rightSide}>
                         <div className={css.text1}>
-                            <ol>&emsp;歡迎來到NLmap！我們是一群來自淡江大學資訊管理系的學生，參加畢業專題競賽時共同開發了這款名為NLmap的網站。我們的目標是創造一個簡單、高效的地理資訊查詢工具，讓使用者能夠輕鬆地通過自然語言進行地理位置的檢索和驗證。</ol>
+                            <ol>&emsp;&emsp;歡迎來到NLmap！我們是一群來自淡江大學資訊管理學系的學生，因為畢業專題競賽而共同開發了這款名為NLmap的網站。我們的目標是創造一個簡單、高效的地理資訊查詢工具，讓使用者能夠輕鬆地通過自然語言進行地理位置的檢索。</ol>
                         </div>
                     </div>
                 </div>
                 <hr/>
                 <div className={css.text2}>
-                    <h2>專題成員</h2>
+                    <h2>專題組員</h2>
                     <ul>
-                        <li>指導教授 : <strong>魏世杰</strong></li>
-                        <li>1.<strong>陳姿樺：</strong>組長、負責UI設計，包括歷史紀錄、收藏及手機版網頁的設計。</li>
-                        <li>2.<strong>洪廷樺 :</strong> 負責前端網頁開發及後端伺服器程式設計。</li>
-                        <li>3.<strong>徐明献 : </strong> 負責主視覺設計及UI設計，包括首頁、帳號登入和註冊、使用教學和"關於我們"頁面的設計，並整理了1000筆原始資料。</li>
-                        <li>4.<strong>楊舒宇 :</strong> 負責原始資料的分類，並將手機版多做的介面補充改成電腦版的設計。</li>
-                        <li>5.<strong>賴美妍 : </strong>負責原始資料的分類、"關於我們"介面UI設計、管理員後台介面UI設計。</li>
+                        <li>指導教授：<strong>魏世杰</strong></li>
+                        <li>1.<strong>陳姿樺：</strong>組長，負責 UI 設計，包括「歷史紀錄」、「收藏」及手機版頁面設計，並協助 RAG 資料集建立與文書資料製作。</li>
+                        <li>2.<strong>洪廷樺：</strong>新鮮的肝、全端開發，專注於整個專案的程式開發及技術支援。</li>
+                        <li>3.<strong>徐明献：</strong>主視覺與 UI 設計，負責首頁、登入、註冊、使用教學及「關於我們」頁面設計，並協助 RAG 資料集建立。</li>
+                        <li>4.<strong>楊舒宇：</strong>負責文書資料製作與 RAG 資料集建立。</li>
+                        <li>5.<strong>賴美妍：</strong>負責「關於我們」、「控制台」頁面的 UI 設計與簡報製作。</li>
                     </ul>
                     <hr/>
                     <h2>具備功能</h2>
                     <ol>
                         <li>1.<strong>自然語言查詢：</strong>允許用戶通過自然語言進行OpenStreetMap數據的查詢，例如查找特定類型的地點或特定地點附近的設施。</li>
-                        <li>2.<strong>地理位置驗證：</strong>用戶可以通過查詢OpenStreetMap數據來驗證地理位置的信息，例如確認某個地點是否存在或特定地點附近是否有特定設施。</li>
+                        <li>2.<strong>地理位置：</strong>用戶可以通過查詢OpenStreetMap數據來驗證地理位置的信息，例如確認某個地點是否存在或特定地點附近是否有特定設施。</li>
                         <li>3.<strong>地圖展示：</strong>將查詢結果以地理地圖的形式呈現給用戶，以直觀地顯示搜尋結果。</li>
+                        <li>3.<strong>收藏：</strong>將喜好的地點加入收藏，需要時可以匯出為KML格式應用在其他地圖軟體。</li>
                     </ol>
                     <hr/>
                     <h2>設計架構</h2>
                     <ol>
-                        <li>1.<strong>Langchain編碼：</strong>將每個固定單位的自然語言問句和答案進行編碼，讓使用者能夠查詢新的案例並匹配之前編的案例。</li>
-                        <li>2.<strong>GPT API整合：</strong>使用GPT API輸入提示字串，並依據Langchain查詢出最接近的幾個案例，整理出應有的答案。</li>
-                        <li>3.<strong>Overpass指令轉換：</strong>將得到的Overpass指令轉換為搜尋結果並呈現在地圖上。</li>
+                        <li>1.<strong>擷取增強生成(RAG)：</strong>將自然語言問句轉換為文本嵌入向量，使使用者在輸入提示詞後，能夠透過 FAISS 框架查詢相似的幾筆資料。</li>
+                        <li>2.<strong>GPT生成結果：</strong>將 FAISS 框架返回後的資料與使用者輸入的自然語言問句傳給GPT，生成最終的結果。</li>
+                        <li>3.<strong>Overpass查詢語言轉換：</strong>將得到的Overpass查詢語言轉換為geoJson並呈現在地圖上。</li>
                     </ol>
                     <hr/>
                     <h2>應用場景</h2>

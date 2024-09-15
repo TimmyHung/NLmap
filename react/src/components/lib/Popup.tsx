@@ -3,8 +3,7 @@ import maplibregl from "maplibre-gl";
 import css from "@/css/Home.module.css";
 import axios from "axios";
 import { record_getDisplayName } from "./Utils";
-import Swal from 'sweetalert2';
-import { FavoriteAndResultModal } from "../layout/FavoriteSelectionModal";
+import Toast from "../ui/Toast";
 
 interface PopupProps {
   map: maplibregl.Map;
@@ -13,6 +12,7 @@ interface PopupProps {
   onFeatureClick?: (feature: maplibregl.MapGeoJSONFeature) => void;
   onAppendCollection;
   disableAppend?: boolean;
+  JWTtoken?: string;
 }
 
 const Popup: React.FC<PopupProps> = ({
@@ -21,6 +21,7 @@ const Popup: React.FC<PopupProps> = ({
   onFeatureClick = () => {},
   onAppendCollection,
   disableAppend = false,
+  JWTtoken = null,
 }) => {
   const popupRef = useRef<HTMLDivElement>(null);
   const [popupProperties, setPopupProperties] = useState<any>(null);
@@ -165,6 +166,14 @@ const Popup: React.FC<PopupProps> = ({
 
   // 處理加入收藏的邏輯
   const handleAddToFavorites = () => {
+    if(!JWTtoken){
+      Toast.fire({
+        icon: "info",
+        title: "請先登入以加入收藏！"
+      })
+      return
+    }
+
     if (selectedRecord) {
       onAppendCollection(selectedRecord);
     }

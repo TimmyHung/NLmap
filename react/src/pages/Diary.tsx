@@ -36,7 +36,10 @@ export default function Diary() {
     return (
         <div className="min-h-screen px-8 md:px-32 pb-6">
             <div className="flex flex-col md:flex-row justify-between py-4 items-center mb-5 border-b border-black text-center text-2xl md:text-2xl">
-                <h1>Github Commit List</h1>
+                <a className="flex gap-2 items-center cursor-pointer text-black" target="_blank" href="https://github.com/TimmyHung/Graduation-Project">
+                    <i className="fa-brands fa-square-github fa-lg"></i>
+                    <h1>Github Commit List</h1>
+                </a>
                 <h1>{getDayRemainingText()}</h1>
             </div>
             <div className="w-full">

@@ -3,8 +3,8 @@ import { getRequest } from "@/components/lib/API";
 
 export const fetchCommits = createAsyncThunk('github/fetchCommits', async () => {
   const response = await getRequest("api/gitCommit", {}, {}, 10000);
-  if (response.status) {
-    return response.commit;
+  if (response.statusCode == 200) {
+    return response.data.commit;
   } else {
     throw new Error('Failed to fetch commits');
   }

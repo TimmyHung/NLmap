@@ -85,8 +85,6 @@ export const FavoriteAndResultModal = ({
 
     // 向收藏清單添加項目
     const handleAddFavoriteItem = async (favorite_id: number, recordSet: Record<string, any>) => {
-        // console.log("RecordSet標準回傳格式：")
-        // console.log(recordSet);
         const response = await addFavoriteItem(JWTtoken, favorite_id, recordSet.records);
         if (response.statusCode == 200) {
             setDupblicatedItems(response.duplicatedItems);

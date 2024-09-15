@@ -7,7 +7,7 @@ import { FaMicrophone } from "react-icons/fa";
 
 const SpendCard_openai = ({ usageData }: { usageData: any }) => {
     return (
-        <div className="grid gap-4 w-full py-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 w-full py-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
             <TotalSpendCard usageData={usageData} />
             <Gpt35SpendCard usageData={usageData} />
             <Gpt4SpendCard usageData={usageData} />
@@ -50,7 +50,7 @@ const TotalSpendCard = ({ usageData }: { usageData: any }) => {
     const { growthPercentage, growthSign } = calculateGrowth(yesterdaySpend, todaySpend);
 
     return (
-        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-4">
+        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-5">
             <div className="flex items-start justify-between">
                 <div className="bg-gray-800 p-2 rounded-md mt-[-40px] shadow-lg">
                     <IconContext.Provider value={{ size: '46px', color: 'white' }}>
@@ -86,7 +86,7 @@ const Gpt35SpendCard = ({ usageData }: { usageData: any }) => {
     const { growthPercentage, growthSign } = calculateGrowth(yesterday, today);
 
     return (
-        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-4">
+        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-5">
             <div className="flex items-start justify-between">
                 <div className="bg-[#06b2af] p-2 rounded-md mt-[-40px] shadow-lg">
                     <IconContext.Provider value={{ size: '46px', color: 'white' }}>
@@ -121,7 +121,7 @@ const Gpt4SpendCard = ({ usageData }: { usageData: any }) => {
     const { growthPercentage, growthSign } = calculateGrowth(yesterday, today);
 
     return (
-        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-4">
+        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-5">
             <div className="flex items-start justify-between">
                 <div className="bg-[#2d96ff] p-2 rounded-md mt-[-40px] shadow-lg">
                     <IconContext.Provider value={{ size: '46px', color: 'white' }}>
@@ -156,7 +156,7 @@ const WhisperSpendCard = ({ usageData }: { usageData: any }) => {
     const { growthPercentage, growthSign } = calculateGrowth(yesterday, today);
 
     return (
-        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-4">
+        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-5">
             <div className="flex items-start justify-between">
                 <div className="bg-[#b900d8] p-2 rounded-md mt-[-40px] shadow-lg">
                     <IconContext.Provider value={{ size: '46px', color: 'white' }}>

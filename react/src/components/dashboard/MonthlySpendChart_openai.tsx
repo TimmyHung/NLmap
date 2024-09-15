@@ -34,25 +34,26 @@ const MonthlySpendChart = ({ usageData }) => {
   }
 
   return (
-    <div className="w-full bg-white rounded-xl">
+    <div className="w-full h-full bg-white rounded-xl flex flex-col">
       <div className="flex flex-row justify-between bg-headerBlack text-white rounded-t-xl py-2 px-4 gap-4 text-lg">
-          近30天計費
-          <span>USD</span>
+        近30天計費
+        <span>USD</span>
       </div>
-      <BarChart
-        xAxis={[{ scaleType: 'band', data: chartData.labels }]}
-        yAxis={[
-          {
-            valueFormatter: (value) => `$${value}`,
-          },
-        ]}
-        series={[
-          { data: chartData.series[0].data, label: chartData.series[0].label },
-          { data: chartData.series[1].data, label: chartData.series[1].label },
-          { data: chartData.series[2].data, label: chartData.series[2].label },
-        ]}
-        height={600}
-      />
+      <div className="flex-grow">
+        <BarChart
+          xAxis={[{ scaleType: 'band', data: chartData.labels }]}
+          yAxis={[
+            {
+              valueFormatter: (value) => `$${value}`,
+            },
+          ]}
+          series={[
+            { data: chartData.series[0].data, label: chartData.series[0].label },
+            { data: chartData.series[1].data, label: chartData.series[1].label },
+            { data: chartData.series[2].data, label: chartData.series[2].label },
+          ]}
+        />
+      </div>
     </div>
   );
 };

@@ -218,34 +218,33 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
     
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={handleCloseModal}>
-            <div className="bg-white rounded-xl h-[80%] w-11/12 md:w-3/4 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center border-b border-black pb-2">
-                    <div className="flex flex-row items-center text-xl gap-2">
-                        <i className="fa-solid fa-list"></i>
+            <div className="bg-white rounded-xl h-[90%] sm:h-[80%] w-11/12 lg:w-3/4 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-black pb-2">
+                    <div className="flex flex-row justify-center items-center text-xl gap-1 sm:gap-2">
                         <h2
-                            className="font-semibold cursor-pointer"
+                            className="font-semibold cursor-pointer text-xl"
                             ref={titleRef}
                             onBlur={handleTitleChange}
                             contentEditable={true}
                             suppressContentEditableWarning={true}
                         >
-                            {title}
+                            <i className="fa-solid fa-list mr-2"/>{title}
                         </h2>
-                        [{filteredItems.length}個地點]
+                        <span className="text-sm sm:text-xl">[{filteredItems.length}個地點]</span>
                     </div>
-                    <div className="flex flex-row gap-2">
+                    <div className="flex flex-row gap-1 sm:gap-2 w-full sm:w-auto justify-end">
                         <button className="text-black hover:bg-red-700" onClick={handleDeleteList}>
-                            <i className="fa-solid fa-trash text-2xl"></i>
+                            <i className="fa-solid fa-trash sm:text-2xl"></i>
                         </button>
                         <button className="text-black" onClick={handleDownload}>
-                            <i className="fa-solid fa-download text-2xl"></i>
+                            <i className="fa-solid fa-download sm:text-2xl"></i>
                         </button>
                         <button className="text-black" onClick={handleCloseModal}>
-                            <i className="fa-solid fa-times text-2xl"></i>
+                            <i className="fa-solid fa-times sm:text-2xl"></i>
                         </button>
                     </div>
                 </div>
-                <div className="flex w-full h-[94%]">
+                <div className="flex flex-col lg:flex-row w-full h-[94%]">
                     <LeftSide
                         ItemLength={filteredItems.length}
                         navigate={navigate}
@@ -313,7 +312,7 @@ const RightSide = ({ favoriteList, JWTtoken, setSearchTerm, searchTerm, filtered
     
 
     return (
-        <div className="w-[30%] h-full flex flex-col pt-4 pl-4 border-l overflow-y-auto">
+        <div className="w-full lg:w-[30%] h-[70%] lg:h-full flex flex-col pt-4 lg:pl-4 lg:border-l overflow-y-auto">
             <div className="gap-x-2 md:gap-x-6">
                 <div className="relative h-12 flex-1">
                     <input
@@ -339,7 +338,7 @@ const RightSide = ({ favoriteList, JWTtoken, setSearchTerm, searchTerm, filtered
             <DragDropContext onDragEnd={handleOnDragEnd}>
                 <Droppable droppableId="records">
                     {(provided) => (
-                        <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-1 overflow-y-auto pt-2">
+                        <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-1 overflow-y-auto pt-2 max-h-[20vh] sm:max-h-full">
                             {filteredItems.length !== 0 && (
                                 filteredItems.map((record, index) => (
                                     record.displayName != null && (
@@ -371,6 +370,7 @@ const RightSide = ({ favoriteList, JWTtoken, setSearchTerm, searchTerm, filtered
                 </Droppable>
             </DragDropContext>
         </div>
+
     );
 };
 
@@ -453,15 +453,15 @@ const LeftSide = ({ ItemLength, navigate, searchTerm, selectedRecord, geoJsonDat
         );
 
     return (
-        <div className="w-full h-full overflow-y-auto pt-2 flex justify-center items-center">
+        <div className="w-full h-[70%] sm:h-full overflow-y-auto pt-2 flex justify-center items-center">
             <div className="w-full h-full flex flex-col justify-center">
                 <div className="flex flex-row items-center justify-between">
                     <div className="flex flex-col items-start">
-                        <div className="flex flex-row items-center text-xl gap-2">
+                        <div className="flex flex-row items-center text-base sm:text-xl gap-2">
                             <i className="fa-solid fa-location-dot"></i>
                             <span>{selectedRecord.displayName}</span>
                         </div>
-                        <div className="flex flex-row items-center text-xl gap-2">
+                        <div className="flex flex-row items-center text-sm sm:text-xl gap-2">
                             <span>{selectedRecord.displayAddress}</span>
                         </div>
                     </div>

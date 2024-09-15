@@ -33,6 +33,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     const containerRef = useRef(null);
 
     //Custom Settings
+    //縣市篩選的選項只顯示有結果的縣市
     const filterCities = true;
     const hideUnknownRecords = true;
     const skipFetchLocationInfo = true;

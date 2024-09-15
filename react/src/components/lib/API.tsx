@@ -28,10 +28,10 @@ export const getRequest = async (url: string, requestData: any, headers = {}, ti
       params: requestData,
       timeout: timeout
     });
-    return response.data;
+    return {statusCode: response.status, data: response.data};
   } catch (error: any) {
     console.error('API GET錯誤:', error.response ? error.response.data : error.message);
-    return {status: false, message: error.response ? error.response.data : error.message}
+    return {statusCode: 500, message: error.response ? error.response.data : error.message}
   }
 };
 
@@ -88,7 +88,7 @@ export const getOverPassQL = async (inputValue: string, model: string, JWTtoken:
     console.log("正在取得OverPassQL，資料: \n" + inputValue);
     
     const response = await getRequest("/api/query", data, headers, 20000);
-    return response;
+    return response.data;
   } catch (err) {
     return { statuscode: 500, message: err };
   }
@@ -99,7 +99,13 @@ export const getGeoJsonData = async (overpassQL: string, bounds: string) => {
   try {
     console.log("正在取得: " + "https://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}", bounds));
     const overpassJson = await getRequest("https://overpass-api.de/api/interpreter?data=" + overpassQL.replaceAll("{{bbox}}", bounds), {}, {}, 20000);
-    const geoJson = osmToGeoJson(overpassJson);
+    
+    // 觸發timeout
+    if(overpassJson.statusCode != 200){
+      return { status: false, message: overpassJson.message, geoJson: null };
+    }
+
+    const geoJson = osmToGeoJson(overpassJson.data);
     return { status: true, message: "successful get geoJson", geoJson: geoJson, rawJson: overpassJson };
   } catch (err) {
     return { status: false, message: err, geoJson: null };
@@ -122,6 +128,25 @@ export const verifyJWT = async (JWTtoken: string) => {
     return { status: false, message: "Timeout", error: error };
   }
 };
+
+// 取得後臺資料
+export const getDashboardStats = async (JWTtoken: string, systemStatsOnly = false, range?: string) => {
+  const headers = {
+    "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : "",
+  };
+
+  const params = {
+    range: range,
+    systemStatsOnly
+  };
+
+  try {
+    const response = await getRequest("api/dashboard/stats", params, headers, 20000);
+    return response.data;
+  } catch (err) {
+    return { statucode: 500, message: err };
+  }
+}
 
 // 刪除帳號
 export const deleteAccount = async (JWTtoken: string, userID: number, account_type: string) => {
@@ -173,7 +198,7 @@ export const getHistoryRecords = async (JWTtoken: string, page: number = 1, per_
 
   try {
     const response = await getRequest("api/user/historyRecords/get", params, headers, 20000);
-    return response;
+    return response.data;
   } catch (err) {
     return { statucode: 500, message: err };
   }
@@ -293,9 +318,6 @@ export const createFavoriteList = async (JWTtoken: string, title: string) => {
 // 添加項目到收藏清單
 export const addFavoriteItem = async (JWTtoken: string, favorite_id: number, records: Record<string, any>) => {
   const data = { favorite_id, records };
-
-  console.log(data);
-
   const headers = {
     "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : "",
   };
@@ -316,7 +338,7 @@ export const getFavoriteLists = async (JWTtoken: string) => {
 
   try {
     const response = await getRequest("api/user/favorites/lists", {}, headers, 20000);
-    return response;
+    return response.data;
   } catch (err) {
     return { statuscode: 500, message: err };
   }
@@ -381,7 +403,7 @@ export const getTopSearch = async () => {
   try {
     // 發送 POST 請求到後端 API 進行確認
     const response = await getRequest("api/dashboard/getTopFavorites", {});
-    return response
+    return response.data
   } catch (err) {
     // 捕捉錯誤並返回錯誤訊息
     return { statusCode: 500, message: err };

@@ -206,6 +206,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
         map={mapInstance.current} 
         onAppendCollection={(selectedRecord)=>{handleFunction(selectedRecord, geoJsonDataArray[0].overpassJson);}}
         disableAppend={ChildComponent}
+        JWTtoken={JWTtoken}
       />
       
       {showInfo &&

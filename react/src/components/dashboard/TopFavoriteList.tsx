@@ -9,7 +9,7 @@ const TopFavoritesList = ({ top_favoritesList }) => {
     return (
         <div className="md:w-[230px] h-full bg-white rounded-xl">
             <div className="flex justify-center bg-headerBlack text-white rounded-t-xl py-2 px-4 gap-4">
-                熱門排行榜
+                熱門收藏排行榜
             </div>
             <div className="">
                 {top_favoritesList.slice(0, 10).map((item, index) => (
@@ -44,10 +44,9 @@ export const TopFavoriteHeat = ({ top_favoritesList }) => {
             Math.min(...top_favoritesList.map((w) => w.favorite_count)),
             Math.max(...top_favoritesList.map((w) => w.favorite_count)),
         ],
-        range: [15, 40], // 調整字體範圍
+        range: [10, 40], // 調整字體範圍
     });
     
-
     const fontSizeSetter = (datum) => fontScale(datum.favorite_count);
 
     const fixedValueGenerator = () => 0.2;
@@ -69,38 +68,40 @@ export const TopFavoriteHeat = ({ top_favoritesList }) => {
     return (
         <div className="bg-white rounded-xl flex flex-col w-full h-full">
             <div className="flex justify-center bg-headerBlack text-white rounded-t-xl py-2 px-4">
-                熱門查詢頻率分析
+                熱門收藏頻率分析
             </div>
-            <div style={{ width: '100%', height: '100%' }} className="p-2">
+            <div style={{ width: '100%', height: '100%' }} className="flex justify-center items-center p-2">
                 {/* 使用 ParentSize 來獲取動態的寬度和高度 */}
                 <ParentSize>
                     {({ width, height }) => (
-                        <Wordcloud
-                            words={wordList}
-                            width={width}
-                            height={height}
-                            fontSize={fontSizeSetter}
-                            font={'Impact'}
-                            padding={2}
-                            spiral={spiralType}
-                            rotate={withRotation ? getRotationDegree : 0}
-                            random={fixedValueGenerator}
-                        >
-                            {(cloudWords) =>
-                                cloudWords.map((w, i) => (
-                                    <Text
-                                        key={w.text}
-                                        fill={colors[i % colors.length]}
-                                        textAnchor={'middle'}
-                                        transform={`translate(${w.x}, ${w.y}) rotate(${w.rotate})`}
-                                        fontSize={w.size}
-                                        fontFamily={w.font}
-                                    >
-                                        {w.text}
-                                    </Text>
-                                ))
-                            }
-                        </Wordcloud>
+                        <div className="flex justify-center items-center" style={{ width, height }}>
+                            <Wordcloud
+                                words={wordList}
+                                width={width * 0.9}
+                                height={height * 0.9}
+                                fontSize={fontSizeSetter}
+                                font={'Impact'}
+                                padding={2}
+                                spiral={spiralType}
+                                rotate={withRotation ? getRotationDegree : 0}
+                                random={fixedValueGenerator}
+                            >
+                                {(cloudWords) =>
+                                    cloudWords.map((w, i) => (
+                                        <Text
+                                            key={w.text}
+                                            fill={colors[i % colors.length]}
+                                            textAnchor={'middle'}
+                                            transform={`translate(${w.x}, ${w.y}) rotate(${w.rotate})`}
+                                            fontSize={w.size}
+                                            fontFamily={w.font}
+                                        >
+                                            {w.text}
+                                        </Text>
+                                    ))
+                                }
+                            </Wordcloud>
+                        </div>
                     )}
                 </ParentSize>
             </div>

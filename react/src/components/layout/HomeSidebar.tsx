@@ -20,7 +20,7 @@ interface HomeSideBarProps {
 }
 
 export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps): ReactElement {
-  const { JWTtoken, role } = useAuth();
+  const { JWTtoken } = useAuth();
   const queryFieldRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLInputElement>(null);
@@ -48,16 +48,28 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
           }
           await saveQueryHistoryRecords(JWTtoken,query_text, query, valid, geoJsonResponse?.rawJson || null, manualQuery, response_metadata);
         } else {
-            Toast.fire({
-                icon: 'error',
-                title: geoJsonResponse.message as String,
+          if(geoJsonResponse.message.includes("timeout of")){
+            Swal.fire({
+              icon: 'error',
+              title: '查詢中斷',
+              text: "您查詢的資料量過於龐大，為避免網頁當機，可以嘗試縮小範圍或換個問法再式一次！",
+              confirmButtonText: "知道了",
             });
+          }else{
+            Swal.fire({
+              icon: 'error',
+              title: '查詢失敗',
+              text: activeTab === "askgpt" ? "GPT看來生成了錯誤結果，可以換個問法，再試一次！" : "您輸入的Overpass Query Language似乎有錯誤的語法，請嘗試修正後再試一次。",
+              confirmButtonText: "知道了",
+            });
+          }
         }
     } catch (error) {
-        Toast.fire({
-            icon: 'error',
-            title: '查詢失敗',
-        });
+      Toast.fire({
+          icon: 'error',
+          title: '查詢失敗',
+          text: error
+      });
     } finally {
         setQueryState('idle');
     }

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
+import { getDashboardStats } from '../lib/API';
 
-const SystemStatsChart = (height) => {
+const SystemStatsChart = ({ JWTtoken }: { JWTtoken: string }) => {
 
     const [chartData, setChartData] = useState<any>(null);
     const [range, setRange] = useState('hourly');
@@ -16,8 +17,7 @@ const SystemStatsChart = (height) => {
 
     const fetchData = async () => {
         try {
-            const response = await fetch(`https://timmyhungback.pettw.online/api/dashboard/systemInfo?range=${range}`);
-            const result = await response.json();
+            const response = await getDashboardStats(JWTtoken, true, range);
             
             const formatDateLabel = (timestamp) => {
                 const date = new Date(timestamp);
@@ -35,10 +35,10 @@ const SystemStatsChart = (height) => {
                 }
             };
 
-            const labels = result.map((entry) => formatDateLabel(entry.period));
-            const cpuUsage = result.map((entry) => entry.cpu_usage);
-            const ramUsage = result.map((entry) => entry.ram_usage);
-            const diskUsage = result.map((entry) => entry.disk_usage);
+            const labels = response.map((entry) => formatDateLabel(entry.period));
+            const cpuUsage = response.map((entry) => entry.cpu_usage);
+            const ramUsage = response.map((entry) => entry.ram_usage);
+            const diskUsage = response.map((entry) => entry.disk_usage);
     
             setChartData({
                 labels,

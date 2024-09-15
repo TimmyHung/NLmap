@@ -240,7 +240,7 @@ export default function MainNavigation() {
       </div>
       {settingVisible && (
         <div className="fixed inset-0 w-full h-full bg-black/40 flex justify-center items-center z-[1000]">
-          <div className="bg-white flex justify-center items-center rounded-lg shadow-lg" ref={settingRef}>
+          <div className="w-full h-full flex justify-center items-center " ref={settingRef}>
             <SettingComponent setSettingVisible={setSettingVisible}/>
           </div>
         </div>

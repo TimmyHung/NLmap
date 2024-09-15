@@ -6,7 +6,7 @@ import { FaUser } from "react-icons/fa";
 
 const StateCardList = ({ statsData: statsData }: { statsData: any }) => {
     return (
-        <div className="grid gap-4 w-full py-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 w-full py-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
             <TotalUserCard statsData={statsData} />
             <ActiveUserCard statsData={statsData} />
             <TodayQueryCard statsData={statsData} />
@@ -19,7 +19,7 @@ export default StateCardList;
 
 const TotalUserCard = ({ statsData }: { statsData: any }) => {
     return (
-        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-4">
+        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-5">
             <div className="flex items-start justify-between">
                 <div className="bg-headerBlack p-2 rounded-md mt-[-40px] shadow-lg">
                     <IconContext.Provider value={{ size: '46px', color: 'white' }}>
@@ -43,7 +43,7 @@ const TotalUserCard = ({ statsData }: { statsData: any }) => {
 
 const ActiveUserCard = ({ statsData }: { statsData: any }) => {
     return (
-        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-4">
+        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-5">
             <div className="flex items-start justify-between">
                 <div className="bg-headerBlack p-2 rounded-md mt-[-40px] shadow-lg">
                     <IconContext.Provider value={{ size: '46px', color: 'white' }}>
@@ -74,7 +74,7 @@ const TodayQueryCard = ({ statsData }: { statsData: any }) => {
     const growthSign = growthPercentage >= 0 ? "+" : "";
 
     return (
-        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-4">
+        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-5">
             <div className="flex items-start justify-between">
                 <div className="bg-headerBlack p-2 rounded-md mt-[-40px] shadow-lg">
                     <IconContext.Provider value={{ size: '46px', color: 'white' }}>
@@ -106,7 +106,7 @@ const VisitorCard = ({ statsData }: { statsData: any }) => {
     const growthSign = growthCount >= 0 ? "+" : "";
 
     return (
-        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-4">
+        <div className="w-full h-full bg-white rounded-xl p-6 flex flex-col space-y-5">
             <div className="flex items-start justify-between">
                 <div className="bg-headerBlack p-2 rounded-md mt-[-40px] shadow-lg">
                     <IconContext.Provider value={{ size: '46px', color: 'white' }}>

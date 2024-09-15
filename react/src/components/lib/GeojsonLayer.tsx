@@ -171,11 +171,6 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
           thresholdZoom = Math.log(polygonArea) / Math.log(2) + 9;
         }
 
-
-        // console.log(polygonArea);
-        // console.log(thresholdZoom);
-        // console.log(zoomLevel);
-
         // 如果當前 zoomLevel 小於閾值，將其轉換為 Point
         if (zoomLevel < thresholdZoom) {
           const centroid = turf.centroid(feature);

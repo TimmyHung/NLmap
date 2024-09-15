@@ -3,7 +3,7 @@ import SystemStatsChart from "@/components/dashboard/SystemStatsChart";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/lib/AuthProvider";
 import Swal from "sweetalert2";
-import { deleteAccount, updateUserRole } from "@/components/lib/API";
+import { deleteAccount, getDashboardStats, updateUserRole } from "@/components/lib/API";
 import Toast from "@/components/ui/Toast";
 import MonthlySpendChart from "@/components/dashboard/MonthlySpendChart_openai";
 import SpendCard_openai from "@/components/dashboard/SpendCard_openai";
@@ -14,12 +14,13 @@ import TopFavoriteList, {TopFavoriteHeat} from "@/components/dashboard/TopFavori
 export default function DashBoard(): JSX.Element {
     const [selectedPage, setSelectedPage] = useState<string>("Home");
     const [dashboardData, setDashboardData] = useState<any>(null);
+    const { JWTtoken } = useAuth();
+
 
     const fetchDashboardData = async () => {
         try {
-            const response = await fetch('https://timmyhungback.pettw.online/api/dashboard/stats?range=daily');
-            const result = await response.json();
-            setDashboardData(result);
+            const response = await getDashboardStats(JWTtoken);
+            setDashboardData(response);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         }
@@ -34,9 +35,9 @@ export default function DashBoard(): JSX.Element {
     }
 
     return (
-        <div className="flex w-full h-full p-6 gap-4">
+        <div className="flex w-full h-full p-4 md:p-6 gap-4">
             <LeftSide setSelectedPage={setSelectedPage} selectedPage={selectedPage} />
-            <RightSide setSelectedPage={setSelectedPage} selectedPage={selectedPage} dashboardData={dashboardData} />
+            <RightSide setSelectedPage={setSelectedPage} selectedPage={selectedPage} dashboardData={dashboardData} JWTtoken={JWTtoken}/>
         </div>
     );
 }
@@ -50,7 +51,7 @@ const menuItems = [
 
 const LeftSide = ({setSelectedPage,selectedPage,}: {setSelectedPage: (page: string) => void;selectedPage: string;}) => {
     return (
-        <div className="hidden lg:block flex flex-col items-center w-[400px] bg-headerBlack rounded-lg">
+        <div className="hidden xl:block flex flex-col items-center w-[400px] bg-headerBlack rounded-lg">
             <div className="flex justify-center items-center text-white w-full text-xl py-4">
                 歡迎回來
             </div>
@@ -73,10 +74,10 @@ const LeftSide = ({setSelectedPage,selectedPage,}: {setSelectedPage: (page: stri
     );
 };
 
-const RightSide = ({setSelectedPage,selectedPage,dashboardData}: {setSelectedPage: (page: string) => void;selectedPage: string;dashboardData: any;}) => {
+const RightSide = ({setSelectedPage,selectedPage,dashboardData,JWTtoken}: {setSelectedPage: (page: string) => void; selectedPage: string; dashboardData: any; JWTtoken: string;}) => {
     return (
         <div className="w-full h-full">
-             <div className="block lg:hidden flex flex-row justify-center mb-4 overflow-x-auto bg-headerBlack rounded-xl p-4 whitespace-nowrap">
+             <div className="block xl:hidden flex flex-row justify-center mb-4 overflow-x-auto bg-headerBlack rounded-xl p-4 whitespace-nowrap">
                 {menuItems.map((item, index) => (
                     <div
                         key={index}
@@ -91,8 +92,7 @@ const RightSide = ({setSelectedPage,selectedPage,dashboardData}: {setSelectedPag
                 ))}
             </div>
             <div className="w-full h-full overflow-y-auto flex flex-col justify-start items-center">
-                {selectedPage === "Home" && <Home dashboardData={dashboardData} />}
-                {selectedPage === "Analytics" && <Analytics dashboardData={dashboardData}/>}
+                {selectedPage === "Home" && <Home dashboardData={dashboardData} JWTtoken={JWTtoken} />}
                 {selectedPage === "Usage" && <Usage dashboardData={dashboardData}/>}
                 {selectedPage === "Account" && <Account dashboardData={dashboardData}/>}
             </div>
@@ -100,24 +100,28 @@ const RightSide = ({setSelectedPage,selectedPage,dashboardData}: {setSelectedPag
     );
 };
 
-const Home = ({ dashboardData }: { dashboardData: any }) => {
+const Home = ({ dashboardData, JWTtoken }: { dashboardData: any, JWTtoken: string }) => {
     return (
         <div className="w-full h-full flex flex-col md:px-4">
-            <div className="">
+            <div className="w-full">
                 <StateCardList statsData={dashboardData.stats_data} />
             </div>
-            <div className="h-full grid md:flex md:flex-row gap-4 w-full grid-cols-1 md:grid-cols-2">
-                <div className="h-[300px] md:h-auto w-full">
-                    <SystemStatsChart/>
+            <div className="h-full grid lg:flex lg:flex-row gap-4 w-full grid-cols-1">
+                
+                <div className="w-full h-full flex flex-col md:flex-row gap-4">
+                    <div className="h-[400px] md:h-auto w-full">
+                        <SystemStatsChart JWTtoken={JWTtoken}/>
+                    </div>
+                    <div className="h-full">
+                        <TopFavoriteList top_favoritesList={dashboardData.top_favorites}/>
+                    </div>
                 </div>
-                <div className="h-full">
-                    <TopFavoriteList top_favoritesList={dashboardData.top_favorites}/>
-                </div>
-                <div className="flex flex-col gap-4">
+
+                <div className="flex flex-col md:flex-row lg:flex-col gap-4 h-full">
                     <div className="w-full h-[400px] md:h-full">
                         <TopFavoriteHeat top_favoritesList={dashboardData.top_favorites}/>
                     </div>
-                    <div className="flex flex-col md:flex-row justify-center gap-4">
+                    <div className="flex flex-col lg:flex-row justify-center gap-4">
                         <QuerySuccessRatePieChart pie_data={dashboardData.pie_data}/>
                         <WhisperPlatformPieChart pie_data={dashboardData.pie_data}/>
                     </div>
@@ -126,20 +130,6 @@ const Home = ({ dashboardData }: { dashboardData: any }) => {
         </div>
     );
 };
-
-const Analytics = ({ dashboardData }) => {
-    console.log(dashboardData.top_favorites)
-    return(
-        <div className="w-full h-full">
-            {dashboardData.top_favorites.map((item,index)=>(
-                <div key={index}>
-                    第{index+1}名{item.name}({item.osm_type}-{item.osm_id}-{item.favorite_count}次)
-                </div>
-            ))}
-        </div>
-
-    );
-}
 
 // 用量與計費頁面
 const Usage = ({ dashboardData }) => {
@@ -154,9 +144,9 @@ const Usage = ({ dashboardData }) => {
     }
   
     return (
-      <div className="w-full h-full flex flex-col">
+      <div className="w-full h-full flex flex-col md:px-4">
         <SpendCard_openai usageData={usageData}/>
-        <div className="h-full flex flex-row gap-4">
+        <div className="h-[400px] lg:h-full flex flex-row gap-4">
             <MonthlySpendChart usageData={usageData} />
         </div>
       </div>
@@ -298,7 +288,6 @@ const Account = ({ dashboardData }: { dashboardData: any }) => {
                         });
                     }
                 } catch (error) {
-                    console.log(error)
                     Swal.fire({
                         icon: "error",
                         title: "更新失敗",
