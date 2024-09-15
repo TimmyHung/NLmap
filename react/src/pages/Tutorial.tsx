@@ -7,6 +7,8 @@ import history4 from "@/assets/歷史紀錄4.mov";
 import collect1 from "@/assets/收藏1.png";
 import collect2 from "@/assets/收藏2.mov";
 import forget from "@/assets/忘記密碼.png";
+import setting1 from "@/assets/設定介面1.png";
+import setting2 from "@/assets/設定介面2.png";
 
 export default function Tutorial() {
     return (
@@ -51,13 +53,16 @@ export default function Tutorial() {
                             <li className="text-base md:text-2xl ml-6">
                                 點選<strong>地圖上的標記點</strong>可以查看地點資訊，或將地點加入收藏。
                             </li>
-                            <li className="text-base md:text-2xl ml-6">
-                                右上角的頭貼標誌可以<strong>設定及登出帳號</strong>。
-                            </li>
                             <video controls className="w-full h-auto rounded-lg border border-gray-300">
                                 <source src={Home_page} type="video/mp4" />
                                 您的瀏覽器不支援HTML5影片標籤。
                             </video>
+                            <br/>
+                            <li className="text-base md:text-2xl ml-6">
+                                右上角的頭貼標誌可以<strong>登出帳號</strong>，或點選設定去<strong>更改、刪除帳號資料</strong>，也可以自行選擇<strong>歷史紀錄的顯示結果條件和設定資料上限</strong>，以加快載入時間。
+                            </li>
+                            <img src={setting1} alt="設定1" className="w-full h-auto rounded-lg border border-gray-300" />
+                            <img src={setting2} alt="設定2" className="w-full h-auto rounded-lg border border-gray-300" />
                         </ol>
                     </div>
                 </div>
