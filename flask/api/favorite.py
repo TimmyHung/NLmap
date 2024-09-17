@@ -249,7 +249,7 @@ def edit_favorite():
         if cursor.rowcount > 0:
             return jsonify({'statusCode': 200, 'message': '成功更新收藏清單'}), 200
         else:
-            return jsonify({'statusCode': 404, 'message': '沒有任何更動或找不到對應的收藏清單'}), 200
+            return jsonify({'statusCode': 400, 'message': '沒有任何更動或找不到對應的收藏清單'}), 200
 
     except Exception as e:
         if connection:

@@ -46,7 +46,7 @@ def verify_JWTtoken(token):
             return {'status': False, 'message': 'Invalid token: Missing userID'}, 400
 
         cursor, connection = get_db_cursor()
-        cursor.execute("SELECT username, role, avatar_url, account_type FROM users WHERE userID = %s", (user_id,))
+        cursor.execute("SELECT username, email, role, avatar_url, account_type FROM users WHERE userID = %s", (user_id,))
         user_data = cursor.fetchone()
 
         if not user_data:
@@ -57,7 +57,8 @@ def verify_JWTtoken(token):
             'role': user_data['role'],
             'picture': user_data['avatar_url'],
             'account_type': user_data['account_type'],
-            'userID': user_id
+            'userID': user_id,
+            'email': user_data['email'],
         }
 
         return {'status': True, 'message': 'Token Normal', 'data': response_data}, 200

@@ -156,7 +156,7 @@ def register():
 
     userID = cursor.lastrowid
 
-    payload = {'username': username, 'account_type': account_type, 'role': 'User', 'userID': userID}
+    payload = {'username': username, 'account_type': account_type, 'role': 'User', 'userID': userID, 'email': email}
     token = generate_jwt(payload)
 
     update_login_time_query = "UPDATE users SET last_login_at = NOW() WHERE userID = %s"
@@ -182,9 +182,9 @@ def login():
         cursor.execute(sql, (email, username, role, google_userID, apple_userID, discord_userID, loginType))
         cursor.connection.commit()
 
-    def generate_response(loginType, username, role, userID, additional_payload={}):
+    def generate_response(loginType, username, role, userID, email, additional_payload={}):
         updateLastLogin(userID)
-        payload = {'account_type': loginType, 'username': username, 'role': role, 'userID': userID}
+        payload = {'account_type': loginType, 'username': username, 'role': role, 'userID': userID, 'email': email}
         payload.update(additional_payload)
         token = generate_jwt(payload)
         return jsonify({'status': True, 'message': message, 'JWTtoken': token}), 200
@@ -236,7 +236,7 @@ def login():
                 # 如果資料庫內有 avatar_url，則返回資料庫的頭像
                 picture = avatar_url if avatar_url else None
                 additional_payload = {'picture': picture}
-                return generate_response(loginType, username, role, userID, additional_payload)
+                return generate_response(loginType, username, role, userID, email, additional_payload)
             else:
                 return jsonify({'status': False, 'message': 'Login Failed: Invalid account or password.', 'JWTtoken': None}), 200
 
@@ -275,7 +275,7 @@ def login():
                 picture = avatar_url if avatar_url else oauth_picture
 
             additional_payload = {'google_userID': google_userID, 'picture': picture}
-            return generate_response(loginType, username, role, userID, additional_payload)
+            return generate_response(loginType, username, role, userID, email, additional_payload)
 
         case "Apple":
             appleRes = data.get('appleRes')
@@ -317,7 +317,7 @@ def login():
                 picture = avatar_url if avatar_url else None
 
             additional_payload = {'apple_userID': apple_userID, 'picture': picture}
-            return generate_response(loginType, username, role, userID, additional_payload)
+            return generate_response(loginType, username, role, userID, email, additional_payload)
 
 
         case _:
@@ -381,9 +381,9 @@ def discord_callback():
         cursor.execute(sql, (email, username, role, discord_userID, 'Discord'))
         cursor.connection.commit()
 
-    def generate_response(username, role, userID, additional_payload={}):
+    def generate_response(username, role, userID, email, additional_payload={}):
         updateLastLogin(userID)
-        payload = {'account_type': 'Discord', 'username': username, 'role': role, 'userID': userID}
+        payload = {'account_type': 'Discord', 'username': username, 'role': role, 'userID': userID, 'email': email}
         payload.update(additional_payload)
         token = generate_jwt(payload)
         return token
@@ -435,7 +435,7 @@ def discord_callback():
 
     # 生成 JWT 並返回
     additional_payload = {'discord_userID': discord_user_id, 'picture': picture}
-    jwt_token = generate_response(username, role, userID, additional_payload)
+    jwt_token = generate_response(username, role, userID, email, additional_payload)
 
     connection.close()
     return redirect(f"{FRONTEND_URL}/login?token={jwt_token}&message={message}&status=true")

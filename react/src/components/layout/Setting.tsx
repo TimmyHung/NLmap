@@ -16,7 +16,7 @@ type Tab = {
 
 const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
   const [selectedTab, setSelectedTab] = useState('general');
-  const { JWTtoken, picture, username, account_type, refreshUserInfo, userID, logout } = useAuth();
+  const { JWTtoken, picture, username, account_type, refreshUserInfo, userID, logout, email } = useAuth();
 
   const tabs: Tab[] = [
     { id: 'general', label: '一般', icon: 'fa-gear' },
@@ -42,7 +42,7 @@ const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
       <div className="flex flex-row">
         {/* 左半部 */}
         <div className="min-w-[500px] flex-grow p-4">
-          {selectedTab === 'general' && <GeneralSettings JWTtoken={JWTtoken} avatar={picture} username={username} account_type={account_type} refreshUserInfo={refreshUserInfo} setSettingVisible={setSettingVisible} userID={userID} logout={logout}/>}
+          {selectedTab === 'general' && <GeneralSettings JWTtoken={JWTtoken} avatar={picture} username={username} account_type={account_type} refreshUserInfo={refreshUserInfo} setSettingVisible={setSettingVisible} userID={userID} logout={logout} email={email}/>}
           {selectedTab === 'data' && <HistorySettings/>}
         </div>
         {/* 右半部 */}
@@ -70,7 +70,7 @@ const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
 
 export default SettingComponent;
 
-const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserInfo, setSettingVisible, userID, logout}) => {
+const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserInfo, setSettingVisible, userID, logout, email}) => {
 
   const [nameInput, setNameInput] = useState(username);
   const uploadImageRef = useRef<HTMLInputElement>(null);
@@ -261,7 +261,7 @@ const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserI
         <div className="flex flex-col gap-2">
             <div className="">
                 <p className="text-gray-500 text-sm">電子郵件</p>
-                <p className="text-base">410631625@gms.tku.edu.tw</p>
+                <p className="text-base">{email}</p>
             </div>
 
             <div className="flex flex-col items-start">

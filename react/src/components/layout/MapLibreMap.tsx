@@ -31,12 +31,93 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
     center: initialCenter,
     zoom: initialZoom,
   });
-
+  const [userLocationMarker, setUserLocationMarker] = useState<maplibregl.Marker | null>(null);
   const [colors, setColors] = useState<{ [key: string]: string }>({});
   const [zoomLevel, setZoomLevel] = useState<number>(initialZoom);
   const [isFavoriteModalVisible, setIsFavoriteModalVisible] = useState<boolean>(false);
   const [recordToAppend, setRecordToAppend] = useState(null);
   const { JWTtoken } = useAuth();
+
+  class CustomButtonControl {
+    private map: maplibregl.Map | undefined;
+    private container: HTMLElement | undefined;
+
+    onAdd(map: maplibregl.Map) {
+      this.map = map;
+
+      // 建立控制器的容器
+      this.container = document.createElement('div');
+      this.container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+
+      // 設定按鈕之間的距離
+      this.container.style.display = 'flex';
+      this.container.style.flexDirection = 'column';
+      this.container.style.gap = '2px';
+
+      // 建立按鈕 1 (Home)
+      const homeButton = document.createElement('button');
+      homeButton.innerHTML = '<i class="fa-solid fa-house text-black"></i>';
+      homeButton.onclick = () => {
+        if (this.map) {
+          // 回到初始中心位置
+          this.map.flyTo({
+            center: initialCenter,
+            zoom: initialZoom,
+            essential: true,
+            duration: 1500,
+          });
+        }
+      };
+      this.container.appendChild(homeButton);
+
+      // 建立按鈕 2 (Location)
+      const locationButton = document.createElement('button');
+      locationButton.innerHTML = '<i class="fa-solid fa-location-crosshairs text-black"></i>';
+      locationButton.onclick = () => {
+        // 獲取使用者位置
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition((position) => {
+            const { latitude, longitude } = position.coords;
+            if (this.map) {
+              // 跳轉到使用者位置
+              this.map.flyTo({
+                center: [longitude, latitude],
+                zoom: 14,
+                essential: true,
+                duration: 1500,
+              });
+
+              if (userLocationMarker) {
+                userLocationMarker.setLngLat([longitude, latitude]);
+              } else {
+                const marker = new maplibregl.Marker({ color: 'rgb(20, 69, 131)' })
+                  .setLngLat([longitude, latitude])
+                  .addTo(this.map);
+                setUserLocationMarker(marker);
+              }
+            }
+          }, (error) => {
+            console.error("取得使用者位置時發生錯誤: ", error);
+          });
+        } else {
+          alert("你的瀏覽器不支援取得自己的位置");
+        }
+      };
+      this.container.appendChild(locationButton);
+
+      return this.container;
+    }
+
+    onRemove() {
+      if (this.container && this.container.parentNode) {
+        this.container.parentNode.removeChild(this.container);
+      }
+      this.map = undefined;
+    }
+  }
+
+  
+
 
   useEffect(() => {
     if (mapRef.current && !mapInstance.current) {
@@ -67,6 +148,11 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
 
       mapInstance.current = new maplibregl.Map(mapOptions);
       mapInstance.current.addControl(new maplibregl.NavigationControl(), 'top-left');
+      // 加入自訂控制器
+      if(!ChildComponent){
+        const customButtonControl = new CustomButtonControl();
+        mapInstance.current.addControl(customButtonControl, 'top-left');
+      }
 
       mapInstance.current.on('zoom', () => {
         setZoomLevel(mapInstance.current!.getZoom());
@@ -211,10 +297,14 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
       
       {showInfo &&
         <div className="absolute bottom-[8vh] md:bottom-2 left-2 bg-white bg-opacity-80 p-2 rounded-md">
-        <div>{"經度 " + mapState.center[0].toFixed(2) + "    緯度 " + mapState.center[1].toFixed(2)}</div>
-        <div>{"縮放等級 " + mapState.zoom.toFixed(2)}</div>
-      </div>}
+          <div>{"經度 " + mapState.center[0].toFixed(2) + "    緯度 " + mapState.center[1].toFixed(2)}</div>
+          <div>{"縮放等級 " + mapState.zoom.toFixed(2)}</div>
+        </div>
+      }
 
+      
+
+        
       <FavoriteAndResultModal
         isVisible={isFavoriteModalVisible}
         onClose={() => setIsFavoriteModalVisible(false)}

@@ -135,13 +135,13 @@ export const FavoriteComponent = ({ favoriteList, onClick }) => {
   const [itemLength, setItemLength] = useState(0);
 
   useEffect(() => {
-    if (favoriteList.recordset.elements) {
-        const filtered = favoriteList.recordset.elements.filter(item => {
-            return item.displayName != null;
-        });
+    if (favoriteList?.recordset?.elements) {
+        const filtered = favoriteList.recordset.elements.filter(item => item?.displayName);
         setItemLength(filtered.length);
+    } else {
+        setItemLength(0); // 當 elements 不存在時，設置 itemLength 為 0
     }
-}, [favoriteList]);
+  }, [favoriteList]);
 
   return (
     <div

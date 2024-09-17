@@ -117,6 +117,21 @@ export const FavoriteAndResultModal = ({
                             </div>
                             <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} onCreate={handleCreateFavoriteList} />
                             <div className="flex flex-col gap-2 w-full h-full overflow-x-auto">
+                                {
+                                    filteredFavoriteLists.length === 0 &&
+                                    <div className="flex flex-col h-[136px] gap-2 bg-gray-200 hover:bg-[#dfe1e5] w-full rounded-2xl pb-4 border-4 border-white cursor-pointer"
+                                        onClick={handleCreateFavoriteList}
+                                    >
+                                    <div className="flex items-center w-full font-normal gap-2 text-gray-100 text-base md:text-lg mb-2 bg-darkBlueGrey rounded-t-xl pl-4 py-2">
+                                        <i className="fa-solid fa-list"></i>空空如也
+                                    </div>
+                                    <div className="flex flex-row w-full h-full items-center justify-center items-center gap-2">
+                                        <i className="fa-solid fa-plus text-2xl"></i>
+                                        <p className="text-lg">創建第一個收藏清單</p>
+                                    </div>
+                                    </div>
+
+                                }
                                 {filteredFavoriteLists.map((favoriteList, index) => (
                                     <FavoriteComponent
                                         key={index}

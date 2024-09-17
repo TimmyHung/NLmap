@@ -15,14 +15,15 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
     const [isTitleEdit, setIsTitleEdit] = useState<boolean>(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [recordSet, setRecordSet] = useState(favoriteList.recordset);
     const geoJsonData = favoriteList.recordset.elements ? osmtogeojson(favoriteList.recordset) : {};
     const titleRef = useRef(null);
     const navigate = useNavigate();
 
     // 開啟介面時的初始化 && 搜尋功能：根據搜尋欄位即時篩選清單中的項目
     useEffect(() => {
-        if (favoriteList.recordset.elements) {
-            const filtered = favoriteList.recordset.elements.filter(item => {
+        if (recordSet.elements) {
+            const filtered = recordSet.elements.filter(item => {
                 const searchLower = searchTerm.toLowerCase().trim();
                 const itemNameLower = item.displayName != null ? item.displayName.toLowerCase() : '';
 
@@ -49,12 +50,13 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
             text: "此操作將無法復原",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#d33",
+            showDenyButton: true,
+            showConfirmButton: false,
             cancelButtonColor: "rgb(20, 69, 131)",
-            confirmButtonText: "是的，刪除它",
+            denyButtonText: "是的，刪除它",
             cancelButtonText: "取消",
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.isDenied) {
                 onDelete(favoriteList.id);
                 onClose();
             }
@@ -92,27 +94,33 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
             text: "此操作將無法復原",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#d33",
+            showDenyButton: true,
+            showConfirmButton: false,
             cancelButtonColor: "#3085d6",
-            confirmButtonText: "是的，刪除",
+            denyButtonText: "是的，刪除它",
             cancelButtonText: "取消"
         }).then(async (result) => {
-            if (result.isConfirmed) {
+            if (result.isDenied) {
                 // 從 filteredItems 中移除選取的記錄
                 const updatedItems = filteredItems.filter(item => item.id !== record.id);
                 setFilteredItems(updatedItems); // 更新前端顯示的紀錄
     
                 // 更新 favoriteList.recordset 並傳給後端
                 const updatedRecordset = {
-                    ...favoriteList.recordset,
+                    ...recordSet,
                     elements: updatedItems, // 使用更新後的紀錄
                 };
+
+                setRecordSet(updatedRecordset)
     
                 // 將更新後的 recordset 傳給後端 API
                 const response = await updateFavorite(JWTtoken, favoriteList.id, { new_recordset: updatedRecordset });
     
                 if (response.statusCode === 200) {
-                    Swal.fire("刪除成功", "紀錄已成功刪除", "success");
+                    Toast.fire({
+                        icon: "success",
+                        text: "紀錄已成功刪除"
+                    })
                 } else {
                     Swal.fire("刪除失敗", response.message, "error");
                 }
@@ -123,53 +131,56 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
 
     // 保存修改的紀錄
     const handleSaveEdit = async (updatedRecord) => {
-        // 獲取所有 elements，包括 node、way 和 relation
-        const updatedElements = favoriteList.recordset.elements.map((item) => {
-            if (item.id === updatedRecord.id && item.type === updatedRecord.type) {
-                return {
-                    ...item,
-                    displayName: updatedRecord.displayName || item.displayName,
-                    displayAddress: updatedRecord.displayAddress || item.displayAddress,
-                    tags: {
-                        ...item.tags,
-                        ...updatedRecord.tags,
-                    },
-                    lats: updatedRecord.lats || item.lats,
-                    lons: updatedRecord.lons || item.lons,
-                    nodes: updatedRecord.nodes || item.nodes,
-                };
-            } else {
-                return item;
-            }
-        });
+        // 找到目標元素的原始索引
+        const targetIndex = recordSet.elements.findIndex((item) => item.id === updatedRecord.id);
     
-        // 前端同步更新
-        setFilteredItems(updatedElements.filter(item => item.displayName != null));
+        // 如果找不到該元素，直接返回
+        if (targetIndex === -1) return;
     
-        // 同步更新 selectedRecord
-        setSelectedRecord(updatedRecord);
+        // 複製該元素並更新 displayName 和 displayAddress
+        const targetElement = recordSet.elements[targetIndex]
+        if(targetElement.displayName == updatedRecord.displayName && targetElement.displayAddress == updatedRecord.displayAddress){
+            setIsEditModalVisible(false);
+            return;
+        }
+        targetElement.displayName = updatedRecord.displayName
+        targetElement.displayAddress = updatedRecord.displayAddress
+
+        // 建立一個更新後的元素陣列，保證 targetElement 保持在原來的位置
+        const updatedElements = [
+            ...recordSet.elements.slice(0, targetIndex), // 保留 targetElement 之前的元素
+            targetElement, // 插入更新後的 targetElement
+            ...recordSet.elements.slice(targetIndex + 1) // 保留 targetElement 之後的元素
+        ];
     
-        // 更新 favoriteList.recordset 並傳給後端
+        // 更新前端的 filteredItems 和 recordset，同步更新
+        setFilteredItems(updatedElements.filter((item) => item.displayName != null));
+    
+        // 更新 favoriteList.recordset 並同步到後端
         const updatedRecordset = {
-            ...favoriteList.recordset,
+            ...recordSet,
             elements: updatedElements,
         };
+
+        setRecordSet(updatedRecordset)
     
+        // 調用 API 傳送更新的記錄到後端
         const response = await updateFavorite(JWTtoken, favoriteList.id, { new_recordset: updatedRecordset });
     
         if (response.statusCode === 200) {
-            // Swal.fire("更新成功", "", "success");
             setIsEditModalVisible(false);
         } else {
             Swal.fire("更新失敗", response.message, "error");
         }
     };
-
+    
+    
+    
     //下載KML格式
     const handleDownload = () => {
-        if (favoriteList.recordset && Array.isArray(favoriteList.recordset.elements)) {
+        if (recordSet && Array.isArray(recordSet.elements)) {
             // 過濾掉名稱為 "Unnamed" 的項目
-            const filteredElements = favoriteList.recordset.elements.filter(element => element.displayName && element.displayName !== "未命名");
+            const filteredElements = recordSet.elements.filter(element => element.displayName && element.displayName !== "未命名");
     
             // 開始生成 KML
             let kmlData = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -221,14 +232,16 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
             <div className="bg-white rounded-xl h-[90%] sm:h-[80%] w-11/12 lg:w-3/4 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-black pb-2">
                     <div className="flex flex-row justify-center items-center text-xl gap-1 sm:gap-2">
-                        <h2
-                            className="font-semibold cursor-pointer text-xl"
-                            ref={titleRef}
-                            onBlur={handleTitleChange}
-                            contentEditable={true}
-                            suppressContentEditableWarning={true}
-                        >
-                            <i className="fa-solid fa-list mr-2"/>{title}
+                        <h2 className="font-semibold cursor-pointer text-xl">
+                            <i className="fa-solid fa-list mr-2"/> 
+                            <span 
+                                ref={titleRef}
+                                onBlur={handleTitleChange}
+                                contentEditable={true}
+                                suppressContentEditableWarning={true}
+                            >
+                            {title}        
+                            </span>
                         </h2>
                         <span className="text-sm sm:text-xl">[{filteredItems.length}個地點]</span>
                     </div>
@@ -255,7 +268,9 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
                         handleDeleteRecord={handleDeleteRecord}
                     />
                     <RightSide
-                        favoriteList={favoriteList}
+                        favoriteListID={favoriteList.id}
+                        recordSet={recordSet}
+                        setRecordSet={setRecordSet}
                         JWTtoken={JWTtoken}
                         setSearchTerm={setSearchTerm}
                         searchTerm={searchTerm}
@@ -279,28 +294,37 @@ const FavoriteDetail = ({ JWTtoken, favoriteList, onClose, onDelete }) => {
 
 export default FavoriteDetail;
 
-const RightSide = ({ favoriteList, JWTtoken, setSearchTerm, searchTerm, filteredItems, setFilteredItems, selectedRecord, setSelectedRecord }) => {
+const RightSide = ({ favoriteListID, recordSet, setRecordSet, JWTtoken, setSearchTerm, searchTerm, filteredItems, setFilteredItems, selectedRecord, setSelectedRecord }) => {
 
     // 當項目排序結束後的回調函數
     const handleOnDragEnd = async (result) => {
         if (!result.destination) return;
-    
         if (result.source.index === result.destination.index) return;
 
-        const items = favoriteList.recordset.elements;
+        // 確保不可變數據處理：創建 filteredItems 的副本
+        let items = Array.from(filteredItems);
+
+        // 把被拖動的元素從原位置移除
         const [reorderedItem] = items.splice(result.source.index, 1);
+
+        // 在新位置插入被拖動的元素
         items.splice(result.destination.index, 0, reorderedItem);
-        
-        // 更新本地狀態
-        setFilteredItems(items.filter(item => item.displayName != null)); 
-    
+
+        // 更新前端狀態，這將觸發重渲染
+        setFilteredItems(items); 
+
+        const childElements = recordSet.elements.filter((items) => items.displayName == null);
+        items = [...items, ...childElements];
+
         const updatedRecordset = {
-            ...favoriteList.recordset,
+            ...recordSet,
             elements: items,
         };
 
+        setRecordSet(updatedRecordset);
+
         // 將更新後的 recordset 傳給後端 API 同步到資料庫
-        const response = await updateFavorite(JWTtoken, favoriteList.id, { new_recordset: updatedRecordset });
+        const response = await updateFavorite(JWTtoken, favoriteListID, { new_recordset: updatedRecordset });
     
         if (response.statusCode !== 200) {
             Toast.fire({
@@ -520,7 +544,7 @@ const EditRecordModal = ({ record, onClose, onSave }) => {
                     />
                 </div>
                 <div className="flex justify-center gap-4">
-                    <button onClick={handleSave} className="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded">保存</button>
+                    <button onClick={handleSave} className="bg-green-500 text-white hover:bg-green-600 px-4 py-2 rounded">保存</button>
                     <button onClick={onClose} className="bg-slateBlue text-white hover:bg-darkSlateBlue px-4 py-2 rounded">取消</button>
                 </div>
             </div>

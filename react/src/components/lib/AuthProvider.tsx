@@ -11,6 +11,7 @@ interface AuthContextType {
   picture: string | null;
   account_type: string | null;
   userID: string | null;
+  email: string | null;
   login: (token: string, firstTime: boolean) => Promise<void>;
   logout: (title: string, text: string) => void;
   refreshUserInfo: () => Promise<void>;
@@ -29,6 +30,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [picture, setPicture] = useState<string | null>('');
   const [account_type, setAccountType] = useState<string | null>('');
   const [userID, setUserID] = useState<string | null>('');
+  const [email, setEmail] = useState<string | null>('');
 
   useEffect(() => {
     if (JWTtoken) {
@@ -41,6 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setPicture(response.data.picture);
             setAccountType(response.data.account_type);
             setUserID(response.data.userID);
+            setEmail(response.data.email);
             break;
           case "JWT Failed: Token Expired":
             logout("您已登出", "帳號驗證已過期請重新登入");
@@ -59,6 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [JWTtoken]);
 
   const refreshUserInfo = async () => {
+    
     if (JWTtoken) {
       const response = await verifyJWT(JWTtoken);
       if (response.message === "Token Normal") {
@@ -67,6 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setPicture(response.data.picture); // 更新頭像
         setAccountType(response.data.account_type);
         setUserID(response.data.userID);
+        setEmail(response.data.email);
       } else {
         logout("您已登出", "帳號驗證問題請重新登入");
       }
@@ -75,6 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const navigate = useNavigate();
   const login = async (token: string, firstTime: boolean) => {
+    
     localStorage.setItem('JWTtoken', token);
     setJWTtoken(token);
     await refreshUserInfo(); // 登錄後刷新用戶信息
@@ -107,7 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 
   return (
-    <AuthContext.Provider value={{ JWTtoken, username, role, picture, login, logout, account_type, userID, refreshUserInfo }}>
+    <AuthContext.Provider value={{ JWTtoken, username, role, picture, login, logout, account_type, userID, refreshUserInfo, email }}>
     {children}
   </AuthContext.Provider>
   );
