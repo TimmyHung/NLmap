@@ -399,6 +399,7 @@ export const resetPassword = async (email, otp, newPassword) => {
   }
 };
 
+// 取得收藏熱門綁
 export const getTopSearch = async () => {
   try {
     // 發送 POST 請求到後端 API 進行確認
@@ -409,3 +410,55 @@ export const getTopSearch = async () => {
     return { statusCode: 500, message: err };
   }
 }
+
+// 更改密碼
+export const updatePassword = async (JWTtoken: string, currentPassword: string, newPassword: string) => {
+  const headers = {
+    "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : "",
+  };
+  const data = { currentPassword, newPassword };
+  
+  try {
+    const response = await putRequest("/api/user/updatePassword", data, headers);
+    return response;
+  } catch (error: any) {
+    return { statusCode: 500, message: error.response ? error.response.data : error.message };
+  }
+};
+
+// 更改名稱
+export const updateUserName = async (JWTtoken: string, newName: string) => {
+  const headers = {
+    "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : "",
+  };
+  const data = { newName };
+  
+  try {
+    const response = await putRequest("/api/user/updateName", data, headers);
+    return response;
+  } catch (error: any) {
+    return { statusCode: 500, message: error.response ? error.response.data : error.message };
+  }
+};
+
+// 更改頭像
+export const uploadAvatar = async (JWTtoken: string, file: File) => {
+  const headers = {
+    "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : "",
+    'Content-Type': 'multipart/form-data'
+  };
+
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  try {
+    const response = await axios.post(baseURL + "api/user/uploadAvatar", formData, {
+      headers: headers,
+      timeout: 10000,
+    });
+    return response.data;
+  } catch (error: any) {
+    return { status: false, message: error.response ? error.response.data : error.message };
+  }
+};
+

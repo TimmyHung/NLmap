@@ -45,8 +45,6 @@ def get_stats():
         return jsonify({'statusCode': 403, 'message': '你沒有權限訪問後台資料'}), 200
 
     systemStatsOnly = request.args.get('systemStatsOnly', 'false').lower() == 'true'
-    print(systemStatsOnly)
-
     
     range_type = request.args.get('range', 'daily')
     system_stats = get_db_data_for_range(range_type)
@@ -83,8 +81,6 @@ def get_stats():
         'users': get_all_users(),
         'usage_data': get_monthly_usage(),
     }
-
-    print(response)
 
     return jsonify(response), 200
 

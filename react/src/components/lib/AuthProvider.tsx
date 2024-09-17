@@ -13,6 +13,7 @@ interface AuthContextType {
   userID: string | null;
   login: (token: string, firstTime: boolean) => Promise<void>;
   logout: (title: string, text: string) => void;
+  refreshUserInfo: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,28 +58,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [JWTtoken]);
 
+  const refreshUserInfo = async () => {
+    if (JWTtoken) {
+      const response = await verifyJWT(JWTtoken);
+      if (response.message === "Token Normal") {
+        setUsername(response.data.username);
+        setRole(response.data.role);
+        setPicture(response.data.picture); // 更新頭像
+        setAccountType(response.data.account_type);
+        setUserID(response.data.userID);
+      } else {
+        logout("您已登出", "帳號驗證問題請重新登入");
+      }
+    }
+  }
+
   const navigate = useNavigate();
   const login = async (token: string, firstTime: boolean) => {
     localStorage.setItem('JWTtoken', token);
     setJWTtoken(token);
+    await refreshUserInfo(); // 登錄後刷新用戶信息
     navigate("/");
-    if(firstTime)
+    if (firstTime) {
       Swal.fire({
         icon: "success",
         title: firstTime ? "註冊成功" : "登入成功",
         showConfirmButton: true,
         timer: 2000
       });
+    }
   };
 
   const logout = (title: string, text: string) => {
     localStorage.removeItem('JWTtoken');
-
     setJWTtoken(null);
     setUsername(null);
     setRole(null);
+    setPicture(null); // 清除頭像
     googleLogout();
-
     Swal.fire({
       icon: "success",
       title: title,
@@ -88,10 +105,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
   };
 
+
   return (
-    <AuthContext.Provider value={{ JWTtoken, username, role, picture, login, logout, account_type, userID }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ JWTtoken, username, role, picture, login, logout, account_type, userID, refreshUserInfo }}>
+    {children}
+  </AuthContext.Provider>
   );
 };
 

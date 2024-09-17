@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '@/components/lib/AuthProvider';
-import { deleteRequest } from '@/components/lib/API';
+import { deleteAccount, deleteRequest, updatePassword, updateUserName, uploadAvatar } from '@/components/lib/API';
 import Swal from 'sweetalert2';
 import Toast from '../ui/Toast';
 
@@ -16,6 +16,7 @@ type Tab = {
 
 const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
   const [selectedTab, setSelectedTab] = useState('general');
+  const { JWTtoken, picture, username, account_type, refreshUserInfo, userID, logout } = useAuth();
 
   const tabs: Tab[] = [
     { id: 'general', label: '一般', icon: 'fa-gear' },
@@ -24,36 +25,6 @@ const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
 
   const handleTabClick = (tabId: string) => {
     setSelectedTab(tabId);
-  };
-
-  const deleteAccount = () => {
-    Swal.fire({
-      title: '確定要刪除帳號嗎?',
-      text: '這項動作不可復原',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: '是的，請刪除！',
-      cancelButtonText: '我再考慮一下',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        const data = {};
-        const response = await deleteRequest('api/authorization/delete', data);
-        if (response.status) {
-          setSettingVisible(false);
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: '帳號刪除失敗',
-            text: response.message,
-            footer: '如果你認為這是一項錯誤，請聯絡網站管理員。',
-            showConfirmButton: false,
-            showCloseButton: true,
-          });
-        }
-      }
-    });
   };
 
   return (
@@ -71,7 +42,7 @@ const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
       <div className="flex flex-row">
         {/* 左半部 */}
         <div className="min-w-[500px] flex-grow p-4">
-          {selectedTab === 'general' && <GeneralSettings deleteAccount={deleteAccount}/>}
+          {selectedTab === 'general' && <GeneralSettings JWTtoken={JWTtoken} avatar={picture} username={username} account_type={account_type} refreshUserInfo={refreshUserInfo} setSettingVisible={setSettingVisible} userID={userID} logout={logout}/>}
           {selectedTab === 'data' && <HistorySettings/>}
         </div>
         {/* 右半部 */}
@@ -99,36 +70,85 @@ const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
 
 export default SettingComponent;
 
-const GeneralSettings = ({deleteAccount}) => {
-  const user = {
-    name: 'ɐuı̣ɹɐzɔ',
-    avatar: 'https://i.imgur.com/L8GHwbE.png',
-  };
+const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserInfo, setSettingVisible, userID, logout}) => {
 
-  const [nameInput, setNameInput] = useState(user.name);
+  const [nameInput, setNameInput] = useState(username);
   const uploadImageRef = useRef<HTMLInputElement>(null);
 
   const handleNameEdit = () => {
-    Toast.fire({
-        icon: "error",
-        text: "這是不能吃的吐司訊息"
-      })
-    // if (uploadImageRef.current) {
-    //   uploadImageRef.current.focus();
-    //   uploadImageRef.current.select();
-    // }
-  };
+    Swal.fire({
+      title: '更改名稱',
+      input: 'text',
+      inputPlaceholder: '請輸入新的名稱',
+      showCancelButton: true,
+      confirmButtonText: '確定',
+      cancelButtonText: '取消',
+      preConfirm: (newName) => {
+        if (!newName) {
+          Swal.showValidationMessage('名稱不能為空');
+          return;
+        }
+        return newName;
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const newName = result.value;
+        try {
+          const response = await updateUserName(JWTtoken, newName);
+          if (response.statusCode == 200) {
+            setNameInput(newName);
+            await refreshUserInfo();
+            Toast.fire({ icon: 'success', text: '名稱更新成功', timer: 1000});
+          } else {
+            Toast.fire({ icon: 'error', text: '名稱更新失敗' });
+          }
+        } catch (error) {
+          Toast.fire({ icon: 'error', text: '發生錯誤，請稍後再試' });
+        }
+      }
+    });
+  }
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNameInput(e.target.value);
+  const handleDeleteAccount = () => {
+    Swal.fire({
+      title: '確定要刪除帳號嗎?',
+      text: '這項動作不可復原',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: '是的，請刪除！',
+      cancelButtonText: '我再考慮一下',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const response = await deleteAccount(JWTtoken, userID, account_type);
+        if (response.statusCode == 200) {
+          setSettingVisible(false);
+          logout("帳號已刪除，您以登出。");
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: '帳號刪除失敗',
+            text: response.message,
+            footer: '如果你認為這是一項錯誤，請聯絡網站管理員。',
+            showConfirmButton: false,
+            showCloseButton: true,
+          });
+        }
+      }
+    });
   };
-
-  const handleBlurOrEnter = () => {
-    console.log("Updated Name:", nameInput);
-    // 這裡可以處理提交邏輯，這裡直接輸出結果
-  };
+  
 
   const handlePasswordChange = () => {
+    if(account_type != "Native"){
+      Swal.fire({
+        title: "無法更改密碼",
+        html: `您目前使用第三方帳號 (${account_type}) 登入<br/>若需要更改密碼，請前往該平台的帳號設定頁進行修改`
+      })
+
+      return;
+    }
     Swal.fire({
       title: '更改密碼',
       html:
@@ -136,6 +156,9 @@ const GeneralSettings = ({deleteAccount}) => {
         '<input type="password" id="newPassword" class="swal2-input" placeholder="新密碼">' +
         '<input type="password" id="confirmPassword" class="swal2-input" placeholder="確認新密碼">',
       focusConfirm: false,
+      confirmButtonText: "確定",
+      showCancelButton: true,
+      cancelButtonText: "取消",
       preConfirm: () => {
         const currentPassword = (
           Swal.getPopup().querySelector('#currentPassword') as HTMLInputElement
@@ -156,10 +179,21 @@ const GeneralSettings = ({deleteAccount}) => {
         }
         return { currentPassword, newPassword };
       },
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed && result.value) {
         const { currentPassword, newPassword } = result.value;
-        Swal.fire('成功', '您的密碼已更新', 'success');
+  
+        try {
+          const response = await updatePassword(JWTtoken, currentPassword, newPassword);
+  
+          if (response.statusCode === 200) {
+            Swal.fire('成功', '您的密碼已更新', 'success');
+          } else {
+            Toast.fire({ icon: 'error', text: response.message || '密碼更新失敗，請稍後再試。' });
+          }
+        } catch (error) {
+          Toast.fire({ icon: 'error', text: '發生錯誤，請稍後再試。' });
+        }
       }
     });
   };
@@ -170,26 +204,37 @@ const GeneralSettings = ({deleteAccount}) => {
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files && event.target.files[0];
     if (file) {
-      Toast.fire({
-        icon: "error",
-        text: "這是不能吃的吐司訊息"
-      })
+      try {
+        const response = await uploadAvatar(JWTtoken, file);
+        if (response.statusCode == 200) {
+          await refreshUserInfo();
+          Toast.fire({ icon: 'success', text: '頭像更新成功', timer: 1000 });
+        } else {
+          Toast.fire({ icon: 'error', text: '頭像更新失敗' });
+        }
+      } catch (error) {
+        Toast.fire({ icon: 'error', text: '發生錯誤，請稍後再試' });
+      }
     }
-  };
+  }
 
   return (
     <div className="flex flex-row h-full justify-center items-center gap-8">
 
         <div className="flex flex-col justify-center items-center gap-2">
             <div className="relative">
-                <img
-                    src={user.avatar}
+                {
+                  avatar ?
+                  <img
+                    src={avatar}
                     alt="頭像圖片"
-                    className="w-[130px] h-[130px] rounded-full object-cover border border-black"
-                />
+                    className="w-[130px] h-[130px] rounded-full object-cover border border-black bg-black"
+                  />
+                  : <div className="w-[130px] h-[130px] rounded-full border border-black flex justify-center items-center text-3xl bg-black text-white">{username?.charAt(0)}</div>
+                }
                 <div
                     className="absolute bottom-0 right-0 bg-slateBlue rounded-full p-1 hover:bg-darkSlateBlue text-white cursor-pointer"
                     onClick={handleAvatarChange}
@@ -207,18 +252,7 @@ const GeneralSettings = ({deleteAccount}) => {
             
             <div className="">
               <div className="flex items-center gap-1">
-                <div
-                //   ref={inputRef}
-                  onChange={handleNameChange}
-                  onBlur={handleBlurOrEnter}  // 當輸入框失去焦點時處理變更
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleBlurOrEnter(); // 當按下 Enter 時處理變更
-                      (e.target as HTMLInputElement).blur(); // 失去焦點
-                    }
-                  }}
-                  className="border-0 rounded px-2 py-1 focus:outline-none"
-                >{nameInput}</div>
+                <div className="border-0 rounded px-2 py-1 focus:outline-none">{nameInput}</div>
                 <i className="fa-solid fa-pencil cursor-pointer" onClick={handleNameEdit}></i>
               </div>
             </div>
@@ -247,7 +281,7 @@ const GeneralSettings = ({deleteAccount}) => {
                 {/* <p className="text-gray-500 text-sm">不想活了</p> */}
                 <div
                     className="max-w-[80px] px-2 py-2 flex items-center justify-center bg-slateBlue hover:bg-red-700 text-white text-sm shadow-none rounded-xl cursor-pointer"
-                    onClick={deleteAccount}
+                    onClick={handleDeleteAccount}
                 >
                     刪除帳號
                 </div>

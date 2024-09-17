@@ -80,7 +80,7 @@ def deleteAccount():
         return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
 
     requesterRole = response["data"]["role"]
-    requesterID = response["data"]
+    requesterID = response["data"]["userID"]
 
     data = request.get_json()
     account_type = data.get("account_type")
@@ -88,7 +88,7 @@ def deleteAccount():
 
     if userID == 1:
         return jsonify({'statusCode': 401, 'message': '受保護的帳號不得刪除(網頁開發者)'}), 200
-    
+
     if requesterRole != "Admin" and requesterID != userID:
         return jsonify({'statusCode': 403, 'message': '你沒有權限刪除他人的帳號'}), 200
 
@@ -126,6 +126,7 @@ def deleteAccount():
         cursor.connection.rollback()
         return {"statusCode": 500, "message": str(e)}, 500
     
+    cursor.close()
     connection.close()
 
 @authorize_blueprint.route(root + '/register', methods=['POST'])
@@ -194,7 +195,7 @@ def login():
         connection.commit()
 
     def get_user_by_field(field, value):
-        sql = f"SELECT role, userID, username, {field}, account_type FROM users WHERE {field} = %s"
+        sql = f"SELECT role, userID, username, {field}, account_type, avatar_url FROM users WHERE {field} = %s"
         cursor.execute(sql, (value,))
         return cursor.fetchone()
 
@@ -219,7 +220,7 @@ def login():
             else:
                 return jsonify({'status': False, 'message': 'Login Failed: Account does not exist'}), 200
 
-            sql = "SELECT userID, hashed_password, salt, role, username FROM users WHERE email = %s"
+            sql = "SELECT userID, hashed_password, salt, role, username, avatar_url FROM users WHERE email = %s"
             cursor.execute(sql, (email,))
             result = cursor.fetchone()
             userID = result["userID"]
@@ -227,11 +228,15 @@ def login():
             salt = result["salt"]
             role = result["role"]
             username = result["username"]
+            avatar_url = result["avatar_url"]
             hashed_login_password = hash_password(password, salt)
 
             if hashed_login_password == stored_hashed_password:
                 message = 'Login Successful'
-                return generate_response(loginType, username, role, userID)
+                # 如果資料庫內有 avatar_url，則返回資料庫的頭像
+                picture = avatar_url if avatar_url else None
+                additional_payload = {'picture': picture}
+                return generate_response(loginType, username, role, userID, additional_payload)
             else:
                 return jsonify({'status': False, 'message': 'Login Failed: Invalid account or password.', 'JWTtoken': None}), 200
 
@@ -241,8 +246,8 @@ def login():
 
             email = user_info.get('email')
             name = user_info.get('name')
-            picture = user_info.get('picture')
             google_userID = user_info.get('sub')
+            oauth_picture = user_info.get('picture')
 
             result = check_email_exists(email)
             if result:
@@ -259,15 +264,17 @@ def login():
                 create_new_user(email, name, role, google_userID=google_userID)
                 userID = cursor.lastrowid
                 message = 'Register Successful'
+                picture = oauth_picture  # 使用OAuth提供的頭像
             else:
                 role = result["role"]
                 username = result["username"]
-                google_userID = result["google_userID"] 
-                account_type = result["account_type"]
                 userID = result["userID"]
+                avatar_url = result["avatar_url"]
                 message = 'Login Successful'
+                # 如果資料庫內有 avatar_url，則返回資料庫的頭像
+                picture = avatar_url if avatar_url else oauth_picture
 
-            additional_payload = {'google_userID': google_userID,'picture': picture}
+            additional_payload = {'google_userID': google_userID, 'picture': picture}
             return generate_response(loginType, username, role, userID, additional_payload)
 
         case "Apple":
@@ -292,22 +299,26 @@ def login():
                 create_new_user(email, username, role, apple_userID=apple_userID)
                 userID = cursor.lastrowid
                 message = 'Register Successful'
+                picture = None  # Apple 沒有提供預設頭像
             elif not initLogin and not result: #使用者已註冊過但資料庫沒有資料
                 role = 'User'
                 username = "使用者"
                 create_new_user(email, username, role, apple_userID=apple_userID)
                 userID = cursor.lastrowid
                 message = 'Register Successful'
+                picture = None  # Apple 沒有提供預設頭像
             else:
                 role = result["role"]
                 username = result["username"]
-                apple_userID = result["apple_userID"] 
-                account_type = result["account_type"]
                 userID = result["userID"]
+                avatar_url = result["avatar_url"]
                 message = 'Login Successful'
+                # 如果資料庫內有 avatar_url，則返回資料庫的頭像
+                picture = avatar_url if avatar_url else None
 
-            additional_payload = {'apple_userID': apple_userID}
+            additional_payload = {'apple_userID': apple_userID, 'picture': picture}
             return generate_response(loginType, username, role, userID, additional_payload)
+
 
         case _:
             return jsonify({'status': False, 'message': 'Bad Request'}), 400
@@ -344,19 +355,21 @@ def discord_callback():
     if not access_token:
         return redirect(f"{FRONTEND_URL}/login?error=Failed to obtain access token")
 
+    # 獲取用戶信息
     user_info_url = 'https://discord.com/api/users/@me'
     user_info_response = requests.get(user_info_url, headers={'Authorization': f'Bearer {access_token}'})
     if user_info_response.status_code != 200:
         return redirect(f"{FRONTEND_URL}/login?error=Failed to fetch user info")
 
     user_info = user_info_response.json()
-    print(user_info)
     discord_user_id = user_info['id']
     username = user_info['global_name']
     email = user_info['email']
-    picture = "https://cdn.discordapp.com/embed/avatars/1.png"
-    if(user_info['avatar']):
-        picture = "https://cdn.discordapp.com/avatars/" + discord_user_id + "/" + user_info['avatar'] + ".png"
+    
+    # 如果 Discord 返回了用戶頭像，生成圖片 URL
+    picture = "https://cdn.discordapp.com/embed/avatars/1.png"  # 預設頭像
+    if user_info['avatar']:
+        picture = f"https://cdn.discordapp.com/avatars/{discord_user_id}/{user_info['avatar']}.png"
 
     cursor, connection = get_db_cursor()
     
@@ -381,7 +394,7 @@ def discord_callback():
         connection.commit()
 
     def get_user_by_field(field, value):
-        sql = f"SELECT role, username, {field}, account_type, userID FROM users WHERE {field} = %s"
+        sql = f"SELECT role, username, {field}, account_type, userID, avatar_url FROM users WHERE {field} = %s"
         cursor.execute(sql, (value,))
         return cursor.fetchone()
 
@@ -392,6 +405,7 @@ def discord_callback():
         cursor.connection.commit()
         return result
 
+    # 檢查電子郵件是否存在，若存在但不屬於 Discord，則提示帳號已存在
     result = check_email_exists(email)
     if result:
         db_email = result["email"]
@@ -399,9 +413,10 @@ def discord_callback():
         if db_email and db_account_type != 'Discord':
             return redirect(f"{FRONTEND_URL}/login?message=Login Failed: account exists&account_type={db_account_type}&status=false")
 
+    # 查找使用者的 Discord ID，檢查是否已經存在
     result = get_user_by_field('discord_userID', discord_user_id)
     
-    if not result: # 使用者第一次登入
+    if not result:  # 使用者第一次登入
         role = 'User'
         create_new_user(email, username, role, discord_user_id)
         message = 'Register Successful'
@@ -412,14 +427,18 @@ def discord_callback():
         discord_user_id = result["discord_userID"]
         account_type = result["account_type"]
         userID = result["userID"]
+        avatar_url = result["avatar_url"]
         message = 'Login Successful'
 
+        # 如果資料庫中有 avatar_url，使用資料庫的頭像，否則使用 Discord 的頭像
+        picture = avatar_url if avatar_url else picture
+
+    # 生成 JWT 並返回
     additional_payload = {'discord_userID': discord_user_id, 'picture': picture}
     jwt_token = generate_response(username, role, userID, additional_payload)
 
     connection.close()
     return redirect(f"{FRONTEND_URL}/login?token={jwt_token}&message={message}&status=true")
-
 
 #重設密碼
 @authorize_blueprint.route(root + "/reset", methods=["POST"])
@@ -575,6 +594,5 @@ def send_mail(reset_code, recipient_email):
     server.login(smtp_username, smtp_password)
     server.sendmail(sender_email, recipient_email, msg.as_string())
     server.quit()
-    print("密碼重置郵件發送成功！")
     # except Exception as e:
     #     print(f"郵件發送失敗: {e}")

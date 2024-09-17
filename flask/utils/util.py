@@ -39,13 +39,36 @@ def verify_JWTtoken(token):
         return {'status': False, 'message': 'no token'}, 401
     try:
         decoded = jwt.decode(token, os.getenv('JWT_SECRET_KEY'), algorithms=['HS256'])
-        return {'status': True, 'message': 'Token Normal', 'data': decoded}, 200
+        
+        user_id = decoded.get('userID')
+
+        if not user_id:
+            return {'status': False, 'message': 'Invalid token: Missing userID'}, 400
+
+        cursor, connection = get_db_cursor()
+        cursor.execute("SELECT username, role, avatar_url, account_type FROM users WHERE userID = %s", (user_id,))
+        user_data = cursor.fetchone()
+
+        if not user_data:
+            return {'status': False, 'message': 'User not found'}, 404
+
+        response_data = {
+            'username': user_data['username'],
+            'role': user_data['role'],
+            'picture': user_data['avatar_url'],
+            'account_type': user_data['account_type'],
+            'userID': user_id
+        }
+
+        return {'status': True, 'message': 'Token Normal', 'data': response_data}, 200
+
     except jwt.ExpiredSignatureError as e:
         return {'status': False, 'message': 'JWT Failed: Token Expired', 'detail': str(e)}, 200
     except jwt.InvalidTokenError as e:
         return {'status': False, 'message': 'JWT Failed: Token Invalid', 'detail': str(e)}, 200
     except Exception as e:
         return {'status': False, 'message': 'JWT Failed: ' + str(e)}, 200
+
 
 
 from openai import OpenAI
