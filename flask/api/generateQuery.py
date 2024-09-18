@@ -53,7 +53,7 @@ def combineSystemRoleText(search_results, prompt):
     promptText += "Format your response exactly like this:\n"
     promptText += "data=[out:json][timeout:60];{YOUR_QUERY_HERE};out;>;out skel qt;\n"
     promptText += "If you determine that the user's input is not a valid or understandable query, respond with:\ndata=null\n"
-    promptText += "Below are some example inputs and their expected outputs for your reference. These are only for guidance, and you may generate your own examples if needed. If an example input is exactly the same as the user's input, use the expected output directly.\n"
+    promptText += "Below are some example inputs and their expected outputs for your reference, If an example input is exactly the same as the user's input, use the expected output directly.\n"
 
     for example in search_results:
         promptText += f"Example Input: {example['nl']}\nExpected Output: {example['ql']}\n"

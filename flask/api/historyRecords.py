@@ -138,16 +138,15 @@ def save_manual_query():
             completion_tokens = response_metadata["token_usage"]["completion_tokens"]
             total_tokens = response_metadata["token_usage"]["total_tokens"]
             save_queryLog(user_id, query_text, query, model_name, prompt_tokens, completion_tokens, total_tokens, valid)
-        
-        if user_id != None and len(data.get('geoRawJson').get("elements",[])) > 0:
+
+        if user_id != None and len(data.get('geoRawJson').get("data").get("elements",[])) > 0:
             cursor, connection = get_db_cursor()
             insert_sql = """
                 INSERT INTO query_history (user_id, model_name, query_text, query, result) 
                 VALUES (%s, %s, %s, %s, %s)
             """
-            cursor.execute(insert_sql, (user_id, model_name, query_text, query, json.dumps(geoRawJson)))
+            cursor.execute(insert_sql, (user_id, model_name, query_text, query, json.dumps(geoRawJson.get("data"))))
             connection.commit()
-
         return jsonify({'statusCode': 200, 'message': 'Query saved successfully'}), 200
     
     except Exception as e:
