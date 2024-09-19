@@ -139,7 +139,7 @@ def save_manual_query():
             total_tokens = response_metadata["token_usage"]["total_tokens"]
             save_queryLog(user_id, query_text, query, model_name, prompt_tokens, completion_tokens, total_tokens, valid)
 
-        if user_id != None and len(data.get('geoRawJson').get("data").get("elements",[])) > 0:
+        if user_id != None and len(geoRawJson) > 0:
             cursor, connection = get_db_cursor()
             insert_sql = """
                 INSERT INTO query_history (user_id, model_name, query_text, query, result) 

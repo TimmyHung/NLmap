@@ -121,9 +121,11 @@ def search_similar_questions(query, index, questions, top_k=5):
     )
     query_embedding = np.array(response.data[0].embedding).astype('float32').reshape(1, -1)
     distances, indices = index.search(query_embedding, top_k)
-    results = [(questions[i], distances[0][idx], i) for idx, i in enumerate(indices[0])]  # 同時返回索引
+    
+    results = [(questions[i], distances[0][idx], i) for idx, i in enumerate(indices[0]) if distances[0][idx] < 1.0]
+    
     tokenUsage = response.usage.total_tokens
-    return results,tokenUsage
+    return results, tokenUsage
 
 def remove_question_by_index(index_to_remove, questions, embeddings):
     question = questions.pop(index_to_remove)

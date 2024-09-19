@@ -32,3 +32,4 @@ dist-ssr
 *.sw?
 flask/assets/datalist.pkl
 flask/assets/modification_times.json
+flask/assets/embeddings.pkl

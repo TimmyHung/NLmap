@@ -7,14 +7,15 @@ index, existing_questions, all_questions_ql = FAISS_initialize()
 
 @query_blueprint.route('/api/query', methods=['GET'])
 def getQuery():
-    JWTtoken = request.headers.get('Authorization')
+    JWTtoken = request.headers.get('Authorization', "")
     userID = None
-    if JWTtoken is None:
+    
+    if len(JWTtoken) == 0:
         userID = None
-
-    jwtResponse, status_code = verify_JWTtoken(JWTtoken.split(' ')[1])
-    if jwtResponse["status"]:
-        userID = jwtResponse["data"]["userID"]
+    else:
+        jwtResponse, status_code = verify_JWTtoken(JWTtoken.split(' ')[1])
+        if jwtResponse["status"]:
+            userID = jwtResponse["data"]["userID"]
     
     
     # 從查詢參數中獲取資料
@@ -48,21 +49,27 @@ def getSimilaritySearch(promptText):
     return similar_queries,tokenUsage
 
 def combineSystemRoleText(search_results, prompt):
-    promptText = f"You are an expert in OverpassQL. Please generate an OverpassQL query for a location in Taiwan based on the following user input: '{prompt}'.\n"
+    promptText = f"You are an expert in OverpassQL. Please generate an OverpassQL query for a location in Taiwan based on the user input.\n"
     promptText += "Respond ONLY with the query string that comes after 'data=', including the entire query, without any additional explanations or text.\n"
     promptText += "Format your response exactly like this:\n"
-    promptText += "data=[out:json][timeout:60];{YOUR_QUERY_HERE};out;>;out skel qt;\n"
-    promptText += "If you determine that the user's input is not a valid or understandable query, respond with:\ndata=null\n"
-    promptText += "Below are some example inputs and their expected outputs for your reference, If an example input is exactly the same as the user's input, use the expected output directly.\n"
+    promptText += "data=[out:json][timeout:20];{YOUR_QUERY_HERE};out;>;out skel qt;\n"
+    # promptText += "If you determine that the user's input is not a valid or understandable query, respond with:\ndata=null\n"
+
+    print("\n==================\n" + promptText)
+    return promptText
+
+def combineUserRoleText(search_results, prompt):
+    promptText = "Below are some example inputs and their expected outputs for your reference\n"
+    promptText += "If the example input is exactly the same or HIGHLY SIMILAR to the user's input, use the expected output directly.\n"
 
     for example in search_results:
         promptText += f"Example Input: {example['nl']}\nExpected Output: {example['ql']}\n"
 
-    promptText += "Now, based on the user's input, generate the best possible OverpassQL query following the specified format."
+    promptText += f"Now, based on the location {prompt}, generate the best possible OverpassQL query following the specified format."
 
-
-    print("\n==================\n" + promptText + "\n=================\n")
+    print(promptText + "\n==================\n")
     return promptText
+
 
 def query(model, prompt):
     search_results,token_usage = getSimilaritySearch(prompt)
@@ -72,9 +79,15 @@ def query(model, prompt):
             "role": "system",
             "content": combineSystemRoleText(search_results, prompt)
         },
+        {
+            "role": "user",
+            "content": combineUserRoleText(search_results, prompt)
+        }
     ]
-    response = chat_completion(model, promptText)
 
+    # print(promptText)
+
+    response = chat_completion(model, promptText)
     if response == None:
         return {'statuscode': 429, 'message': '查詢失敗: 速率限制'}
     else:

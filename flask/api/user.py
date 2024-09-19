@@ -177,3 +177,86 @@ def upload_avatar():
             cursor.close()
         if connection:
             connection.close()
+
+@user_blueprint.route('/api/user/settings', methods=['GET'])
+def get_user_settings():
+    # 驗證JWT
+    JWTtoken = request.headers.get('Authorization', '').split(' ')[-1]
+    JWTresponse = verify_JWTtoken(JWTtoken)[0]
+    
+    if not JWTresponse["status"]:
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
+    
+    user_id = JWTresponse["data"]["userID"]
+
+    try:
+        cursor, connection = get_db_cursor()
+
+        # 查詢該使用者的設定
+        select_sql = """
+            SELECT filterCities, hideUnknownRecords, skipFetchLocationInfo, removeRecordAfterAddToFavorite
+            FROM user_setting
+            WHERE user_id = %s
+        """
+        cursor.execute(select_sql, (user_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({'statusCode': 404, 'message': '找不到使用者設定'}), 200
+
+        # 返回設定結果
+        user_settings = {
+            'filterCities': bool(result['filterCities']),
+            'hideUnknownRecords': bool(result['hideUnknownRecords']),
+            'skipFetchLocationInfo': result['skipFetchLocationInfo'],
+            'removeRecordAfterAddToFavorite': bool(result['removeRecordAfterAddToFavorite']),
+        }
+        return jsonify({'statusCode': 200, 'message': '成功取得使用者設定', 'settings': user_settings}), 200
+
+    except Exception as e:
+        return jsonify({'statusCode': 500, 'message': f'無法取得使用者設定: {e}'}), 200
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+@user_blueprint.route('/api/user/settings/update', methods=['PUT'])
+def update_user_settings():
+    # 驗證JWT
+    JWTtoken = request.headers.get('Authorization', '').split(' ')[-1]
+    JWTresponse = verify_JWTtoken(JWTtoken)[0]
+
+    if not JWTresponse["status"]:
+        return jsonify({'statusCode': 401, 'message': '身分驗證無效，請重新登入。'}), 200
+
+    user_id = JWTresponse["data"]["userID"]
+    data = request.get_json()
+
+    filterCities = data.get('filterCities', True)
+    hideUnknownRecords = data.get('hideUnknownRecords', True)
+    skipFetchLocationInfo = data.get('skipFetchLocationInfo', 500)
+    removeRecordAfterAddToFavorite = data.get('removeRecordAfterAddToFavorite', False)
+
+    try:
+        cursor, connection = get_db_cursor()
+
+        update_sql = """
+        UPDATE user_setting 
+        SET filterCities = %s, hideUnknownRecords = %s, skipFetchLocationInfo = %s, removeRecordAfterAddToFavorite = %s 
+        WHERE user_id = %s
+        """
+        cursor.execute(update_sql, (filterCities, hideUnknownRecords, skipFetchLocationInfo, removeRecordAfterAddToFavorite, user_id))
+        connection.commit()
+
+        return jsonify({'statusCode': 200, 'message': '設定更新成功'}), 200
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        return jsonify({'statusCode': 500, 'message': f'更新設定失敗: {e}'}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
