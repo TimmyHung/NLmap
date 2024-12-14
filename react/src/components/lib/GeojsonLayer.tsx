@@ -144,11 +144,10 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
     updatedGeojson.features = geojson.features.map((feature) => {
       if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
         const polygonArea = turf.area(feature); // 使用 Turf.js 計算 Polygon 面積
-
         // 根據面積計算出顯示閾值
         let thresholdZoom;
         if (polygonArea > 1000000) {
-          thresholdZoom = Math.log(polygonArea) / Math.log(3.7);
+          thresholdZoom = 0
         } else if(polygonArea > 500000)   {
           // 對於非常大的多邊形，調整顯示縮放等級
           thresholdZoom = Math.log(polygonArea) / Math.log(3.3);
@@ -166,11 +165,12 @@ const GeojsonLayer: React.FC<GeoJsonLayerProps> = ({
         } else if (polygonArea > 1000) {
           // 對於中等大小的多邊形，使用較合理的縮放級別
           thresholdZoom = Math.log(polygonArea) / Math.log(2) + 4;
-        } else {
+        } else if(polygonArea > 100){
           // 對於小的多邊形
+          thresholdZoom = Math.log(polygonArea) / Math.log(2) + 7;
+        }else{
           thresholdZoom = Math.log(polygonArea) / Math.log(2) + 9;
         }
-
         // 如果當前 zoomLevel 小於閾值，將其轉換為 Point
         if (zoomLevel < thresholdZoom) {
           const centroid = turf.centroid(feature);

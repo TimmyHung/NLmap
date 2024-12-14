@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { osmToGeoJson } from "@/components/lib/Utils";
 
-const baseURL = "https://timmyhungback.pettw.online/";
+
+const baseURL = "";
 const defaultHeaders = {
   'Content-Type': 'application/json'
 };
@@ -87,7 +88,7 @@ export const getOverPassQL = async (inputValue: string, model: string, JWTtoken:
   try {
     console.log("正在取得OverPassQL，資料: \n" + inputValue);
     
-    const response = await getRequest("/api/query", data, headers, 20000);
+    const response = await getRequest("api/query", data, headers, 20000);
     return response.data;
   } catch (err) {
     return { statuscode: 500, message: err };
@@ -227,7 +228,7 @@ export const deleteHistoryRecords = async (JWTtoken: string, record_id: number) 
 export const setDailyVisitRecord = async(ip: string)=>{
 
   try{
-    const response = await postRequest('/api/record-visit', {ip});
+    const response = await postRequest('api/record-visit', {ip});
     return response
   }catch (err){
     return { status: 500, message: err}
@@ -266,7 +267,7 @@ export const editQueryHistoryRecords = async (JWTtoken: string, query_history_id
   const data = { geoRawJson, query_history_id };
 
   try {
-    const response = await putRequest(`/api/user/historyRecords/edit`, data, headers);
+    const response = await putRequest(`api/user/historyRecords/edit`, data, headers);
     return response;
   } catch (error: any) {
     return { statusCode: 500, message: error.response ? error.response.data : error.message };
@@ -367,7 +368,7 @@ export const updateFavorite = async ( JWTtoken: string, favorite_id: number, upd
       "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : "",
     };
     const data = { favorite_id, ...updates };
-    const response = await putRequest(`/api/user/favorites/edit`, data, headers);
+    const response = await putRequest(`api/user/favorites/edit`, data, headers);
     return response;
   } catch (error: any) {
     return { statusCode: 500, message: error.response ? error.response.data : error.message };
@@ -419,7 +420,7 @@ export const updatePassword = async (JWTtoken: string, currentPassword: string, 
   const data = { currentPassword, newPassword };
   
   try {
-    const response = await putRequest("/api/user/updatePassword", data, headers);
+    const response = await putRequest("api/user/updatePassword", data, headers);
     return response;
   } catch (error: any) {
     return { statusCode: 500, message: error.response ? error.response.data : error.message };
@@ -434,7 +435,7 @@ export const updateUserName = async (JWTtoken: string, newName: string) => {
   const data = { newName };
   
   try {
-    const response = await putRequest("/api/user/updateName", data, headers);
+    const response = await putRequest("api/user/updateName", data, headers);
     return response;
   } catch (error: any) {
     return { statusCode: 500, message: error.response ? error.response.data : error.message };
@@ -462,3 +463,33 @@ export const uploadAvatar = async (JWTtoken: string, file: File) => {
   }
 };
 
+
+// 取得OverpassQL
+export const getUserSetting = async (JWTtoken: string) => {
+  const headers = {
+    "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : ""
+  };
+
+  try {
+    const response = await getRequest("api/user/settings", {}, headers, 20000);
+    return response.data;
+  } catch (err) {
+    return { statuscode: 500, message: err };
+  }
+};
+
+/// 更新使用者設定
+export const updateUserSetting = async (JWTtoken: string, settings: Record<string, any>) => {
+  const headers = {
+    "Authorization": JWTtoken ? `Bearer ${JWTtoken}` : "",
+    "Content-Type": "application/json"
+  };
+
+  try {
+    const response = await putRequest("api/user/settings/update", settings, headers);
+    return response;
+  } catch (err) {
+    console.error('更新使用者設定時出錯:', err);  // 錯誤日志
+    return { statusCode: 500, message: '無法更新設定，請稍後再試' };  // 提供一個回退的值
+  }
+};

@@ -8,8 +8,33 @@ import Toast from '../ui/Toast';
 import Swal from 'sweetalert2';
 import { useAuth } from "@/components/lib/AuthProvider";
 import { FavoriteAndResultModal } from './FavoriteSelectionModal';
-import { editQueryHistoryRecords } from '../lib/API';
+import { editQueryHistoryRecords, getUserSetting } from '../lib/API';
 
+const cities = [
+    { value: "基隆市", label: "基隆市" },
+    { value: "臺北市", label: "臺北市" },
+    { value: "新北市", label: "新北市" },
+    { value: "桃園市", label: "桃園市" },
+    { value: "新竹市", label: "新竹市" },
+    { value: "新竹縣", label: "新竹縣" },
+    { value: "宜蘭縣", label: "宜蘭縣" },
+    { value: "苗栗縣", label: "苗栗縣" },
+    { value: "臺中市", label: "臺中市" },
+    { value: "彰化縣", label: "彰化縣" },
+    { value: "南投縣", label: "南投縣" },
+    { value: "雲林縣", label: "雲林縣" },
+    { value: "嘉義市", label: "嘉義市" },
+    { value: "嘉義縣", label: "嘉義縣" },
+    { value: "臺東縣", label: "臺東縣" },
+    { value: "臺南市", label: "臺南市" },
+    { value: "高雄市", label: "高雄市" },
+    { value: "屏東縣", label: "屏東縣" },
+    { value: "澎湖縣", label: "澎湖縣" },
+    { value: "花蓮縣", label: "花蓮縣" },
+    { value: "金門縣", label: "金門縣" },
+    { value: "連江縣", label: "連江縣" },
+    { value: "未知", label: "未歸類"}
+];
 
 const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     const { JWTtoken } = useAuth();
@@ -32,40 +57,37 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
     const geoJsonData = osmToGeoJson(recordSet.records);
     const containerRef = useRef(null);
 
+
+
     //Custom Settings
-    //縣市篩選的選項只顯示有結果的縣市
-    const filterCities = true;
-    const hideUnknownRecords = true;
-    const skipFetchLocationInfo = true;
+    const [userSettings, setUserSettings] = useState({
+        filterCities: true,
+        hideUnknownRecords: true,
+        skipFetchLocationInfoCount: 500,
+    });
 
     const title = recordSet.title;
     const records = recordSet.records.elements;
 
-    const cities = useMemo(() => [
-        { value: "基隆市", label: "基隆市" },
-        { value: "臺北市", label: "臺北市" },
-        { value: "新北市", label: "新北市" },
-        { value: "桃園市", label: "桃園市" },
-        { value: "新竹市", label: "新竹市" },
-        { value: "新竹縣", label: "新竹縣" },
-        { value: "宜蘭縣", label: "宜蘭縣" },
-        { value: "苗栗縣", label: "苗栗縣" },
-        { value: "臺中市", label: "臺中市" },
-        { value: "彰化縣", label: "彰化縣" },
-        { value: "南投縣", label: "南投縣" },
-        { value: "雲林縣", label: "雲林縣" },
-        { value: "嘉義市", label: "嘉義市" },
-        { value: "嘉義縣", label: "嘉義縣" },
-        { value: "臺東縣", label: "臺東縣" },
-        { value: "臺南市", label: "臺南市" },
-        { value: "高雄市", label: "高雄市" },
-        { value: "屏東縣", label: "屏東縣" },
-        { value: "澎湖縣", label: "澎湖縣" },
-        { value: "花蓮縣", label: "花蓮縣" },
-        { value: "金門縣", label: "金門縣" },
-        { value: "連江縣", label: "連江縣" },
-        { value: "未知", label: "未歸類"}
-    ], []);
+
+     // 載入使用者設置
+     useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const response = await getUserSetting(JWTtoken);
+                if (response.statusCode === 200) {
+                    setUserSettings({
+                        filterCities: response.settings.filterCities,
+                        hideUnknownRecords: response.settings.hideUnknownRecords,
+                        skipFetchLocationInfoCount: response.settings.skipFetchLocationInfo,
+                    });
+                }
+            } catch (error) {
+                console.error("無法載入使用者設置:", error);
+            }
+        };
+        loadSettings();
+    }, [JWTtoken]);
 
     // 透過國土鑑測API取得大略縣市、鄉鎮市區
     const fetchLocationInfo = async (lng, lat) => {
@@ -175,46 +197,51 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
             const filtered = [];
             const citySet = new Set();
             const districtSet = new Set();
+            
+            const allUnnamedRecords = records.every(
+                rec => record_getDisplayName(rec) === '未命名紀錄'
+            );
+            const allUnknownAddressRecords = records.every(
+                rec => record_getDisplayAddress(rec) === '未知'
+            );
     
-            for (const record of records) {
+            let processedRecords = 0;
+    
+            // 使用 Promise.all 並行處理地理位置信息
+            const promises = records.map(async (record) => {
                 if (record?.tags && Object.keys(record.tags).length > 0) {
                     let ctyName = standardizeCityName(record.tags["addr:city"]) || "未知";
                     let townName = record.tags["addr:district"] || "未知";
                     record.displayName = record_getDisplayName(record);
-                    
+    
                     // 優先過濾掉未命名紀錄(如果有開啟設定)
-                    if (hideUnknownRecords && record.displayName === '未命名紀錄') {
-                        setProcessedCount(prevCount => prevCount + 1);
-                        continue;
+                    if (userSettings.hideUnknownRecords && record.displayName === '未命名紀錄' && !allUnnamedRecords) {
+                        processedRecords++;
+                        return;
                     }
-                    
+    
                     // 替每一個搜尋結果設定經緯度
                     const location = getLatLon(record, records);
-
+    
                     // 透過國土鑑測API根據經緯度去取得大概地理位置
-                    if ((ctyName === "未知" || townName === "未知") && !skipFetchLocationInfo) {
+                    if ((ctyName === "未知" || townName === "未知") && allUnknownAddressRecords <= userSettings.skipFetchLocationInfoCount) {
                         const locationInfo = await fetchLocationInfo(location.lon, location.lat);
                         ctyName = standardizeCityName(locationInfo[0]);
                         townName = locationInfo[1];
                     }
-
+    
                     // 透過國土鑑測API根據經緯度去取得大概地理位置(有部分地址的額外請求)
                     if ((ctyName === "未知" || townName === "未知") && record.tags["addr:street"]) {
                         const locationInfo = await fetchLocationInfo(location.lon, location.lat);
                         ctyName = standardizeCityName(locationInfo[0]);
                         townName = locationInfo[1];
                     }
-                    
-
-                    // if (ctyName === "未知" || townName === "未知") {
-                    //     setProcessedCount(prevCount => prevCount + 1);
-                    //     continue;
-                    // }
-
+    
                     record.ctyName = ctyName;
                     record.townName = townName;
                     record.displayAddress = record_getDisplayAddress(record);
-                    
+    
+                    // 篩選邏輯
                     citySet.add(ctyName);
                     if (ctyName === selectedCity || !selectedCity) {
                         districtSet.add(townName);
@@ -223,10 +250,12 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                         }
                     }
     
-                    setProcessedCount(prevCount => prevCount + 1);
+                    processedRecords++;
                 }
-            }
+            });
     
+            await Promise.all(promises); // 等待所有地理位置請求並行完成
+            // 資料排序
             filtered.sort((a, b) => {
                 if (a.tags.branch && !b.tags.branch) return -1;
                 if (!a.tags.branch && b.tags.branch) return 1;
@@ -244,12 +273,14 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
             setDisplayedRecords(new Set(filtered.slice(0, batchSize)));
             setAvailableCities([...citySet]);
             setAvailableDistricts([...districtSet]);
+            setProcessedCount(processedRecords); // 在所有處理完成後才更新一次
             setLoading(false);
         };
     
-        setProcessedCount(0);
-        filterRecordsByCityAndDistrict();
+        setProcessedCount(0); // 重置處理計數
+        filterRecordsByCityAndDistrict(); // 開始過濾和處理
     }, [records, batchSize, selectedCity, selectedDistrict]);
+    
 
     // 監聽到滑動時的判定
     const handleScroll = useCallback(() => {
@@ -566,7 +597,7 @@ const HistoryRecord = ({ batchSize = 15, onDelete, recordSet }) => {
                             >
                                 <option value="">縣市篩選</option>
                                 {cities
-                                    .filter(city => !filterCities || availableCities.includes(city.value))
+                                    .filter(city => !userSettings.filterCities || availableCities.includes(city.value))
                                     .map((city) => (
                                         <option key={city.value} value={city.value}>
                                             {city.label}

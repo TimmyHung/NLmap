@@ -3,7 +3,6 @@
 __pycache__/
 *.env
 .Note/
-chroma_persist_db/
 flask/uploads
 
 # Logs

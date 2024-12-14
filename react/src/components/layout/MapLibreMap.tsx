@@ -227,10 +227,10 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
   }, [geoJsonDataArray]);
 
   const generateUpdatedRecordSet = (recordSet, selectedRecord, whitelist = true) => {
+    console.log(recordSet.data.elements);
     const nodesToInclude = new Set();
     const targetId = selectedRecord.properties.id;
-    const targetRecord = recordSet.elements.filter((element) => element.id === targetId)[0];
-
+    const targetRecord = recordSet.data.elements.filter((element) => element.id === targetId)[0];
 
     //若是way或是relation將其附屬node都加入List
     if (selectedRecord.properties.type === 'way' || selectedRecord.properties.type === 'relation') {
@@ -244,13 +244,13 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
     targetRecord.lons = targetRecord.type == "node" ? [targetRecord.lon] : [];
 
     //根據nodesToInclude還有selectedId從recordSet中篩選出想要加入的地點
-    const updatedRecords = recordSet.elements.filter(record => {
+    const updatedRecords = recordSet.data.elements.filter(record => {
         const isSelected = targetId === record.id || nodesToInclude.has(record.id);
         return whitelist ? isSelected : !isSelected;
     });
 
     //如果是way或是relations則將所有附屬node的經緯度都放入lats跟lons
-    recordSet.elements.map((element)=>{
+    recordSet.data.elements.map((element)=>{
       if(nodesToInclude.has(element.id) && selectedRecord.properties.type != "node"){
         targetRecord.lats = [...targetRecord.lats, element.lat];
         targetRecord.lons = [...targetRecord.lons, element.lon];
@@ -259,7 +259,7 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
 
     return {
         records: {
-            ...recordSet,
+            ...recordSet.data,
             elements: updatedRecords,
         },
     };
@@ -296,13 +296,11 @@ const MapLibreMap: React.FC<MapLibreMapProps> = ({
       />
       
       {showInfo &&
-        <div className="absolute bottom-[8vh] md:bottom-2 left-2 bg-white bg-opacity-80 p-2 rounded-md">
+        <div className="absolute bottom-[8vh] lg:bottom-2 left-2 bg-white bg-opacity-80 p-2 rounded-md">
           <div>{"經度 " + mapState.center[0].toFixed(2) + "    緯度 " + mapState.center[1].toFixed(2)}</div>
           <div>{"縮放等級 " + mapState.zoom.toFixed(2)}</div>
         </div>
       }
-
-      
 
         
       <FavoriteAndResultModal

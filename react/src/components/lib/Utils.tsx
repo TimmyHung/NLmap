@@ -27,20 +27,27 @@ export function record_getDisplayName(record) {
   if (record?.tags?.is_in)
       return record.tags.is_in;
 
+  if (record?.tags?.description)
+    return record.tags.description;
+
+  if (record?.tags?.amenity)
+    return record.tags.amenity
+
   return '未命名紀錄';
 }
 
 //取得顯示的地址
 export function record_getDisplayAddress(record) {
-  if (record.tags["addr:full"] != null) {
+  // console.log(record.tags);
+  if (record.tags && record.tags["addr:full"]) {
       const fullAddress = record.tags["addr:full"].replace(/^\d+/, "");
       return fullAddress;
   }
 
   const parts = [];
-  let streetName = record.tags["addr:street"] || "";
-  let housenumber = record.tags["addr:housenumber"] || "";
-  let floor = record.tags["addr:floor"] || "";
+  let streetName = record.tags ? record.tags["addr:street"] || "" : "";
+  let housenumber = record.tags ? record.tags["addr:housenumber"] || "" : "";
+  let floor = record.tags ? record.tags["addr:floor"] || "" : "";
   
   if (record.ctyName) parts.push(record.ctyName);
   if (record.townName && record.ctyName != "未知") parts.push(record.townName);
@@ -50,6 +57,7 @@ export function record_getDisplayAddress(record) {
 
   return parts.length > 0 ? parts.join('') : "未知";
 }
+
 
 let usedColors: string[] = [];
 

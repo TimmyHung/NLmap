@@ -169,7 +169,8 @@ const Popup: React.FC<PopupProps> = ({
     if(!JWTtoken){
       Toast.fire({
         icon: "info",
-        title: "請先登入以加入收藏！"
+        title: "請先登入以加入收藏！",
+        timer: 1000
       })
       return
     }

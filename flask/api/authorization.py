@@ -39,6 +39,9 @@ def updateRole():
 
     if userID == 1:
         return jsonify({'statusCode': 403, 'message': '受保護的帳號不得更新(網頁開發者)'}), 200
+    
+    if userID == 2:
+        return jsonify({'statusCode': 403, 'message': '受保護的帳號不得更新(預設管理員)'}), 200
 
     if requesterRole != "Admin":
         return jsonify({'statusCode': 403, 'message': '你沒有權限更新他人的帳號身分組'}), 200
@@ -88,6 +91,9 @@ def deleteAccount():
 
     if userID == 1:
         return jsonify({'statusCode': 401, 'message': '受保護的帳號不得刪除(網頁開發者)'}), 200
+    
+    if userID == 2:
+        return jsonify({'statusCode': 401, 'message': '受保護的帳號不得刪除(預設管理員)'}), 200
 
     if requesterRole != "Admin" and requesterID != userID:
         return jsonify({'statusCode': 403, 'message': '你沒有權限刪除他人的帳號'}), 200
@@ -521,6 +527,10 @@ def sendOTP():
         finally:
             connection.close()
 
+        
+        if not smtp_server or not smtp_port or not smtp_username or not smtp_password:
+            return jsonify({'statusCode': 500, 'message': 'SMTP伺服器尚未設定，請先設定.env檔案後再使用'}), 200
+
         # 寄送 OTP 到使用者的 email
         send_mail(reset_code, email)
 
@@ -532,12 +542,12 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr
 from email.header import Header
+smtp_server = os.getenv('SMTP_SERVER')
+smtp_port = os.getenv('SMTP_PORT')
+smtp_username = os.getenv('SMTP_USERNAME')
+smtp_password = os.getenv('SMTP_PASSWORD')
 # 寄送含有OTP的郵件
 def send_mail(reset_code, recipient_email):
-    smtp_server = os.getenv('SMTP_SERVER')
-    smtp_port = os.getenv('SMTP_PORT')
-    smtp_username = os.getenv('SMTP_USERNAME')
-    smtp_password = os.getenv('SMTP_PASSWORD')
 
     sender_name = 'NLmap'
     sender_email = os.getenv('SMTP_USERNAME')
@@ -588,11 +598,11 @@ def send_mail(reset_code, recipient_email):
     # 將 HTML 郵件內容加入 MIMEText
     msg.attach(MIMEText(html_content, 'html', 'utf-8'))
 
-    # try:
-    # 發送郵件
-    server = smtplib.SMTP_SSL(smtp_server, smtp_port)
-    server.login(smtp_username, smtp_password)
-    server.sendmail(sender_email, recipient_email, msg.as_string())
-    server.quit()
-    # except Exception as e:
-    #     print(f"郵件發送失敗: {e}")
+    try:
+        # 發送郵件
+        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+        server.login(smtp_username, smtp_password)
+        server.sendmail(sender_email, recipient_email, msg.as_string())
+        server.quit()
+    except Exception as e:
+        print(f"郵件發送失敗: {e}")

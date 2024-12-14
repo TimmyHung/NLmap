@@ -29,7 +29,7 @@ def getQuery():
     response,tokenUsage = query(model, promptText)
 
     log_embedding_to_db(userID,tokenUsage)
-
+    
     return jsonify(response),200
 
 
@@ -94,10 +94,12 @@ def query(model, prompt):
         print(response["content"])
         osmquery = response["content"].replace("data=", "")
 
-        # JWTresponse = verify_JWTtoken(JWTtoken)[0]
+        response_metadata = response["response_metadata"]
+        response_metadata['token_usage'].pop('completion_tokens_details', None)
+        response_metadata['token_usage'].pop('prompt_tokens_details', None)
         
         # 資料返回給前端
         if osmquery == "null":
-            return {'statuscode': 400, 'message': '查詢失敗，無效的查詢字詞。', 'osmquery': osmquery, 'response_metadata': response["response_metadata"]},token_usage
+            return {'statuscode': 400, 'message': '查詢失敗，無效的查詢字詞。', 'osmquery': osmquery, 'response_metadata': response_metadata},token_usage
         else:
-            return {'statuscode': 200, 'message': '查詢成功', 'osmquery': osmquery, 'response_metadata': response["response_metadata"]},token_usage
+            return {'statuscode': 200, 'message': '查詢成功', 'osmquery': osmquery, 'response_metadata': response_metadata},token_usage

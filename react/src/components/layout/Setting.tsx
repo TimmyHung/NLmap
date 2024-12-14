@@ -1,6 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/components/lib/AuthProvider';
-import { deleteAccount, deleteRequest, updatePassword, updateUserName, uploadAvatar } from '@/components/lib/API';
+import {
+  deleteAccount,
+  deleteRequest,
+  getUserSetting,
+  updatePassword,
+  updateUserName,
+  updateUserSetting,
+  uploadAvatar,
+} from '@/components/lib/API';
 import Swal from 'sweetalert2';
 import Toast from '../ui/Toast';
 
@@ -16,7 +24,16 @@ type Tab = {
 
 const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
   const [selectedTab, setSelectedTab] = useState('general');
-  const { JWTtoken, picture, username, account_type, refreshUserInfo, userID, logout, email } = useAuth();
+  const {
+    JWTtoken,
+    picture,
+    username,
+    account_type,
+    refreshUserInfo,
+    userID,
+    logout,
+    email,
+  } = useAuth();
 
   const tabs: Tab[] = [
     { id: 'general', label: '一般', icon: 'fa-gear' },
@@ -28,7 +45,7 @@ const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
   };
 
   return (
-    <div className=" bg-white rounded-lg">
+    <div className="w-full mx-8 md:mx-0 md:w-auto bg-white rounded-lg">
       <div className="flex w-full justify-between items-center px-6 py-4 border-b border-gray-200">
         <span className="font-bold text-[1.3rem]">設定</span>
         <button
@@ -39,14 +56,26 @@ const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
         </button>
       </div>
 
-      <div className="flex flex-row">
+      <div className="flex flex-col md:flex-row">
         {/* 左半部 */}
-        <div className="min-w-[500px] flex-grow p-4">
-          {selectedTab === 'general' && <GeneralSettings JWTtoken={JWTtoken} avatar={picture} username={username} account_type={account_type} refreshUserInfo={refreshUserInfo} setSettingVisible={setSettingVisible} userID={userID} logout={logout} email={email}/>}
-          {selectedTab === 'data' && <HistorySettings/>}
+        <div className="w-full md:min-w-[500px] md:flex-grow p-4">
+          {selectedTab === 'general' && (
+            <GeneralSettings
+              JWTtoken={JWTtoken}
+              avatar={picture}
+              username={username}
+              account_type={account_type}
+              refreshUserInfo={refreshUserInfo}
+              setSettingVisible={setSettingVisible}
+              userID={userID}
+              logout={logout}
+              email={email}
+            />
+          )}
+          {selectedTab === 'data' && <HistorySettings />}
         </div>
         {/* 右半部 */}
-        <div className="min-w-[200px] min-h-[300px] px-5 border-l border-grey-800 py-4">
+        <div className="w-full md:min-w-[200px] md:min-h-[300px] px-5 border-t md:border-t-0 md:border-l border-grey-800 py-4">
           <ul className="list-none p-0">
             {tabs.map((tab) => (
               <li
@@ -62,7 +91,6 @@ const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
             ))}
           </ul>
         </div>
-
       </div>
     </div>
   );
@@ -70,8 +98,17 @@ const SettingComponent: React.FC<DisableSetting> = ({ setSettingVisible }) => {
 
 export default SettingComponent;
 
-const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserInfo, setSettingVisible, userID, logout, email}) => {
-
+const GeneralSettings = ({
+  JWTtoken,
+  avatar,
+  username,
+  account_type,
+  refreshUserInfo,
+  setSettingVisible,
+  userID,
+  logout,
+  email,
+}) => {
   const [nameInput, setNameInput] = useState(username);
   const uploadImageRef = useRef<HTMLInputElement>(null);
 
@@ -89,16 +126,20 @@ const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserI
           return;
         }
         return newName;
-      }
+      },
     }).then(async (result) => {
       if (result.isConfirmed) {
         const newName = result.value;
         try {
           const response = await updateUserName(JWTtoken, newName);
-          if (response.statusCode == 200) {
+          if (response.statusCode === 200) {
             setNameInput(newName);
             await refreshUserInfo();
-            Toast.fire({ icon: 'success', text: '名稱更新成功', timer: 1000});
+            Toast.fire({
+              icon: 'success',
+              text: '名稱更新成功',
+              timer: 1000,
+            });
           } else {
             Toast.fire({ icon: 'error', text: '名稱更新失敗' });
           }
@@ -107,7 +148,7 @@ const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserI
         }
       }
     });
-  }
+  };
 
   const handleDeleteAccount = () => {
     Swal.fire({
@@ -122,9 +163,9 @@ const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserI
     }).then(async (result) => {
       if (result.isConfirmed) {
         const response = await deleteAccount(JWTtoken, userID, account_type);
-        if (response.statusCode == 200) {
+        if (response.statusCode === 200) {
           setSettingVisible(false);
-          logout("帳號已刪除，您以登出。");
+          logout('帳號已刪除，您已登出。');
         } else {
           Swal.fire({
             icon: 'error',
@@ -138,14 +179,13 @@ const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserI
       }
     });
   };
-  
 
   const handlePasswordChange = () => {
-    if(account_type != "Native"){
+    if (account_type !== 'Native') {
       Swal.fire({
-        title: "無法更改密碼",
-        html: `您目前使用第三方帳號 (${account_type}) 登入<br/>若需要更改密碼，請前往該平台的帳號設定頁進行修改`
-      })
+        title: '無法更改密碼',
+        html: `您目前使用第三方帳號 (${account_type}) 登入<br/>若需要更改密碼，請前往該平台的帳號設定頁進行修改`,
+      });
 
       return;
     }
@@ -156,9 +196,9 @@ const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserI
         '<input type="password" id="newPassword" class="swal2-input" placeholder="新密碼">' +
         '<input type="password" id="confirmPassword" class="swal2-input" placeholder="確認新密碼">',
       focusConfirm: false,
-      confirmButtonText: "確定",
+      confirmButtonText: '確定',
       showCancelButton: true,
-      cancelButtonText: "取消",
+      cancelButtonText: '取消',
       preConfirm: () => {
         const currentPassword = (
           Swal.getPopup().querySelector('#currentPassword') as HTMLInputElement
@@ -182,14 +222,21 @@ const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserI
     }).then(async (result) => {
       if (result.isConfirmed && result.value) {
         const { currentPassword, newPassword } = result.value;
-  
+
         try {
-          const response = await updatePassword(JWTtoken, currentPassword, newPassword);
-  
+          const response = await updatePassword(
+            JWTtoken,
+            currentPassword,
+            newPassword
+          );
+
           if (response.statusCode === 200) {
             Swal.fire('成功', '您的密碼已更新', 'success');
           } else {
-            Toast.fire({ icon: 'error', text: response.message || '密碼更新失敗，請稍後再試。' });
+            Toast.fire({
+              icon: 'error',
+              text: response.message || '密碼更新失敗，請稍後再試。',
+            });
           }
         } catch (error) {
           Toast.fire({ icon: 'error', text: '發生錯誤，請稍後再試。' });
@@ -204,12 +251,14 @@ const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserI
     }
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files && event.target.files[0];
     if (file) {
       try {
         const response = await uploadAvatar(JWTtoken, file);
-        if (response.statusCode == 200) {
+        if (response.statusCode === 200) {
           await refreshUserInfo();
           Toast.fire({ icon: 'success', text: '頭像更新成功', timer: 1000 });
         } else {
@@ -219,160 +268,220 @@ const GeneralSettings = ({JWTtoken, avatar, username, account_type, refreshUserI
         Toast.fire({ icon: 'error', text: '發生錯誤，請稍後再試' });
       }
     }
-  }
+  };
 
   return (
-    <div className="flex flex-row h-full justify-center items-center gap-8">
-
-        <div className="flex flex-col justify-center items-center gap-2">
-            <div className="relative">
-                {
-                  avatar ?
-                  <img
-                    src={avatar}
-                    alt="頭像圖片"
-                    className="w-[130px] h-[130px] rounded-full object-cover border border-black bg-black"
-                  />
-                  : <div className="w-[130px] h-[130px] rounded-full border border-black flex justify-center items-center text-3xl bg-black text-white">{username?.charAt(0)}</div>
-                }
-                <div
-                    className="absolute bottom-0 right-0 bg-slateBlue rounded-full p-1 hover:bg-darkSlateBlue text-white cursor-pointer"
-                    onClick={handleAvatarChange}
-                >
-                  <i className="fa-solid fa-camera fa-sm p-2"></i>
-                </div>
-                <input
-                    type="file"
-                    accept=".heic, .jpeg, .jpg, .png, .webp"
-                    ref={uploadImageRef}
-                    style={{ display: 'none' }}
-                    onChange={handleFileChange}
-                />
+    <div className="flex flex-col md:flex-row h-full justify-center items-center gap-8">
+      <div className="flex flex-col justify-center items-center gap-2">
+        <div className="relative">
+          {avatar ? (
+            <img
+              src={avatar}
+              alt="頭像圖片"
+              className="w-32 h-32 md:w-[130px] md:h-[130px] rounded-full object-cover border border-black bg-black"
+            />
+          ) : (
+            <div className="w-32 h-32 md:w-[130px] md:h-[130px] rounded-full border border-black flex justify-center items-center text-3xl bg-black text-white">
+              {username?.charAt(0)}
             </div>
-            
-            <div className="">
-              <div className="flex items-center gap-1">
-                <div className="border-0 rounded px-2 py-1 focus:outline-none">{nameInput}</div>
-                <i className="fa-solid fa-pencil cursor-pointer" onClick={handleNameEdit}></i>
-              </div>
-            </div>
+          )}
+          <div
+            className="absolute bottom-0 right-0 bg-slateBlue rounded-full p-1 hover:bg-darkSlateBlue text-white cursor-pointer"
+            onClick={handleAvatarChange}
+          >
+            <i className="fa-solid fa-camera fa-sm p-2"></i>
+          </div>
+          <input
+            type="file"
+            accept=".heic, .jpeg, .jpg, .png, .webp"
+            ref={uploadImageRef}
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
         </div>
 
-        <div className="flex flex-col gap-2">
-            <div className="">
-                <p className="text-gray-500 text-sm">電子郵件</p>
-                <p className="text-base">{email}</p>
+        <div className="">
+          <div className="flex items-center gap-1">
+            <div className="border-0 rounded px-2 py-1 focus:outline-none">
+              {nameInput}
             </div>
-
-            <div className="flex flex-col items-start">
-                <p className="text-gray-500 text-sm">密碼</p>
-                <p className="text-base flex items-center gap-1">
-                  **********
-                  <span
-                    className="text-base cursor-pointer hover:text-red-500"
-                    onClick={handlePasswordChange}
-                  >
-                    (更改密碼)
-                  </span>
-                </p>
-            </div>
-            
-            <div className="">
-                {/* <p className="text-gray-500 text-sm">不想活了</p> */}
-                <div
-                    className="max-w-[80px] px-2 py-2 flex items-center justify-center bg-slateBlue hover:bg-red-700 text-white text-sm shadow-none rounded-xl cursor-pointer"
-                    onClick={handleDeleteAccount}
-                >
-                    刪除帳號
-                </div>
-            </div>
+            <i
+              className="fa-solid fa-pencil cursor-pointer"
+              onClick={handleNameEdit}
+            ></i>
+          </div>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2 w-full md:w-auto">
+        <div className="">
+          <p className="text-gray-500 text-sm">電子郵件</p>
+          <p className="text-sm md:text-base">{email}</p>
+        </div>
+
+        <div className="flex flex-col items-start">
+          <p className="text-gray-500 text-sm">密碼</p>
+          <p className="text-sm md:text-base flex items-center gap-1">
+            **********
+            <span
+              className="text-sm md:text-base cursor-pointer hover:text-red-500"
+              onClick={handlePasswordChange}
+            >
+              (更改密碼)
+            </span>
+          </p>
+        </div>
+
+        <div className="">
+          <div
+            className="max-w-[80px] px-2 py-2 flex items-center justify-center bg-slateBlue hover:bg-red-700 text-white text-sm shadow-none rounded-xl cursor-pointer"
+            onClick={handleDeleteAccount}
+          >
+            刪除帳號
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
 const HistorySettings = () => {
+  const { JWTtoken } = useAuth(); // 取得使用者的 JWT token
 
-    const showInfo1 = () =>{
-        Swal.fire({
-            icon: "info",
-            html: `
-                <div style="text-align: start;">
-                    篩選縣市的下拉式選單，是否只顯示篩選後有結果的縣市選項。
-                </div>
-            `,
-            confirmButtonText: "知道了"
-        });
-    }
+  // 將設定的狀態設置為 undefined, 直到我們獲取後端的資料
+  const [filterCities, setFilterCities] = useState<boolean | undefined>(
+    undefined
+  );
+  const [hideUnknownRecords, setHideUnknownRecords] = useState<
+    boolean | undefined
+  >(undefined);
+  const [removeRecordAfterAddToFavorite, setRemoveRecordAfterAddToFavorite] =
+    useState<boolean | undefined>(undefined);
+  const [skipFetchLocationInfo, setSkipFetchLocationInfo] = useState<
+    number | undefined
+  >(undefined);
 
-    const showInfo2 = () =>{
-        Swal.fire({
-            icon: "info",
-            html: `
-                <div style="text-align: center;">
-                    隱藏完全沒有名稱資料的地點。
-                </div>
-            `,
-            confirmButtonText: "知道了"
-        });
-    }
+  // 載入當前使用者的設定
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await getUserSetting(JWTtoken);
+        // console.log(response);
+        if (response.statusCode === 200) {
+          const {
+            filterCities,
+            hideUnknownRecords,
+            removeRecordAfterAddToFavorite,
+            skipFetchLocationInfo,
+          } = response.settings;
+          setFilterCities(filterCities);
+          setHideUnknownRecords(hideUnknownRecords);
+          setRemoveRecordAfterAddToFavorite(removeRecordAfterAddToFavorite);
+          setSkipFetchLocationInfo(skipFetchLocationInfo);
+        } else {
+          Toast.fire({
+            icon: 'error',
+            text: '無法取得使用者設定，請稍後再試',
+          });
+        }
+      } catch (error) {
+        Toast.fire({ icon: 'error', text: '發生錯誤，無法取得設定' });
+      }
+    };
 
-    const showInfo3 = () =>{
-      Swal.fire({
-          icon: "info",
-          html: `
-              <div style="text-align: start;">
-                  將地點從歷史紀錄加入收藏後，是否自動從歷史紀錄中移除該地點。
-              </div>
-          `,
-          confirmButtonText: "知道了"
+    loadSettings();
+  }, [JWTtoken]);
+
+  const handleSaveSettings = async () => {
+    const settings = {
+      filterCities,
+      hideUnknownRecords,
+      removeRecordAfterAddToFavorite,
+      skipFetchLocationInfo,
+    };
+
+    const response = await updateUserSetting(JWTtoken, settings);
+    // console.log(response);
+    if (response.statusCode === 200) {
+      Toast.fire({ icon: 'success', text: '設定已成功更新', timer: 1500 });
+    } else {
+      Toast.fire({
+        icon: 'error',
+        text: response?.message || '更新失敗，請稍後再試',
       });
+    }
+  };
+
+  if (
+    filterCities === undefined ||
+    hideUnknownRecords === undefined ||
+    removeRecordAfterAddToFavorite === undefined ||
+    skipFetchLocationInfo === undefined
+  ) {
+    return <div></div>;
   }
 
-
-    const showInfo4 = () =>{
-        Swal.fire({
-            icon: "info",
-            html: `
-                <div style="text-align: left;">
-                    對於沒有詳細地址的地點，需要透過國土測繪中心取得其所在鄉鎮市區的大概位置。
-                    設置一個資料筆數上限，當超過這個數量的資料則地址顯示"未知"。
-                </div>
-            `,
-            footer: "這麼做的好處是可以加快載入時間，並節省電腦資源！",
-            confirmButtonText: "知道了"
-        });
-    }
-    return (
-        <div className="flex flex-col gap-4">
-            <div className="flex justify-between items-center py-2 min-h-[45px] border-b border-gray-200">
-                <div className="flex gap-2 items-center justify-center">
-                    <label>縣市篩選-只顯示有結果的縣市</label>
-                    <i className="fa-solid fa-circle-question cursor-pointer" onClick={()=>showInfo1()}></i>
-                </div>
-                <input type="checkbox" checked readOnly/>
-            </div>
-            <div className="flex justify-between items-center py-2 min-h-[45px] border-b border-gray-200">
-                <div className="flex gap-2 items-center justify-center">
-                    <label>隱藏沒有名稱的地點</label>
-                    <i className="fa-solid fa-circle-question cursor-pointer" onClick={()=>showInfo2()}></i>
-                </div>
-                <input type="checkbox" checked readOnly/>
-            </div>
-            <div className="flex justify-between items-center py-2 min-h-[45px] border-b border-gray-200">
-                <div className="flex gap-2 items-center justify-center">
-                    <label>將地點加入收藏後從歷史紀錄中移除</label>
-                    <i className="fa-solid fa-circle-question cursor-pointer" onClick={()=>showInfo3()}></i>
-                </div>
-                <input type="checkbox"/>
-            </div>
-            <div className="flex justify-between items-center py-2 min-h-[45px] border-b border-gray-200">
-                <div className="flex gap-2 items-center justify-center">
-                    <label>無地址地點的地理位置查詢資料上限</label>
-                    <i className="fa-solid fa-circle-question cursor-pointer" onClick={()=>showInfo4()}></i>
-                </div>
-                <input type="text" className="text-base w-[60px] px-2 text-center border border-gray-400 rounded-lg" value={500} readOnly/>
-            </div>
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 min-h-[45px] border-b border-gray-200">
+        <div className="flex gap-2 items-center justify-center">
+          <label>縣市篩選 - 只顯示有結果的縣市</label>
         </div>
-    );
+        <input
+          type="checkbox"
+          className="w-4 h-4 cursor-pointer mt-2 sm:mt-0"
+          checked={filterCities}
+          onChange={() => setFilterCities(!filterCities)}
+        />
+      </div>
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 min-h-[45px] border-b border-gray-200">
+        <div className="flex gap-2 items-center justify-center">
+          <label>隱藏沒有名稱的地點</label>
+        </div>
+        <input
+          type="checkbox"
+          className="w-4 h-4 cursor-pointer mt-2 sm:mt-0"
+          checked={hideUnknownRecords}
+          onChange={() => setHideUnknownRecords(!hideUnknownRecords)}
+        />
+      </div>
+
+      {/* 取消註解以下區塊以恢復該設定項 */}
+      {/* <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 min-h-[45px] border-b border-gray-200">
+        <div className="flex gap-2 items-center justify-center">
+          <label>將地點加入收藏後從歷史紀錄中移除</label>
+        </div>
+        <input
+          type="checkbox"
+          className="w-4 h-4 cursor-pointer mt-2 sm:mt-0"
+          checked={removeRecordAfterAddToFavorite}
+          onChange={() =>
+            setRemoveRecordAfterAddToFavorite(!removeRecordAfterAddToFavorite)
+          }
+        />
+      </div> */}
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 min-h-[45px] border-b border-gray-200">
+        <div className="flex gap-2 items-center justify-center">
+          <label>無地址地點的地理位置查詢資料上限</label>
+        </div>
+        <input
+          type="number"
+          className="text-base w-[60px] px-2 text-center border border-gray-400 rounded-lg mt-2 sm:mt-0"
+          value={skipFetchLocationInfo}
+          onChange={(e) => setSkipFetchLocationInfo(Number(e.target.value))}
+        />
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          className="bg-slateBlue hover:bg-darkSlateBlue text-white px-4 py-2 rounded-lg"
+          onClick={handleSaveSettings}
+        >
+          儲存設定
+        </button>
+      </div>
+    </div>
+  );
 };

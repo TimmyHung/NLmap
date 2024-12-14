@@ -27,7 +27,7 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
 
   const [queryState, setQueryState] = useState<QueryStates>('idle');
   const [activeTab, setActiveTab] = useState<Tabs>('askgpt');
-  const [gptModel, setGPTModel] = useState<GPTModel>('gpt35');
+  const [gptModel, setGPTModel] = useState<GPTModel>('gpt4o');
   const [extractedQuery, setExtractedQuery] = useState<null | QueryResponse>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isRecording, setRecording] = useState<boolean>(false);
@@ -39,6 +39,7 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
 
     try {
         geoJsonResponse = await getGeoJsonData(query, bounds);
+        // console.log(geoJsonResponse);
         if (geoJsonResponse.status) {
           if (geoJsonResponse.geoJson.features.length === 0) {
               Swal.fire('查無結果');
@@ -170,7 +171,8 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
   };
 
   function isMobile(): boolean {
-    return window.matchMedia('(max-width: 767px)').matches;
+    // return window.matchMedia('(max-width: 767px)').matches;
+    return window.matchMedia('(max-width: 1024px)').matches;
   }
 
   useEffect(() => {
@@ -238,7 +240,7 @@ export default function HomeSideBar({ setGeoJsonData, bounds }: HomeSideBarProps
                 <div className="flex-1 border-b border-gray-800"></div>
               </div>
               <div className="flex flex-row gap-2 whitespace-nowrap overflow-x-auto pb-1 mb-2">
-                {topSearches.slice(0, 5).map((search, index) => (
+                {topSearches.slice(0, 10).map((search, index) => (
                   <div
                     key={index}
                     className="px-4 py-2 cursor-pointer rounded-lg border border-black bg-gray-100 hover:bg-white text-black md:text-sm"
